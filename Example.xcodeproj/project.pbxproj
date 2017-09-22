@@ -16,6 +16,9 @@
 		393BE6E51F7119F80099AD80 /* QSearchListCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 393BE6E41F7119F80099AD80 /* QSearchListCell.swift */; };
 		393BE6E91F7206280099AD80 /* QSearchListDefaultCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 393BE6E71F7206280099AD80 /* QSearchListDefaultCell.swift */; };
 		393BE6EA1F7206280099AD80 /* QSearchListDefaultCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 393BE6E81F7206280099AD80 /* QSearchListDefaultCell.xib */; };
+		393BE6F41F7262470099AD80 /* QiscusCore.h in Headers */ = {isa = PBXBuildFile; fileRef = 393BE6F21F7262470099AD80 /* QiscusCore.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		393BE6F71F7262470099AD80 /* QiscusCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 393BE6F01F7262470099AD80 /* QiscusCore.framework */; };
+		393BE6F81F7262470099AD80 /* QiscusCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 393BE6F01F7262470099AD80 /* QiscusCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		393BFC6B1F3ADE9E00CF4CB5 /* Qiscus.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 39F1F70F1D3B91E200FF1C8C /* Qiscus.framework */; };
 		393BFC6C1F3ADE9E00CF4CB5 /* Qiscus.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 39F1F70F1D3B91E200FF1C8C /* Qiscus.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		394D7A9F1F4E735300E69E1C /* QCellLocationRight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 394D7A9D1F4E735300E69E1C /* QCellLocationRight.swift */; };
@@ -143,6 +146,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		393BE6F51F7262470099AD80 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 39F1F6A11D3B90E200FF1C8C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 393BE6EF1F7262470099AD80;
+			remoteInfo = QiscusCore;
+		};
 		393BFC6D1F3ADE9E00CF4CB5 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 39F1F6A11D3B90E200FF1C8C /* Project object */;
@@ -160,6 +170,7 @@
 			dstSubfolderSpec = 10;
 			files = (
 				393BFC6C1F3ADE9E00CF4CB5 /* Qiscus.framework in Embed Frameworks */,
+				393BE6F81F7262470099AD80 /* QiscusCore.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -177,6 +188,9 @@
 		393BE6E41F7119F80099AD80 /* QSearchListCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = QSearchListCell.swift; path = "Qiscus/View Collection/QRoomList/QSearchListCell.swift"; sourceTree = "<group>"; };
 		393BE6E71F7206280099AD80 /* QSearchListDefaultCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = QSearchListDefaultCell.swift; path = "Qiscus/View Collection/Default View/QSearchListDefaultCell.swift"; sourceTree = "<group>"; };
 		393BE6E81F7206280099AD80 /* QSearchListDefaultCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = QSearchListDefaultCell.xib; path = "Qiscus/View Collection/Default View/QSearchListDefaultCell.xib"; sourceTree = "<group>"; };
+		393BE6F01F7262470099AD80 /* QiscusCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = QiscusCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		393BE6F21F7262470099AD80 /* QiscusCore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = QiscusCore.h; sourceTree = "<group>"; };
+		393BE6F31F7262470099AD80 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		394D7A9D1F4E735300E69E1C /* QCellLocationRight.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = QCellLocationRight.swift; path = Qiscus/View/QChatCell/QCellLocationRight.swift; sourceTree = "<group>"; };
 		394D7A9E1F4E735300E69E1C /* QCellLocationRight.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = QCellLocationRight.xib; path = Qiscus/View/QChatCell/QCellLocationRight.xib; sourceTree = "<group>"; };
 		394D7AA11F4E979E00E69E1C /* QCellLocationLeft.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = QCellLocationLeft.swift; path = Qiscus/View/QChatCell/QCellLocationLeft.swift; sourceTree = "<group>"; };
@@ -312,11 +326,19 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		393BE6EC1F7262470099AD80 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		39F1F6A61D3B90E200FF1C8C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				393BFC6B1F3ADE9E00CF4CB5 /* Qiscus.framework in Frameworks */,
+				393BE6F71F7262470099AD80 /* QiscusCore.framework in Frameworks */,
 				B0846505F0ABD97C0375C737 /* Pods_Example.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -373,6 +395,15 @@
 				393BE6E81F7206280099AD80 /* QSearchListDefaultCell.xib */,
 			);
 			name = "Default View";
+			sourceTree = "<group>";
+		};
+		393BE6F11F7262470099AD80 /* QiscusCore */ = {
+			isa = PBXGroup;
+			children = (
+				393BE6F21F7262470099AD80 /* QiscusCore.h */,
+				393BE6F31F7262470099AD80 /* Info.plist */,
+			);
+			path = QiscusCore;
 			sourceTree = "<group>";
 		};
 		396CBDB31F6B6E910028C3FE /* QRoomList */ = {
@@ -461,6 +492,7 @@
 				39BD59161EB2F1A3001AFB7C /* Qiscus.podspec */,
 				39F1F6AB1D3B90E200FF1C8C /* Example */,
 				39F1F7101D3B91E200FF1C8C /* Qiscus */,
+				393BE6F11F7262470099AD80 /* QiscusCore */,
 				39F1F6AA1D3B90E200FF1C8C /* Products */,
 				D152613B40A4B1744C77978E /* Pods */,
 				BE138CAFFD79F3212D8F75CE /* Frameworks */,
@@ -472,6 +504,7 @@
 			children = (
 				39F1F6A91D3B90E200FF1C8C /* Example.app */,
 				39F1F70F1D3B91E200FF1C8C /* Qiscus.framework */,
+				393BE6F01F7262470099AD80 /* QiscusCore.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -643,6 +676,14 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
+		393BE6ED1F7262470099AD80 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				393BE6F41F7262470099AD80 /* QiscusCore.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		39F1F70C1D3B91E200FF1C8C /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -654,6 +695,25 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		393BE6EF1F7262470099AD80 /* QiscusCore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 393BE6F91F7262470099AD80 /* Build configuration list for PBXNativeTarget "QiscusCore" */;
+			buildPhases = (
+				393BE6EB1F7262470099AD80 /* Sources */,
+				393BE6EC1F7262470099AD80 /* Frameworks */,
+				393BE6ED1F7262470099AD80 /* Headers */,
+				393BE6EE1F7262470099AD80 /* Resources */,
+				393BE6FC1F7265A60099AD80 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = QiscusCore;
+			productName = QiscusCore;
+			productReference = 393BE6F01F7262470099AD80 /* QiscusCore.framework */;
+			productType = "com.apple.product-type.framework";
+		};
 		39F1F6A81D3B90E200FF1C8C /* Example */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 39F1F6D41D3B90E200FF1C8C /* Build configuration list for PBXNativeTarget "Example" */;
@@ -670,6 +730,7 @@
 			);
 			dependencies = (
 				393BFC6E1F3ADE9E00CF4CB5 /* PBXTargetDependency */,
+				393BE6F61F7262470099AD80 /* PBXTargetDependency */,
 			);
 			name = Example;
 			productName = Example;
@@ -706,6 +767,11 @@
 				LastUpgradeCheck = 0800;
 				ORGANIZATIONNAME = "Ahmad Athaullah";
 				TargetAttributes = {
+					393BE6EF1F7262470099AD80 = {
+						CreatedOnToolsVersion = 8.3.3;
+						DevelopmentTeam = QG8KA4P8TE;
+						ProvisioningStyle = Automatic;
+					};
 					39F1F6A81D3B90E200FF1C8C = {
 						CreatedOnToolsVersion = 7.3.1;
 						DevelopmentTeam = QG8KA4P8TE;
@@ -743,11 +809,19 @@
 			targets = (
 				39F1F6A81D3B90E200FF1C8C /* Example */,
 				39F1F70E1D3B91E200FF1C8C /* Qiscus */,
+				393BE6EF1F7262470099AD80 /* QiscusCore */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		393BE6EE1F7262470099AD80 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		39F1F6A71D3B90E200FF1C8C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -819,6 +893,19 @@
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
+		};
+		393BE6FC1F7265A60099AD80 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp -r ${BUILT_PRODUCTS_DIR}/${EXECUTABLE_NAME}.framework ../QiscusCore/";
 		};
 		469A93B61943512933236015 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -905,6 +992,13 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		393BE6EB1F7262470099AD80 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		39F1F6A51D3B90E200FF1C8C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1013,6 +1107,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		393BE6F61F7262470099AD80 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 393BE6EF1F7262470099AD80 /* QiscusCore */;
+			targetProxy = 393BE6F51F7262470099AD80 /* PBXContainerItemProxy */;
+		};
 		393BFC6E1F3ADE9E00CF4CB5 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 39F1F70E1D3B91E200FF1C8C /* Qiscus */;
@@ -1040,6 +1139,57 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		393BE6FA1F7262470099AD80 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = QG8KA4P8TE;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = QiscusCore/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.qiscus.QiscusCore;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_VERSION = 3.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		393BE6FB1F7262470099AD80 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = QG8KA4P8TE;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = QiscusCore/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.qiscus.QiscusCore;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 3.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
 		39F1F6D21D3B90E200FF1C8C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1288,6 +1438,14 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		393BE6F91F7262470099AD80 /* Build configuration list for PBXNativeTarget "QiscusCore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				393BE6FA1F7262470099AD80 /* Debug */,
+				393BE6FB1F7262470099AD80 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		39F1F6A41D3B90E200FF1C8C /* Build configuration list for PBXProject "Example" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
