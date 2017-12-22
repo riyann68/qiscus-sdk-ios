@@ -25,7 +25,7 @@ public class QConversationCollectionView: UICollectionView {
                 self.subscribeEvent()
                 self.delegate = self
                 self.dataSource = self
-                QiscusBackgroundThread.async {
+                QiscusBackgroundThread.sync {
                     if let rts = QRoom.threadSaveRoom(withId: rid){
                         var messages = rts.grouppedCommentsUID
                         messages = self.checkHiddenMessage(messages: messages)

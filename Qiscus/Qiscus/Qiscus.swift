@@ -622,7 +622,7 @@ var QiscusDBThread = DispatchQueue(label: "com.qiscus.db", attributes: .concurre
             
             var realmURL = conf.fileURL!
             realmURL.deleteLastPathComponent()
-            realmURL.appendPathComponent("\(QiscusMe.shared.dbFile)")
+            realmURL.appendPathComponent("\(QiscusMe.shared.dbFile).realm")
             
             conf.fileURL = realmURL
             conf.deleteRealmIfMigrationNeeded = true
@@ -1464,9 +1464,6 @@ extension Qiscus { // Public class API to get room
         let destinationPaths = [documentsPath.appendingPathComponent("\(path).realm"),
                                 documentsPath.appendingPathComponent("\(path).realm.lock"),
                                 documentsPath.appendingPathComponent("\(path).realm.management"),
-                                documentsPath.appendingPathComponent("\(path)"),
-                                documentsPath.appendingPathComponent("\(path).lock"),
-                                documentsPath.appendingPathComponent("\(path).management"),
                                 documentsPath.appendingPathComponent("Qiscus.realm"),
                                 documentsPath.appendingPathComponent("Qiscus.realm.lock"),
                                 documentsPath.appendingPathComponent("Qiscus.realm.management")]

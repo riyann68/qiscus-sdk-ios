@@ -152,7 +152,7 @@ internal extension QRoom {
     }
     internal func subscribeRoomChannel(){
         let id = self.id
-        QiscusBackgroundThread.async {
+        QiscusBackgroundThread.sync {
             if let room = QRoom.threadSaveRoom(withId: id) {
                 var channels = [String]()
                 
