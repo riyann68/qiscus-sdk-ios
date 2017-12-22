@@ -210,7 +210,7 @@ public class QRoom:Object {
         return comment
     }
     public func newFileComment(type:QiscusFileType, filename:String = "", caption:String = "", data:Data? = nil, thumbImage:UIImage? = nil)->QComment{
-        let realm = Qiscus.realm()
+        guard let realm = Qiscus.realm() else{ return QComment() }
         let comment = QComment()
         let time = Double(Date().timeIntervalSince1970)
         let timeToken = UInt64(time * 10000)
@@ -442,7 +442,7 @@ public class QRoom:Object {
 //    }
     public func updateUserTyping(userEmail: String){
         if !self.isInvalidated {
-            let realm = Qiscus.realm()
+            guard let realm = Qiscus.realm() else{ return }
             if userEmail != self.typingUser {
                 try! realm.write {
                     self.typingUser = userEmail
@@ -462,7 +462,7 @@ public class QRoom:Object {
         }
     }
     public func deleteComment(comment:QComment){
-        let realm = Qiscus.realm()
+        guard let realm = Qiscus.realm() else{ return }
         let id = self.id
         let cUid = comment.uniqueId
         func publishNotification(roomId:String){
@@ -472,7 +472,7 @@ public class QRoom:Object {
             }
         }
         QiscusDBThread.async {
-            let realm = Qiscus.realm()
+            guard let realm = Qiscus.realm() else{ return }
             if let r = QRoom.threadSaveRoom(withId: id){
                 var i = r.comments.count - 1
                 for c in r.comments.reversed() {
@@ -504,7 +504,7 @@ public class QRoom:Object {
         }
     }
     public func updateLastReadId(commentId:Int){
-        let realm = Qiscus.realm()
+        guard let realm = Qiscus.realm() else{ return }
         if self.lastReadCommentId < commentId {
             try! realm.write {
                 self.lastReadCommentId = commentId
@@ -522,7 +522,7 @@ public class QRoom:Object {
         QiscusDBThread.async {
             if let room = QRoom.threadSaveRoom(withId: id){
                 if room.unreadCount != count {
-                    let realm = Qiscus.realm()
+                    guard let realm = Qiscus.realm() else{ return }
                     try! realm.write {
                         room.unreadCount = count
                     }
@@ -540,7 +540,7 @@ public class QRoom:Object {
     public func readAll(){
         let id = self.id
         QiscusDBThread.async {
-            let realm = Qiscus.realm()
+            guard let realm = Qiscus.realm() else{ return }
             let unreadData =  realm.objects(QComment.self).filter("roomId == '\(id)' AND isRead ==  false").sorted(byKeyPath: "createdAt", ascending: true)
             
             if let last = unreadData.last {
@@ -600,7 +600,7 @@ public class QRoom:Object {
                             comment.updateStatus(status: .read)
                         }
                     }
-                    let realm = Qiscus.realm()
+                    guard let realm = Qiscus.realm() else{ return }
                     try! realm.write {
                         room.lastParticipantsReadId = readId
                         room.lastParticipantsDeliveredId = readId
@@ -622,7 +622,7 @@ public class QRoom:Object {
                         }
                     }
                     
-                    let realm = Qiscus.realm()
+                    guard let realm = Qiscus.realm() else{ return }
                     try! realm.write {
                         room.lastParticipantsDeliveredId = deliveredId
                     }
@@ -640,7 +640,7 @@ public class QRoom:Object {
     internal func update(name:String){
         let id = self.id
         if self.storedName != name {
-            let realm = Qiscus.realm()
+            guard let realm = Qiscus.realm() else{ return }
             try! realm.write {
                 self.storedName = name
             }
@@ -659,7 +659,7 @@ public class QRoom:Object {
             let id = self.id
             QiscusDBThread.async {
                 if let room = QRoom.threadSaveRoom(withId: id){
-                    let realm = Qiscus.realm()
+                    guard let realm = Qiscus.realm() else{ return }
                     try! realm.write {
                         room.storedAvatarURL = avatarURL
                     }
@@ -681,7 +681,7 @@ public class QRoom:Object {
     internal func update(data:String){
         let roomTS = ThreadSafeReference(to: self)
         QiscusDBThread.sync { autoreleasepool {
-            let realm = Qiscus.realm()
+            guard let realm = Qiscus.realm() else{ return }
             guard let r = realm.resolve(roomTS) else { return }
             if r.data != data {
                 try! realm.write {
@@ -695,7 +695,7 @@ public class QRoom:Object {
             let id = self.id
             QiscusDBThread.async {
                 if let room = QRoom.threadSaveRoom(withId: id){
-                    let realm = Qiscus.realm()
+                    guard let realm = Qiscus.realm() else{ return }
                     try! realm.write {
                         room.definedAvatarURL = url
                         room.avatarData = nil
@@ -715,7 +715,7 @@ public class QRoom:Object {
             let id = self.id
             QiscusDBThread.async {
                 if let room = QRoom.threadSaveRoom(withId: id) {
-                    let realm = Qiscus.realm()
+                    guard let realm = Qiscus.realm() else{ return }
                     try! realm.write {
                         room.definedname = name
                     }
@@ -752,7 +752,7 @@ public class QRoom:Object {
             }
         }else{
             DispatchQueue.main.sync {
-                let realm = Qiscus.realm()
+                guard let realm = Qiscus.realm() else{ return }
                 guard let room = realm.resolve(roomTS) else { return }
                 if Qiscus.chatRooms[room.id] == nil {
                     Qiscus.chatRooms[room.id] = room
@@ -775,7 +775,7 @@ public class QRoom:Object {
                 onError("invalid offset")
                 return
             }
-            let realm = Qiscus.realm()
+            guard let realm = Qiscus.realm() else{ onError("no database found"); return }
             let data =  realm.objects(QComment.self).filter("roomId == '\(self.id)' AND id > \(commentId)").sorted(byKeyPath: "createdAt", ascending: true)
             if data.count >= limit {
                 var comments = [QComment]()
@@ -805,7 +805,7 @@ public class QRoom:Object {
                 onError("invalid offset")
                 return
             }
-            let realm = Qiscus.realm()
+            guard let realm = Qiscus.realm() else{ onError("no database found"); return }
             let data =  realm.objects(QComment.self).filter("roomId == '\(self.id)' AND id < \(commentId)").sorted(byKeyPath: "createdAt", ascending: true)
             if data.count >= limit {
                 var comments = [QComment]()
@@ -836,7 +836,7 @@ public class QRoom:Object {
             QChatService.downloadImage(url: url, onSuccess: { (data) in
                 QiscusDBThread.async {
                     if let room = QRoom.threadSaveRoom(withId: id){
-                        let realm = Qiscus.realm()
+                        guard let realm = Qiscus.realm() else{ return }
                         try! realm.write {
                             room.avatarData = data
                         }
@@ -880,14 +880,14 @@ public class QRoom:Object {
         }
     }
     internal func clearMessage(){
-        let realm = Qiscus.realm()
+        guard let realm = Qiscus.realm() else{ return }
         
         try! realm.write {
             self.comments.removeAll()
         }
     }
     internal class func removeAllMessage(){
-        let realm = Qiscus.realm()
+        guard let realm = Qiscus.realm() else{ return }
         for room in QRoom.all() {
             room.clearMessage()
         }

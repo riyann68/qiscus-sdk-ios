@@ -73,6 +73,7 @@ open class QiscusMe: NSObject {
     public var paramPass = ""
     public var paramUsername = ""
     public var paramAvatar = ""
+    public var dbFile = ""
     
     open var deviceToken:String = ""{
         didSet{
@@ -140,6 +141,9 @@ open class QiscusMe: NSObject {
         if let paramAvatar = userData.value(forKey: "qiscus_param_avatar") as? String{
             self.paramAvatar = paramAvatar
         }
+        if let paramAvatar = userData.value(forKey: "qiscus_db_name") as? String{
+            self.paramAvatar = paramAvatar
+        }
     }
     
     open class func saveData(fromJson json:JSON, reconnect:Bool = false)->QiscusMe{
@@ -150,6 +154,8 @@ open class QiscusMe: NSObject {
         QiscusMe.shared.avatarUrl = json["avatar"].stringValue
         QiscusMe.shared.rtKey = json["rtKey"].stringValue
         QiscusMe.shared.token = json["token"].stringValue
+        let dbfile = "Qiscus-\(json["token"].stringValue)"
+        QiscusMe.shared.dbFile = dbfile
         
         QiscusMe.shared.userData.set(json["id"].intValue, forKey: "qiscus_id")
         QiscusMe.shared.userData.set(json["email"].stringValue, forKey: "qiscus_email")
@@ -157,6 +163,7 @@ open class QiscusMe: NSObject {
         QiscusMe.shared.userData.set(json["avatar"].stringValue, forKey: "qiscus_avatar_url")
         QiscusMe.shared.userData.set(json["rtKey"].stringValue, forKey: "qiscus_rt_key")
         QiscusMe.shared.userData.set(json["token"].stringValue, forKey: "qiscus_token")
+        QiscusMe.shared.userData.set(dbfile, forKey: "qiscus_db_name")
         
         if !reconnect {
             QiscusMe.shared.userData.set(json["last_comment_id"].intValue, forKey: "qiscus_lastComment_id")
@@ -208,6 +215,7 @@ open class QiscusMe: NSObject {
         QiscusMe.shared.rtKey = ""
         QiscusMe.shared.token = ""
         QiscusMe.shared.lastCommentId = 0
+        QiscusMe.shared.dbFile = ""
         
         QiscusMe.shared.userData.removeObject(forKey: "qiscus_id")
         QiscusMe.shared.userData.removeObject(forKey: "qiscus_email")
@@ -217,6 +225,7 @@ open class QiscusMe: NSObject {
         QiscusMe.shared.userData.removeObject(forKey: "qiscus_token")
         QiscusMe.shared.userData.removeObject(forKey: "qiscus_lastComment_id")
         QiscusMe.shared.userData.removeObject(forKey: "qiscus_lastKnownComment_id")
+        QiscusMe.shared.userData.removeObject(forKey: "qiscus_db_name")
     }
 }
 

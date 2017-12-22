@@ -17,7 +17,7 @@ public extension QRoom {
     }
     public var canLoadMore:Bool{
         get{
-            let realm = Qiscus.realm()
+            guard let realm = Qiscus.realm() else{ return true }
             let predicate = NSPredicate(format: "id > 0 AND beforeId == 0 AND roomId = %@",self.id)
             if realm.objects(QComment.self).filter(predicate).count > 0 {
                 return false
@@ -102,7 +102,7 @@ public extension QRoom {
     public var listComment:[QComment]{
         get{
             if self.isInvalidated { return [QComment]()}
-            let realm = Qiscus.realm()
+            guard let realm = Qiscus.realm() else{ return [QComment]() }
             var comments = [QComment]()
             if Thread.isMainThread {
                 let data =  realm.objects(QComment.self).filter("roomId == '\(self.id)'").sorted(byKeyPath: "createdAt", ascending: true)

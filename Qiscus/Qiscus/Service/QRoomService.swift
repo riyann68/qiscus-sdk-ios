@@ -306,7 +306,7 @@ public class QRoomService:NSObject{
                 let time = DispatchTime.now() + delay / Double(NSEC_PER_SEC)
                 let commentTS = ThreadSafeReference(to: comment)
                 DispatchQueue.main.asyncAfter(deadline: time, execute: {
-                    let realm = Qiscus.realm()
+                    guard let realm = Qiscus.realm() else{ return }
                     guard let c = realm.resolve(commentTS) else { return }
                     if let room = QRoom.room(withId: roomId){
                         room.post(comment: c)

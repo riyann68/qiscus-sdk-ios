@@ -98,7 +98,7 @@ public class QFile:Object{
     }
     
     public class func file(withURL url:String) -> QFile?{
-        let realm = Qiscus.realm()
+        guard let realm = Qiscus.realm() else{ return nil }
         var file:QFile? = nil
         let data =  realm.objects(QFile.self).filter("url == '\(url)'")
         
@@ -142,13 +142,13 @@ public class QFile:Object{
         return mediaUrlString!.replacingOccurrences(of: " ", with: "%20")
     }
     internal func updateLocalPath(path:String){
-        let realm = Qiscus.realm()
+        guard let realm = Qiscus.realm() else{ return }
         try! realm.write {
             self.localPath = localPath
         }
     }
     public func saveFile(withData data:Data)->String{
-        let realm = Qiscus.realm()
+        guard let realm = Qiscus.realm() else{ return "" }
         let localPath = QFileManager.saveFile(withData: data, fileName: self.filename, type: .comment)
         try! realm.write {
             self.localPath = localPath
@@ -156,7 +156,7 @@ public class QFile:Object{
         return localPath
     }
     public func updatePages(withTotalPage pages:Int){
-        let realm = Qiscus.realm()
+        guard let realm = Qiscus.realm() else{ return }
         
         if self.pages != pages {
             try! realm.write {
@@ -165,7 +165,7 @@ public class QFile:Object{
         }
     }
     public func updateSize(withSize size:Double){
-        let realm = Qiscus.realm()
+        guard let realm = Qiscus.realm() else{ return }
         if self.size != size {
             try! realm.write {
                 self.size = size
@@ -173,7 +173,7 @@ public class QFile:Object{
         }
     }
     public func saveThumbImage(withImage image:UIImage){
-        let realm = Qiscus.realm()
+        guard let realm = Qiscus.realm() else{ return }
         var data = Data()
         var ext = "jpg"
         let imageSize = image.size
@@ -202,7 +202,7 @@ public class QFile:Object{
         }
     }
     public func saveMiniThumbImage(withImage image:UIImage){
-        let realm = Qiscus.realm()
+        guard let realm = Qiscus.realm() else{ return }
         var data = Data()
         if let imageData = UIImagePNGRepresentation(image){
             data = imageData
@@ -216,7 +216,7 @@ public class QFile:Object{
     }
     internal func update(fileURL:String){
         if self.url != fileURL {
-            let realm = Qiscus.realm()
+            guard let realm = Qiscus.realm() else{ return }
             try! realm.write {
                 self.url = fileURL
             }

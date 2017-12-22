@@ -157,11 +157,8 @@ var QiscusDBThread = DispatchQueue(label: "com.qiscus.db", attributes: .concurre
     @objc public class func clearData(){
         Qiscus.cancellAllRequest()
         Qiscus.removeAllFile()
-        var path = "Qiscus"
-        if Qiscus.isLoggedIn {
-            path = "\(path)-\(QiscusMe.shared.token)"
-        }
-        Qiscus.removeDB(withPath: path)
+        print(QiscusMe.shared.dbFile)
+        Qiscus.removeDB(withPath: QiscusMe.shared.dbFile)
         
         Qiscus.chatRooms = [String : QRoom]()
         QParticipant.cache = [String : QParticipant]()
@@ -619,22 +616,21 @@ var QiscusDBThread = DispatchQueue(label: "com.qiscus.db", attributes: .concurre
     }
     
     // MARK: - local DB
-    internal class func getConfiguration()->Realm.Configuration{
-        var conf = Realm.Configuration.defaultConfiguration
-        
-        var path = "Qiscus"
-        if Qiscus.isLoggedIn {
-            path = "\(path)-\(QiscusMe.shared.token)"
+    internal class func getConfiguration()->Realm.Configuration?{
+        if QiscusMe.shared.dbFile != ""{
+            var conf = Realm.Configuration.defaultConfiguration
+            
+            var realmURL = conf.fileURL!
+            realmURL.deleteLastPathComponent()
+            realmURL.appendPathComponent("\(QiscusMe.shared.dbFile)")
+            
+            conf.fileURL = realmURL
+            conf.deleteRealmIfMigrationNeeded = true
+            conf.schemaVersion = Qiscus.shared.config.dbSchemaVersion
+            
+            return conf
         }
-        var realmURL = conf.fileURL!
-        realmURL.deleteLastPathComponent()
-        realmURL.appendPathComponent("path")
-        
-        conf.fileURL = realmURL
-        conf.deleteRealmIfMigrationNeeded = true
-        conf.schemaVersion = Qiscus.shared.config.dbSchemaVersion
-        
-        return conf
+        return nil
     }
     
     // MARK: - Create NEW Chat
@@ -1467,7 +1463,10 @@ extension Qiscus { // Public class API to get room
         let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory,.userDomainMask,true)[0] as NSString
         let destinationPaths = [documentsPath.appendingPathComponent("\(path).realm"),
                                 documentsPath.appendingPathComponent("\(path).realm.lock"),
-                                documentsPath.appendingPathComponent("\(path).realm.management")]
+                                documentsPath.appendingPathComponent("\(path).realm.management"),
+                                documentsPath.appendingPathComponent("\(path)"),
+                                documentsPath.appendingPathComponent("\(path).lock"),
+                                documentsPath.appendingPathComponent("\(path).management")]
         
         for destination in destinationPaths {
             do {
@@ -1498,14 +1497,17 @@ extension Qiscus { // Public class API to get room
     public class func backgroundSync(onSuccess:@escaping (()->Void),onError:@escaping ((String)->Void)){
         QChatService.backgroundSync(onSuccess: onSuccess, onError: onError)
     }
-    public class func realm()->Realm{
+    public class func realm()->Realm?{
         var configuration = Realm.Configuration()
         if let conf = Qiscus.dbConfigurationRaw {
             configuration = conf
         }else{
-            let conf = Qiscus.getConfiguration()
-            Qiscus.dbConfigurationRaw = conf
-            configuration = conf
+            if let conf = Qiscus.getConfiguration(){
+                Qiscus.dbConfigurationRaw = conf
+                configuration = conf
+            }else{
+                return nil
+            }
         }
         let realm = try! Realm(configuration: configuration)
         realm.refresh()
