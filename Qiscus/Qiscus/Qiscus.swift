@@ -1466,7 +1466,10 @@ extension Qiscus { // Public class API to get room
                                 documentsPath.appendingPathComponent("\(path).realm.management"),
                                 documentsPath.appendingPathComponent("\(path)"),
                                 documentsPath.appendingPathComponent("\(path).lock"),
-                                documentsPath.appendingPathComponent("\(path).management")]
+                                documentsPath.appendingPathComponent("\(path).management"),
+                                documentsPath.appendingPathComponent("Qiscus.realm"),
+                                documentsPath.appendingPathComponent("Qiscus.realm.lock"),
+                                documentsPath.appendingPathComponent("Qiscus.realm.management")]
         
         for destination in destinationPaths {
             do {
