@@ -128,8 +128,7 @@ open class ChatPreviewDocVC: UIViewController, UIWebViewDelegate, WKNavigationDe
                             let directoryPath = QFileManager.directoryPath(forDirectory: .comment)
                             let path = "\(directoryPath)/\(file.filename.replacingOccurrences(of: " ", with: "_"))"
                             try? data.write(to: URL(fileURLWithPath: path), options: [.atomic])
-                            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                            realm.refresh()
+                            let realm = Qiscus.realm()
                             
                             try! realm.write {
                                 file.localPath = path

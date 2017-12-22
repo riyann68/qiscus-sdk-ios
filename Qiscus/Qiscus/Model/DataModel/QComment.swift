@@ -214,8 +214,7 @@ public class QComment:Object {
     }
     public var file:QFile? {
         get{
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            realm.refresh()
+            let realm = Qiscus.realm()
             let files = realm.objects(QFile.self).filter("id == '\(self.uniqueId)'")
             if files.count > 0 {
                 return files.first!
@@ -362,8 +361,7 @@ public class QComment:Object {
             }
             return size
         }
-        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-        realm.refresh()
+        let realm = Qiscus.realm()
         if Float(Qiscus.style.chatFont.pointSize) != self.textFontSize || Qiscus.style.chatFont.familyName != self.textFontName{
             recalculate = true
             try! realm.write {
@@ -482,8 +480,7 @@ public class QComment:Object {
         }
     }
     public class func threadSaveComment(withUniqueId uniqueId:String)->QComment?{
-        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-        realm.refresh()
+        let realm = Qiscus.realm()
         let comments = realm.objects(QComment.self).filter("uniqueId == '\(uniqueId)'")
         if comments.count > 0 {
             let comment = comments.first!
@@ -493,8 +490,7 @@ public class QComment:Object {
     }
     public class func comment(withUniqueId uniqueId:String)->QComment?{
         if Thread.isMainThread {
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            realm.refresh()
+            let realm = Qiscus.realm()
             if let comment = QComment.cache[uniqueId] {
                 if !comment.isInvalidated{
                     return comment
@@ -512,8 +508,7 @@ public class QComment:Object {
     }
     public class func comment(withId id:Int)->QComment?{
         if Thread.isMainThread {
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            realm.refresh()
+            let realm = Qiscus.realm()
             let data =  realm.objects(QComment.self).filter("id == \(id) && id != 0")
             
             if data.count > 0 {
@@ -525,8 +520,7 @@ public class QComment:Object {
     }
     public class func comment(withBeforeId id:Int)->QComment?{
         if Thread.isMainThread {
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            realm.refresh()
+            let realm = Qiscus.realm()
             let data =  realm.objects(QComment.self).filter("beforeId == \(id) && id != 0")
             
             if data.count > 0 {
@@ -537,8 +531,7 @@ public class QComment:Object {
         return nil
     }
     internal class func countComments(afterId id:Int, roomId:String)->Int{
-        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-        realm.refresh()
+        let realm = Qiscus.realm()
         let data =  realm.objects(QComment.self).filter("id > \(id) AND roomId = \'(roomId)'").sorted(byKeyPath: "createdAt", ascending: true)
         
         return data.count
@@ -637,8 +630,7 @@ public class QComment:Object {
         }
         
         if let room = QRoom.room(withId: roomId){
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            realm.refresh()
+            let realm = Qiscus.realm()
             if file != nil {
                 try! realm.write {
                     realm.add(file!, update:true)
@@ -657,8 +649,7 @@ public class QComment:Object {
         QiscusDBThread.async {
             if let c = QComment.threadSaveComment(withUniqueId: uId){
                 if c.status != status {
-                    let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                    realm.refresh()
+                    let realm = Qiscus.realm()
                     try! realm.write {
                         c.statusRaw = status.rawValue
                     }
@@ -675,8 +666,7 @@ public class QComment:Object {
     public func updateCellPos(cellPos: QCellPosition){
         let uId = self.uniqueId
         if self.cellPos != cellPos {
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            realm.refresh()
+            let realm = Qiscus.realm()
             try! realm.write {
                 self.cellPosRaw = cellPos.rawValue
             }
@@ -697,8 +687,7 @@ public class QComment:Object {
     public func updateDurationLabel(label:String){
         let uId = self.uniqueId
         if self.durationLabel != label {
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            realm.refresh()
+            let realm = Qiscus.realm()
             try! realm.write {
                 self.durationLabel = label
             }
@@ -719,8 +708,7 @@ public class QComment:Object {
     public func updateTimeSlider(value:Float){
         let uId = self.uniqueId
         if self.currentTimeSlider != value {
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            realm.refresh()
+            let realm = Qiscus.realm()
             try! realm.write {
                 self.currentTimeSlider = value
             }
@@ -741,8 +729,7 @@ public class QComment:Object {
     public func updateSeekLabel(label:String){
         let uId = self.uniqueId
         if self.seekTimeLabel != label {
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            realm.refresh()
+            let realm = Qiscus.realm()
             try! realm.write {
                 self.seekTimeLabel = label
             }
@@ -763,8 +750,7 @@ public class QComment:Object {
     public func updatePlaying(playing:Bool){
         let uId = self.uniqueId
         if self.audioIsPlaying != playing {
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            realm.refresh()
+            let realm = Qiscus.realm()
             try! realm.write {
                 self.audioIsPlaying = playing
             }
@@ -865,8 +851,7 @@ public class QComment:Object {
         if self.isRead {return}
         QiscusDBThread.async {
             if let comment = QComment.threadSaveComment(withUniqueId: uniqueId){
-                let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                realm.refresh()
+                let realm = Qiscus.realm()
                 try! realm.write {
                     comment.isRead = true
                 }
@@ -896,8 +881,7 @@ public class QComment:Object {
                 if let room = QRoom.threadSaveRoom(withId: comment.roomId) {
                     if room.lastDeliveredCommentId < comment.id {
                         QRoom.publishStatus(roomId: room.id, commentId: comment.id, status: .delivered)
-                        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                        realm.refresh()
+                        let realm = Qiscus.realm()
                         try! realm.write {
                             room.lastDeliveredCommentId = comment.id
                         }
@@ -1109,8 +1093,7 @@ public class QComment:Object {
         return temp
     }
     internal func update(commentId:Int, beforeId:Int){
-        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-        realm.refresh()
+        let realm = Qiscus.realm()
         try! realm.write {
             self.id = commentId
             self.beforeId = beforeId
@@ -1118,8 +1101,7 @@ public class QComment:Object {
     }
     internal func update(text:String){
         if self.text != text {
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            realm.refresh()
+            let realm = Qiscus.realm()
             try! realm.write {
                 self.text = text
             }
@@ -1127,16 +1109,14 @@ public class QComment:Object {
     }
     internal func update(data:String){
         if self.data != data {
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            realm.refresh()
+            let realm = Qiscus.realm()
             try! realm.write {
                 self.data = data
             }
         }
     }
     public class func all() -> [QComment]{
-        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-        realm.refresh()
+        let realm = Qiscus.realm()
         let data = realm.objects(QComment.self)
         
         if data.count > 0 {
@@ -1153,8 +1133,7 @@ public class QComment:Object {
     }
     internal class func resendPendingMessage(){
         QiscusDBThread.async {
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            realm.refresh()
+            let realm = Qiscus.realm()
             let data = realm.objects(QComment.self).filter("statusRaw == 1")
             
             if data.count > 0 {
@@ -1167,8 +1146,7 @@ public class QComment:Object {
                     }else{
                         let commentTS = ThreadSafeReference(to: comment)
                         DispatchQueue.main.sync {
-                            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                            realm.refresh()
+                            let realm = Qiscus.realm()
                             guard let c = realm.resolve(commentTS) else { return }
                             if let room = QRoom.room(withId: c.roomId){
                                 room.updateCommentStatus(inComment: c, status: .sending)
@@ -1188,8 +1166,7 @@ public class QComment:Object {
         }
     }
     public func set(extras data:[String:Any], onSuccess: @escaping (QComment)->Void, onError: @escaping (QComment, String)->Void){
-        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-        realm.refresh()
+        let realm = Qiscus.realm()
         if let jsonData = try? JSONSerialization.data(withJSONObject: data as Any, options: []){
             if let jsonString = String(data: jsonData,
                                        encoding: .ascii){
@@ -1207,8 +1184,7 @@ public class QComment:Object {
         }
     }
     public func set(extras data:[String:Any])->QComment?{
-        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-        realm.refresh()
+        let realm = Qiscus.realm()
         if let jsonData = try? JSONSerialization.data(withJSONObject: data as Any, options: []){
             if let jsonString = String(data: jsonData,
                                        encoding: .ascii){

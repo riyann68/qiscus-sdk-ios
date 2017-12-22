@@ -41,8 +41,7 @@ public class QParticipant:Object {
                     if room.lastDeliveredCommentId >= commentId {return}
                     
                     if let participant = room.participant(withEmail: email){
-                        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                        realm.refresh()
+                        let realm = Qiscus.realm()
                         if room.isInvalidated {return}
                         if participant.lastDeliveredCommentId < commentId {
                             try! realm.write {
@@ -88,8 +87,7 @@ public class QParticipant:Object {
                     if room.lastReadCommentId >= commentId {return}
                     
                     if let participant = room.participant(withEmail: email){
-                        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                        realm.refresh()
+                        let realm = Qiscus.realm()
                         if participant.lastReadCommentId < commentId {
                             try! realm.write {
                                 participant.lastReadCommentId = commentId
@@ -167,8 +165,7 @@ public class QParticipant:Object {
     }
     public class func all(withEmail email:String)->[QParticipant]{
         var participants = [QParticipant]()
-        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-        realm.refresh()
+        let realm = Qiscus.realm()
         let data =  realm.objects(QParticipant.self).filter("email == '\(email)'")
         for participant in data {
             participants.append(participant)
@@ -176,8 +173,7 @@ public class QParticipant:Object {
         return participants
     }
     public class func updateLastDeliveredId(forUser email:String, commentId:Int){
-        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-        realm.refresh()
+        let realm = Qiscus.realm()
         let data =  realm.objects(QParticipant.self).filter("email == '\(email)'")
         
         for participant in data {
@@ -185,8 +181,7 @@ public class QParticipant:Object {
         }
     }
     public class func all() -> [QParticipant]{
-        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-        realm.refresh()
+        let realm = Qiscus.realm()
         let data = realm.objects(QParticipant.self)
         
         if data.count > 0 {

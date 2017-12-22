@@ -33,18 +33,7 @@ var QiscusDBThread = DispatchQueue(label: "com.qiscus.db", attributes: .concurre
     static let uiThread = DispatchQueue.main
     
     static var qiscusDeviceToken: String = ""
-    private static var dbConfigurationRaw:Realm.Configuration? = nil
-    static var dbConfiguration:Realm.Configuration{
-        get{
-            if let conf = Qiscus.dbConfigurationRaw {
-                return conf
-            }else{
-                let conf = Qiscus.getConfiguration()
-                Qiscus.dbConfigurationRaw = conf
-                return conf
-            }
-        }
-    }
+    internal static var dbConfigurationRaw:Realm.Configuration? = nil
     
     static var chatRooms = [String : QRoom]()
     static var qiscusDownload:[String] = [String]()
@@ -155,8 +144,7 @@ var QiscusDBThread = DispatchQueue(label: "com.qiscus.db", attributes: .concurre
     }
     
     @objc public class func clear(){
-        let path = "Qiscus-\(QiscusMe.shared.token)"
-        Qiscus.clearData(onPath: path)
+        Qiscus.clearData()
         Qiscus.shared.stopPublishOnlineStatus()
         for channel in Qiscus.realtimeChannel {
             Qiscus.shared.mqtt?.unsubscribe(channel)
@@ -166,12 +154,15 @@ var QiscusDBThread = DispatchQueue(label: "com.qiscus.db", attributes: .concurre
         QiscusMe.clear()
         Qiscus.removeLogFile()
     }
-    @objc public class func clearData(onPath path:String){
+    @objc public class func clearData(){
         Qiscus.cancellAllRequest()
         Qiscus.removeAllFile()
-        
+        var path = "Qiscus"
+        if Qiscus.isLoggedIn {
+            path = "\(path)-\(QiscusMe.shared.token)"
+        }
         Qiscus.removeDB(withPath: path)
-        Qiscus.dbConfigurationRaw = nil
+        
         Qiscus.chatRooms = [String : QRoom]()
         QParticipant.cache = [String : QParticipant]()
         QComment.cache = [String : QComment]()
@@ -628,7 +619,7 @@ var QiscusDBThread = DispatchQueue(label: "com.qiscus.db", attributes: .concurre
     }
     
     // MARK: - local DB
-    private class func getConfiguration()->Realm.Configuration{
+    internal class func getConfiguration()->Realm.Configuration{
         var conf = Realm.Configuration.defaultConfiguration
         
         var path = "Qiscus"
@@ -1485,6 +1476,7 @@ extension Qiscus { // Public class API to get room
                 Qiscus.printLog(text: "Could not clear Qiscus folder: \(error.localizedDescription)")
             }
         }
+        Qiscus.dbConfigurationRaw = nil
     }
     
     internal class func logFile()->String{
@@ -1506,5 +1498,17 @@ extension Qiscus { // Public class API to get room
     public class func backgroundSync(onSuccess:@escaping (()->Void),onError:@escaping ((String)->Void)){
         QChatService.backgroundSync(onSuccess: onSuccess, onError: onError)
     }
-    
+    public class func realm()->Realm{
+        var configuration = Realm.Configuration()
+        if let conf = Qiscus.dbConfigurationRaw {
+            configuration = conf
+        }else{
+            let conf = Qiscus.getConfiguration()
+            Qiscus.dbConfigurationRaw = conf
+            configuration = conf
+        }
+        let realm = try! Realm(configuration: configuration)
+        realm.refresh()
+        return realm
+    }
 }

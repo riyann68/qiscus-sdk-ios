@@ -15,8 +15,7 @@ internal extension QRoom {
         let id = self.id
         QiscusDBThread.async {
             if let r = QRoom.threadSaveRoom(withId: id) {
-                let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                realm.refresh()
+                let realm = Qiscus.realm()
                 try! realm.write {
                     r.pinned = Double(Date().timeIntervalSince1970)
                 }
@@ -28,8 +27,7 @@ internal extension QRoom {
         QiscusDBThread.async {
             if let r = QRoom.threadSaveRoom(withId: id) {
                 if r.pinned != 0 {
-                    let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                    realm.refresh()
+                    let realm = Qiscus.realm()
                     try! realm.write {
                         r.pinned = 0
                     }
@@ -76,8 +74,7 @@ internal extension QRoom {
     internal func checkCommentStatus(){
         let id = self.id
         QiscusDBThread.async {
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            realm.refresh()
+            let realm = Qiscus.realm()
             if let room = QRoom.threadSaveRoom(withId: id){
                 var lastReadId = 0
                 var lastDeliveredId = 0
@@ -113,8 +110,7 @@ internal extension QRoom {
                                 let rId = room.id
                                 let rts = ThreadSafeReference(to: room)
                                 DispatchQueue.main.async {
-                                    let mainRealm = try! Realm(configuration: Qiscus.dbConfiguration)
-                                    mainRealm.refresh()
+                                    let mainRealm = Qiscus.realm()
                                     if Qiscus.chatRooms[rId] == nil {
                                         if let r = mainRealm.resolve(rts) {
                                             Qiscus.chatRooms[rId] = r
@@ -137,8 +133,7 @@ internal extension QRoom {
                                 let rId = room.id
                                 let rts = ThreadSafeReference(to:room)
                                 DispatchQueue.main.async {
-                                    let mainRealm = try! Realm(configuration: Qiscus.dbConfiguration)
-                                    mainRealm.refresh()
+                                    let mainRealm = Qiscus.realm()
                                     if Qiscus.chatRooms[rId] == nil {
                                         if let r = mainRealm.resolve(rts) {
                                             Qiscus.chatRooms[rId] = r
@@ -208,8 +203,7 @@ internal extension QRoom {
         let id = self.id
         QiscusDBThread.async {
             if let room = QRoom.threadSaveRoom(withId: id){
-                let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                realm.refresh()
+                let realm = Qiscus.realm()
                 let data =  realm.objects(QComment.self).filter("roomId == '\(id)'")
                 
                 try! realm.write {
@@ -247,8 +241,7 @@ internal extension QRoom {
                 let senderName = newComment.senderName
                 let avatarURL = newComment.senderAvatarURL
                 
-                let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                realm.refresh()
+                let realm = Qiscus.realm()
                 
                 if QUser.getUser(email: senderEmail) == nil {
                     let _ = QUser.saveUser(withEmail: senderEmail, fullname: senderName, avatarURL: avatarURL)
@@ -320,8 +313,7 @@ internal extension QRoom {
             if let room = QRoom.threadSaveRoom(withId: id){
                 if !room.isInvalidated {
                     if cCreatedAt > room.lastCommentCreatedAt || cId > room.lastCommentId || cId == 0 {
-                        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                        realm.refresh()
+                        let realm = Qiscus.realm()
                         try! realm.write {
                             room.lastCommentId = cId
                             room.lastCommentText = cText
@@ -337,8 +329,7 @@ internal extension QRoom {
                         }
                         let rts = ThreadSafeReference(to:room)
                         DispatchQueue.main.async {
-                            let mainRealm = try! Realm(configuration: Qiscus.dbConfiguration)
-                            mainRealm.refresh()
+                            let mainRealm = Qiscus.realm()
                             if Qiscus.chatRooms[id] == nil {
                                 if let r = mainRealm.resolve(rts) {
                                     Qiscus.chatRooms[id] = r
@@ -364,8 +355,7 @@ internal extension QRoom {
         let id = self.id
         QiscusDBThread.async {
             if let room = QRoom.threadSaveRoom(withId: id) {
-                let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                realm.refresh()
+                let realm = Qiscus.realm()
                 if let option = json["options"].string {
                     if option != "" && option != "<null>" && option != room.data{
                         try! realm.write {
@@ -373,8 +363,7 @@ internal extension QRoom {
                         }
                         let rts = ThreadSafeReference(to:room)
                         DispatchQueue.main.async {
-                            let mainRealm = try! Realm(configuration: Qiscus.dbConfiguration)
-                            mainRealm.refresh()
+                            let mainRealm = Qiscus.realm()
                             if Qiscus.chatRooms[id] == nil {
                                 if let r = mainRealm.resolve(rts) {
                                     Qiscus.chatRooms[id] = r
@@ -393,8 +382,7 @@ internal extension QRoom {
                         }
                         let rts = ThreadSafeReference(to: room)
                         DispatchQueue.main.async {
-                            let mainRealm = try! Realm(configuration: Qiscus.dbConfiguration)
-                            mainRealm.refresh()
+                            let mainRealm = Qiscus.realm()
                             if Qiscus.chatRooms[id] == nil {
                                 if let r = mainRealm.resolve(rts) {
                                     Qiscus.chatRooms[id] = r
@@ -415,8 +403,7 @@ internal extension QRoom {
                         if room.definedname == "" {
                             let rts = ThreadSafeReference(to: room)
                             DispatchQueue.main.async {
-                                let mainRealm = try! Realm(configuration: Qiscus.dbConfiguration)
-                                mainRealm.refresh()
+                                let mainRealm = Qiscus.realm()
                                 if Qiscus.chatRooms[id] == nil {
                                     if let r = mainRealm.resolve(rts) {
                                         Qiscus.chatRooms[id] = r
@@ -450,8 +437,7 @@ internal extension QRoom {
                         }
                         let rts = ThreadSafeReference(to: room)
                         DispatchQueue.main.async {
-                            let mainRealm = try! Realm(configuration: Qiscus.dbConfiguration)
-                            mainRealm.refresh()
+                            let mainRealm = Qiscus.realm()
                             if Qiscus.chatRooms[id] == nil {
                                 if let r = mainRealm.resolve(rts) {
                                     Qiscus.chatRooms[id] = r
@@ -518,8 +504,7 @@ internal extension QRoom {
                     if participantChanged {
                         let rts = ThreadSafeReference(to: room)
                         DispatchQueue.main.async {
-                            let mainRealm = try! Realm(configuration: Qiscus.dbConfiguration)
-                            mainRealm.refresh()
+                            let mainRealm = Qiscus.realm()
                             if Qiscus.chatRooms[id] == nil {
                                 if let r = mainRealm.resolve(rts) {
                                     Qiscus.chatRooms[id] = r
@@ -539,7 +524,7 @@ internal extension QRoom {
         }
     }
     internal func createComment(withJSON json:JSON)->QComment{
-        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        let realm = Qiscus.realm()
         let commentId = json["id"].intValue
         let commentUniqueId = json["unique_temp_id"].stringValue
         var commentText = json["message"].stringValue
@@ -737,8 +722,7 @@ internal extension QRoom {
         
         QiscusDBThread.sync {
             if let room = QRoom.threadSaveRoom(withId:  roomId){
-                let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                realm.refresh()
+                let realm = Qiscus.realm()
                 let newComment = room.createComment(withJSON: json)
                 let commentUniqueId = newComment.uniqueId
                 
@@ -771,8 +755,7 @@ internal extension QRoom {
         
         QiscusDBThread.sync {
             autoreleasepool {
-                let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                realm.refresh()
+                let realm = Qiscus.realm()
                 guard let room = QRoom.threadSaveRoom(withId: roomId) else { return }
                 let commentUniqueId = json["unique_temp_id"].stringValue
                 let newComment = room.createComment(withJSON: json)
@@ -828,7 +811,7 @@ internal extension QRoom {
     }
     
     internal func getGrouppedCommentsUID()->[[String]]{
-        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        let realm = Qiscus.realm()
         var retVal = [[String]]()
         var uidList = [String]()
         var s = 0
