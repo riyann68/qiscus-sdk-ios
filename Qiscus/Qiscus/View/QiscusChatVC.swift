@@ -106,8 +106,8 @@ public class QiscusChatVC: UIViewController{
     var prefetch:Bool = false
     var presentingLoading = false
     
-    internal let currentNavbarTint = UINavigationBar.appearance().tintColor
-    static let currentNavbarTint = UINavigationBar.appearance().tintColor
+    internal let currentNavbarTint = Qiscus.shared.styleConfiguration.color.tintColor
+    static let currentNavbarTint = Qiscus.shared.styleConfiguration.color.tintColor
     
     var replyData:QComment? = nil {
         didSet{
