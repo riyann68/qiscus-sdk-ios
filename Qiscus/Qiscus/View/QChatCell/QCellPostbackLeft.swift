@@ -121,14 +121,14 @@ class QCellPostbackLeft: QChatCell {
        
     }
     
-    func postback(sender:UIButton){
+    @objc func postback(sender:UIButton){
         let allData = JSON(parseJSON: self.comment!.data).arrayValue
         if allData.count > sender.tag {
             self.delegate?.didTapPostbackButton(onComment: self.comment!, index: sender.tag)
         }
     }
     
-    func accountLinking(sender:UIButton){
+    @objc func accountLinking(sender:UIButton){
         self.delegate?.didTapAccountLinking(onComment: self.comment!)
     }
     public override func comment(didChangePosition comment:QComment, position: QCellPosition) {

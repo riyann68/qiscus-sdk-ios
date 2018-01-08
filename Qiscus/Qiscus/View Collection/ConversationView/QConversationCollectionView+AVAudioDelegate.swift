@@ -28,7 +28,7 @@ extension QConversationCollectionView:AVAudioPlayerDelegate{
     }
     
     // MARK: - Audio Methods
-    func audioTimerFired(_ timer: Timer) {
+    @objc func audioTimerFired(_ timer: Timer) {
         self.updateAudioDisplay()
     }
     

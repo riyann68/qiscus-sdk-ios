@@ -580,7 +580,7 @@ public class QiscusChatVC: UIViewController{
     }
     
     // MARK: - Keyboard Methode
-    func keyboardWillHide(_ notification: Notification){
+    @objc func keyboardWillHide(_ notification: Notification){
         let info: NSDictionary = (notification as NSNotification).userInfo! as NSDictionary
         
         let animateDuration = info[UIKeyboardAnimationDurationUserInfoKey] as! Double
@@ -594,7 +594,7 @@ public class QiscusChatVC: UIViewController{
         }, completion: nil)
     }
     
-    func keyboardChange(_ notification: Notification){
+    @objc func keyboardChange(_ notification: Notification){
         let info:NSDictionary = (notification as NSNotification).userInfo! as NSDictionary
         let keyboardSize = (info[UIKeyboardFrameEndUserInfoKey] as! NSValue).cgRectValue
         
@@ -616,7 +616,7 @@ public class QiscusChatVC: UIViewController{
     }
     func righRightButtonAction(_ sender: AnyObject) {
     }
-    func goBack() {
+    @objc func goBack() {
         self.isPresence = false
         view.endEditing(true)
         if let delegate = self.delegate{
@@ -634,7 +634,7 @@ public class QiscusChatVC: UIViewController{
         center.removeObserver(self)
     }
     // MARK: - Button Action
-    func appDidEnterBackground(){
+    @objc func appDidEnterBackground(){
         self.isPresence = false
         view.endEditing(true)
         self.dismissLoading()
@@ -678,7 +678,7 @@ public class QiscusChatVC: UIViewController{
     public func register(_ chatCellClass: AnyClass?, forCellWithReuseIdentifier identifier: String) {
         self.collectionView.register(chatCellClass, forCellWithReuseIdentifier: identifier)
     }
-    internal func applicationDidBecomeActive(){
+    @objc internal func applicationDidBecomeActive(){
         if let room = self.collectionView.room{
             room.syncRoom()
         }

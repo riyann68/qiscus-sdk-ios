@@ -27,7 +27,7 @@ extension QConversationCollectionView: ChatCellDelegate, ChatCellAudioDelegate {
     func didTapAccountLinking(onComment comment: QComment) {
         self.cellDelegate?.cellDelegate?(didTapAccountLinking: comment)
     }
-    func didTapCardButton(onComment comment: QComment, index: Int) {
+    @objc func didTapCardButton(onComment comment: QComment, index: Int) {
         self.cellDelegate?.cellDelegate?(didTapCardButton: comment, buttonIndex: index)
     }
     func didTapPostbackButton(onComment comment: QComment, index: Int) {

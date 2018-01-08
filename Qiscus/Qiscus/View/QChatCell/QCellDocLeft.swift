@@ -173,7 +173,7 @@ class QCellDocLeft: QChatCell {
             self.progressContainer.isHidden = true
         }
     }
-    func didTapImage(){
+    @objc func didTapImage(){
         if let file = self.comment?.file{
             if QFileManager.isFileExist(inLocalPath: file.localPath){
                 self.delegate?.didTapFile(comment: self.comment!)

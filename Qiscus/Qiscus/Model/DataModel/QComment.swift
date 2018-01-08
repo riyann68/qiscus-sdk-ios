@@ -114,38 +114,38 @@ public enum QReplyType:Int{
 public class QComment:Object {
     static var cache = [String: QComment]()
     
-    public dynamic var uniqueId: String = ""
-    public dynamic var id:Int = 0
-    public dynamic var roomId:String = ""
-    public dynamic var beforeId:Int = 0
-    public dynamic var text:String = ""
-    public dynamic var createdAt: Double = 0
-    public dynamic var senderEmail:String = ""
-    public dynamic var senderName:String = ""
-    public dynamic var senderAvatarURL:String = ""
-    public dynamic var statusRaw:Int = QCommentStatus.sending.rawValue
-    public dynamic var typeRaw:String = QCommentType.text.name()
-    public dynamic var data:String = ""
-    public dynamic var cellPosRaw:Int = 0
+    @objc public dynamic var uniqueId: String = ""
+    @objc public dynamic var id:Int = 0
+    @objc public dynamic var roomId:String = ""
+    @objc public dynamic var beforeId:Int = 0
+    @objc public dynamic var text:String = ""
+    @objc public dynamic var createdAt: Double = 0
+    @objc public dynamic var senderEmail:String = ""
+    @objc public dynamic var senderName:String = ""
+    @objc public dynamic var senderAvatarURL:String = ""
+    @objc public dynamic var statusRaw:Int = QCommentStatus.sending.rawValue
+    @objc public dynamic var typeRaw:String = QCommentType.text.name()
+    @objc public dynamic var data:String = ""
+    @objc public dynamic var cellPosRaw:Int = 0
     
-    public dynamic var roomName:String = ""
-    internal dynamic var roomTypeRaw:Int = 0
-    public dynamic var roomAvatar:String = ""
+    @objc public dynamic var roomName:String = ""
+    @objc internal dynamic var roomTypeRaw:Int = 0
+    @objc public dynamic var roomAvatar:String = ""
     
-    private dynamic var cellWidth:Float = 0
-    private dynamic var cellHeight:Float = 0
-    internal dynamic var textFontName:String = ""
-    internal dynamic var textFontSize:Float = 0
-    internal dynamic var rawExtra:String = ""
+    @objc private dynamic var cellWidth:Float = 0
+    @objc private dynamic var cellHeight:Float = 0
+    @objc internal dynamic var textFontName:String = ""
+    @objc internal dynamic var textFontSize:Float = 0
+    @objc internal dynamic var rawExtra:String = ""
     // MARK : - Ignored Parameters
     var displayImage:UIImage?
     public var delegate:QCommentDelegate?
     
     // audio variable
-    public dynamic var durationLabel = ""
-    public dynamic var currentTimeSlider = Float(0)
-    public dynamic var seekTimeLabel = "00:00"
-    public dynamic var audioIsPlaying = false
+    @objc public dynamic var durationLabel = ""
+    @objc public dynamic var currentTimeSlider = Float(0)
+    @objc public dynamic var seekTimeLabel = "00:00"
+    @objc public dynamic var audioIsPlaying = false
     // file variable
     public var isDownloading = false
     public var isUploading = false
@@ -153,7 +153,7 @@ public class QComment:Object {
     
     
     // read mark
-    internal dynamic var isRead:Bool = false
+    @objc internal dynamic var isRead:Bool = false
     
     override public static func primaryKey() -> String? {
         return "uniqueId"
@@ -188,10 +188,10 @@ public class QComment:Object {
                 underlineColorAttributeName = QiscusColorConfiguration.sharedInstance.rightBaloonLinkColor
             }
             return [
-                NSForegroundColorAttributeName: foregroundColorAttributeName,
-                NSUnderlineColorAttributeName: underlineColorAttributeName,
-                NSUnderlineStyleAttributeName: NSUnderlineStyle.styleSingle.rawValue,
-                NSFontAttributeName: Qiscus.style.chatFont
+                NSAttributedStringKey.foregroundColor.rawValue: foregroundColorAttributeName,
+                NSAttributedStringKey.underlineColor.rawValue: underlineColorAttributeName,
+                NSAttributedStringKey.underlineStyle.rawValue: NSUnderlineStyle.styleSingle.rawValue,
+                NSAttributedStringKey.font.rawValue: Qiscus.style.chatFont
             ]
         }
     }
@@ -385,7 +385,7 @@ public class QComment:Object {
         }
     }
     
-    var textAttribute:[String: Any]{
+    var textAttribute:[NSAttributedStringKey: Any]{
         get{
             if self.type == .location {
                 let style = NSMutableParagraphStyle()
@@ -397,9 +397,9 @@ public class QComment:Object {
                 }
                 
                 return [
-                    NSForegroundColorAttributeName: foregroundColorAttributeName,
-                    NSFontAttributeName: systemFont,
-                    NSParagraphStyleAttributeName: style
+                    .foregroundColor: foregroundColorAttributeName,
+                    .font: systemFont,
+                    .paragraphStyle: style
                 ]
             }
             else if self.type == .system {
@@ -410,9 +410,9 @@ public class QComment:Object {
                 let foregroundColorAttributeName = QiscusColorConfiguration.sharedInstance.systemBalloonTextColor
                 
                 return [
-                    NSForegroundColorAttributeName: foregroundColorAttributeName,
-                    NSFontAttributeName: systemFont,
-                    NSParagraphStyleAttributeName: style
+                    .foregroundColor: foregroundColorAttributeName,
+                    .font: systemFont,
+                    .paragraphStyle: style
                 ]
             }else{
                 var foregroundColorAttributeName = QiscusColorConfiguration.sharedInstance.leftBaloonTextColor
@@ -420,8 +420,8 @@ public class QComment:Object {
                     foregroundColorAttributeName = QiscusColorConfiguration.sharedInstance.rightBaloonTextColor
                 }
                 return [
-                    NSForegroundColorAttributeName: foregroundColorAttributeName,
-                    NSFontAttributeName: Qiscus.style.chatFont
+                    .foregroundColor: foregroundColorAttributeName,
+                    .font: Qiscus.style.chatFont
                 ]
             }
         }

@@ -309,7 +309,7 @@ public class QConversationCollectionView: UICollectionView {
         return retHeight
     }
     
-    func loadMore(){
+    @objc func loadMore(){
         if let room = self.room {
             let id = room.id
             self.loadMoreComment(roomId: id)

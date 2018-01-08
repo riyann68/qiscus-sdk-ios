@@ -18,17 +18,17 @@ import RealmSwift
 }
 
 public class QFile:Object{
-    public dynamic var id:String = ""
-    public dynamic var url:String = ""
-    public dynamic var localPath:String = ""
-    public dynamic var localThumbPath:String = ""
-    public dynamic var localMiniThumbPath:String = ""
-    public dynamic var roomId:String = ""
-    public dynamic var mimeType:String = ""
-    public dynamic var senderEmail:String = ""
-    public dynamic var size:Double = 0
-    public dynamic var pages:Int = 0
-    public dynamic var filename:String = ""
+    @objc public dynamic var id:String = ""
+    @objc public dynamic var url:String = ""
+    @objc public dynamic var localPath:String = ""
+    @objc public dynamic var localThumbPath:String = ""
+    @objc public dynamic var localMiniThumbPath:String = ""
+    @objc public dynamic var roomId:String = ""
+    @objc public dynamic var mimeType:String = ""
+    @objc public dynamic var senderEmail:String = ""
+    @objc public dynamic var size:Double = 0
+    @objc public dynamic var pages:Int = 0
+    @objc public dynamic var filename:String = ""
     
     var uploadProgress:Double = 0
     var downloadProgress:Double = 0

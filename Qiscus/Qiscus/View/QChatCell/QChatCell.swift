@@ -45,10 +45,10 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
                 underlineColorAttributeName = QiscusColorConfiguration.sharedInstance.rightBaloonLinkColor
             }
             return [
-                NSForegroundColorAttributeName: foregroundColorAttributeName,
-                NSUnderlineColorAttributeName: underlineColorAttributeName,
-                NSUnderlineStyleAttributeName: NSUnderlineStyle.styleSingle.rawValue,
-                NSFontAttributeName: Qiscus.style.chatFont
+                NSAttributedStringKey.foregroundColor.rawValue: foregroundColorAttributeName,
+                NSAttributedStringKey.underlineColor.rawValue: underlineColorAttributeName,
+                NSAttributedStringKey.underlineStyle.rawValue: NSUnderlineStyle.styleSingle.rawValue,
+                NSAttributedStringKey.font.rawValue: Qiscus.style.chatFont
             ]
         }
     }
@@ -87,7 +87,7 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
     open func updateStatus(toStatus status:QCommentStatus){
         // implementation will be overrided on child class
     }
-    open func resend(){
+    @objc open func resend(){
         let roomId = self.comment!.roomId
         let cUid = self.comment!.uniqueId
         QiscusBackgroundThread.async {
@@ -121,26 +121,26 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
             }
         }
     }
-    open func reply(){
+    @objc open func reply(){
         self.delegate?.didReply(comment: self.comment!)
     }
-    public func forward(){
+    @objc public func forward(){
         self.delegate?.didForward(comment: self.comment!)
     }
-    open func deleteComment(){
+    @objc open func deleteComment(){
         if let room = QRoom.room(withId: self.comment!.roomId){
             room.deleteComment(comment: self.comment!)
         }
     }
-    open func info(){
+    @objc open func info(){
         self.delegate?.getInfo(comment: self.comment!)
     }
-    open func share(){
+    @objc open func share(){
         if let comment = self.comment {
             self.delegate?.didShare(comment: comment)
         }
     }
-    open func showFile(){
+    @objc open func showFile(){
         if let c = self.comment {
             self.delegate?.didTapFile(comment: c)
         }
@@ -216,7 +216,7 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
         self.showUserName = showUserName
         self.hideAvatar = hideAvatar
         if let color = userNameColor {
-            self.userNameColor = userNameColor
+            self.userNameColor = color
         }else{
             self.userNameColor = UIColor(red: 85/255, green: 85/255, blue: 85/255, alpha: 1)
         }

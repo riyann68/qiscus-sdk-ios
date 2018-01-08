@@ -38,43 +38,43 @@ import AVFoundation
     @objc optional func room(didChangeUnread inRoom:QRoom)
 }
 public class QRoom:Object {
-    public dynamic var id:String = ""
-    public dynamic var uniqueId:String = ""
-    internal dynamic var storedName:String = ""
-    internal dynamic var definedname:String = ""
-    public dynamic var storedAvatarURL:String = ""
-    public dynamic var definedAvatarURL:String = ""
-    internal dynamic var avatarData:Data?
-    public dynamic var data:String = ""
-    public dynamic var distinctId:String = ""
-    public dynamic var typeRaw:Int = QRoomType.single.rawValue
-    public dynamic var singleUser:String = ""
-    public dynamic var typingUser:String = ""
-    public dynamic var lastReadCommentId: Int = 0
-    public dynamic var lastDeliveredCommentId: Int = 0
-    public dynamic var isLocked:Bool = false
+    @objc public dynamic var id:String = ""
+    @objc public dynamic var uniqueId:String = ""
+    @objc internal dynamic var storedName:String = ""
+    @objc internal dynamic var definedname:String = ""
+    @objc public dynamic var storedAvatarURL:String = ""
+    @objc public dynamic var definedAvatarURL:String = ""
+    @objc internal dynamic var avatarData:Data?
+    @objc public dynamic var data:String = ""
+    @objc public dynamic var distinctId:String = ""
+    @objc public dynamic var typeRaw:Int = QRoomType.single.rawValue
+    @objc public dynamic var singleUser:String = ""
+    @objc public dynamic var typingUser:String = ""
+    @objc public dynamic var lastReadCommentId: Int = 0
+    @objc public dynamic var lastDeliveredCommentId: Int = 0
+    @objc public dynamic var isLocked:Bool = false
     
-    internal dynamic var unreadCommentCount:Int = 0
-    public dynamic var unreadCount:Int = 0
-    internal dynamic var pinned:Double = 0
+    @objc internal dynamic var unreadCommentCount:Int = 0
+    @objc public dynamic var unreadCount:Int = 0
+    @objc internal dynamic var pinned:Double = 0
     
     // MARK: - lastComment variable
-    internal dynamic var lastCommentId:Int = 0
-    internal dynamic var lastCommentText:String = ""
-    internal dynamic var lastCommentUniqueId: String = ""
-    internal dynamic var lastCommentBeforeId:Int = 0
-    internal dynamic var lastCommentCreatedAt: Double = 0
-    internal dynamic var lastCommentSenderEmail:String = ""
-    internal dynamic var lastCommentSenderName:String = ""
-    internal dynamic var lastCommentStatusRaw:Int = QCommentStatus.sending.rawValue
-    internal dynamic var lastCommentTypeRaw:String = QCommentType.text.name()
-    internal dynamic var lastCommentData:String = ""
-    internal dynamic var lastCommentRawExtras:String = ""
+    @objc internal dynamic var lastCommentId:Int = 0
+    @objc internal dynamic var lastCommentText:String = ""
+    @objc internal dynamic var lastCommentUniqueId: String = ""
+    @objc internal dynamic var lastCommentBeforeId:Int = 0
+    @objc internal dynamic var lastCommentCreatedAt: Double = 0
+    @objc internal dynamic var lastCommentSenderEmail:String = ""
+    @objc internal dynamic var lastCommentSenderName:String = ""
+    @objc internal dynamic var lastCommentStatusRaw:Int = QCommentStatus.sending.rawValue
+    @objc internal dynamic var lastCommentTypeRaw:String = QCommentType.text.name()
+    @objc internal dynamic var lastCommentData:String = ""
+    @objc internal dynamic var lastCommentRawExtras:String = ""
         
     // MARK: private method
-    internal dynamic var lastParticipantsReadId:Int = 0
-    internal dynamic var lastParticipantsDeliveredId:Int = 0
-    internal dynamic var roomVersion011:Bool = true
+    @objc internal dynamic var lastParticipantsReadId:Int = 0
+    @objc internal dynamic var lastParticipantsDeliveredId:Int = 0
+    @objc internal dynamic var roomVersion011:Bool = true
     
     public let comments = List<QComment>()
     public let participants = List<QParticipant>()
@@ -451,7 +451,7 @@ public class QRoom:Object {
             }
         }
     }
-    public func clearUserTyping(){
+    @objc public func clearUserTyping(){
         if !self.isInvalidated {
             self.updateUserTyping(userEmail: "")
         }

@@ -90,7 +90,7 @@ class QCellCardRight: QChatCell {
         self.cardHeight.constant = 90 + yPos
         self.containerView.layoutIfNeeded()
     }
-    func cardButtonTapped(_ sender: UIButton) {
+    @objc func cardButtonTapped(_ sender: UIButton) {
         let data = self.comment!.data
         let payload = JSON(parseJSON: data)
         let buttonsData = payload["buttons"].arrayValue
