@@ -18,19 +18,20 @@ open class QiscusLinkData: Object {
                 let id = self.localId
                 let value = linkURL
                 
-                    let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                    let searchQuery = NSPredicate(format: "localId == \(id)")
-                    
-                    let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
-                    
-                    if linkData.count > 0{
-                        let firstLink = linkData.first!
-                        if firstLink.linkURL != value{
-                            try! realm.write {
-                                firstLink.linkURL = value
-                            }
+                let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+                realm.refresh()
+                let searchQuery = NSPredicate(format: "localId == \(id)")
+                
+                let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
+                
+                if linkData.count > 0{
+                    let firstLink = linkData.first!
+                    if firstLink.linkURL != value{
+                        try! realm.write {
+                            firstLink.linkURL = value
                         }
                     }
+                }
                 
             }
         }
@@ -41,20 +42,20 @@ open class QiscusLinkData: Object {
                 let id = self.localId
                 let value = linkTitle
                 
-                    let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                    let searchQuery = NSPredicate(format: "localId == \(id)")
-                    
-                    let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
-                    
-                    if linkData.count > 0{
-                        let firstLink = linkData.first!
-                        if firstLink.linkTitle != value{
-                            try! realm.write {
-                                firstLink.linkTitle = value
-                            }
+                let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+                realm.refresh()
+                let searchQuery = NSPredicate(format: "localId == \(id)")
+                
+                let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
+                
+                if linkData.count > 0{
+                    let firstLink = linkData.first!
+                    if firstLink.linkTitle != value{
+                        try! realm.write {
+                            firstLink.linkTitle = value
                         }
                     }
-                
+                }
             }
         }
     }
@@ -64,20 +65,20 @@ open class QiscusLinkData: Object {
                 let id = self.localId
                 let value = linkDescription
                 
-                    let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                    let searchQuery = NSPredicate(format: "localId == \(id)")
-                    
-                    let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
-                    
-                    if linkData.count > 0{
-                        let firstLink = linkData.first!
-                        if firstLink.linkDescription != value{
-                            try! realm.write {
-                                firstLink.linkDescription = value
-                            }
+                let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+                realm.refresh()
+                let searchQuery = NSPredicate(format: "localId == \(id)")
+                
+                let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
+                
+                if linkData.count > 0{
+                    let firstLink = linkData.first!
+                    if firstLink.linkDescription != value{
+                        try! realm.write {
+                            firstLink.linkDescription = value
                         }
                     }
-                
+                }
             }
         }
     }
@@ -87,19 +88,20 @@ open class QiscusLinkData: Object {
                 let id = self.localId
                 let value = linkImageURL
                 
-                    let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                    let searchQuery = NSPredicate(format: "localId == \(id)")
-                    
-                    let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
-                    
-                    if linkData.count > 0{
-                        let firstLink = linkData.first!
-                        if firstLink.linkImageURL != value{
-                            try! realm.write {
-                                firstLink.linkImageURL = value
-                            }
+                let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+                realm.refresh()
+                let searchQuery = NSPredicate(format: "localId == \(id)")
+                
+                let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
+                
+                if linkData.count > 0{
+                    let firstLink = linkData.first!
+                    if firstLink.linkImageURL != value{
+                        try! realm.write {
+                            firstLink.linkImageURL = value
                         }
                     }
+                }
                 
             }
         }
@@ -110,19 +112,20 @@ open class QiscusLinkData: Object {
                 let id = self.localId
                 let value = linkImageThumbURL
                 
-                    let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                    let searchQuery = NSPredicate(format: "localId == \(id)")
-                    
-                    let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
-                    
-                    if linkData.count > 0{
-                        let firstLink = linkData.first!
-                        if firstLink.linkImageThumbURL != value{
-                            try! realm.write {
-                                firstLink.linkImageThumbURL = value
-                            }
+                let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+                realm.refresh()
+                let searchQuery = NSPredicate(format: "localId == \(id)")
+                
+                let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
+                
+                if linkData.count > 0{
+                    let firstLink = linkData.first!
+                    if firstLink.linkImageThumbURL != value{
+                        try! realm.write {
+                            firstLink.linkImageThumbURL = value
                         }
                     }
+                }
                 
             }
         }
@@ -181,6 +184,7 @@ open class QiscusLinkData: Object {
     open class var LastId:Int{
         get{
             let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
             let RetNext = realm.objects(QiscusLinkData.self).sorted(byKeyPath: "localId")
             
             if RetNext.count > 0 {
@@ -193,6 +197,7 @@ open class QiscusLinkData: Object {
     }
     open class func getLinkData(fromURL url: String)->QiscusLinkData?{
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
         let searchQuery:NSPredicate = NSPredicate(format: "linkURL == '\(url)'")
         let RetNext = realm.objects(QiscusLinkData.self).filter(searchQuery)
         
@@ -205,52 +210,55 @@ open class QiscusLinkData: Object {
     }
     open func saveLink(){ //  
         
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            let searchQuery = NSPredicate(format: "linkURL == '\(self.linkURL)'")
-            
-            let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
-            
-            if linkData.count == 0{
-                try! realm.write {
-                    self.localId = QiscusLinkData.LastId + 1
-                    realm.add(self)
-                }
-                if self.linkImageThumbURL == "" {
-                    //self.downloadThumbImage()
-                }
+        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
+        let searchQuery = NSPredicate(format: "linkURL == '\(self.linkURL)'")
+        
+        let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
+        
+        if linkData.count == 0{
+            try! realm.write {
+                self.localId = QiscusLinkData.LastId + 1
+                realm.add(self)
             }
+            if self.linkImageThumbURL == "" {
+                //self.downloadThumbImage()
+            }
+        }
         
     }
     open func updateThumbURL(url:String){
         let localId = self.localId
         
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            let searchQuery = NSPredicate(format: "localId == '\(localId)'")
-            
-            let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
+        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
+        let searchQuery = NSPredicate(format: "localId == '\(localId)'")
+        
+        let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
 
-            if linkData.count > 0{
-                let firstLink = linkData.first!
-                try! realm.write {
-                    firstLink.linkImageThumbURL = url
-                }
+        if linkData.count > 0{
+            let firstLink = linkData.first!
+            try! realm.write {
+                firstLink.linkImageThumbURL = url
             }
+        }
         
     }
     open func updateLinkImageURL(url:String){
         let localId = self.localId
         
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            let searchQuery = NSPredicate(format: "localId == '\(localId)'")
-            
-            let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
-            
-            if linkData.count > 0{
-                let firstLink = linkData.first!
-                try! realm.write {
-                    firstLink.linkImageURL = url
-                }
+        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
+        let searchQuery = NSPredicate(format: "localId == '\(localId)'")
+        
+        let linkData = realm.objects(QiscusLinkData.self).filter(searchQuery)
+        
+        if linkData.count > 0{
+            let firstLink = linkData.first!
+            try! realm.write {
+                firstLink.linkImageURL = url
             }
+        }
         
     }
     fileprivate func createThumbLink(_ image:UIImage)->UIImage{

@@ -17,7 +17,34 @@ import CoreLocation
 
 //
 import RealmSwift
-open class QiscusChatVC: UIViewController{
+
+@objc public protocol QiscusChatVCConfigDelegate{
+    @objc optional func chatVCConfigDelegate(userNameLabelColor viewController:QiscusChatVC, forUser user:QUser)->UIColor?
+    @objc optional func chatVCConfigDelegate(hideLeftAvatarOn viewController:QiscusChatVC)->Bool
+    @objc optional func chatVCConfigDelegate(hideUserNameLabel viewController:QiscusChatVC, forUser user:QUser)->Bool
+}
+@objc public protocol QiscusChatVCDelegate{
+    func chatVC(enableForwardAction viewController:QiscusChatVC)->Bool
+    func chatVC(enableInfoAction viewController:QiscusChatVC)->Bool
+    func chatVC(overrideBackAction viewController:QiscusChatVC)->Bool
+    
+    @objc optional func chatVC(backAction viewController:QiscusChatVC, room:QRoom?, data:Any?)
+    @objc optional func chatVC(titleAction viewController:QiscusChatVC, room:QRoom?, data:Any?)
+    @objc optional func chatVC(viewController:QiscusChatVC, onForwardComment comment:QComment, data:Any?)
+    @objc optional func chatVC(viewController:QiscusChatVC, infoActionComment comment:QComment,data:Any?)
+    
+    @objc optional func chatVC(onViewDidLoad viewController:QiscusChatVC)
+    @objc optional func chatVC(viewController:QiscusChatVC, willAppear animated:Bool)
+    @objc optional func chatVC(viewController:QiscusChatVC, willDisappear animated:Bool)
+    
+    @objc optional func chatVC(viewController:QiscusChatVC, willPostComment comment:QComment, room:QRoom?, data:Any?)->QComment?
+    
+    @objc optional func chatVC(viewController:QiscusChatVC, cellForComment comment:QComment)->QChatCell?
+    @objc optional func chatVC(viewController:QiscusChatVC, heightForComment comment:QComment)->QChatCellHeight?
+    @objc optional func chatVC(viewController:QiscusChatVC, hideCellWith comment:QComment)->Bool
+}
+
+public class QiscusChatVC: UIViewController{
     
     @IBOutlet weak var inputBarHeight: NSLayoutConstraint!
     // MARK: - IBOutlet Properties
@@ -33,7 +60,7 @@ open class QiscusChatVC: UIViewController{
     @IBOutlet weak var archievedNotifLabel: UILabel!
     @IBOutlet weak var unlockButton: UIButton!
     @IBOutlet weak var emptyChatImage: UIImageView!
-    @IBOutlet public weak var collectionView: UICollectionView!
+    @IBOutlet public weak var collectionView: QConversationCollectionView!
     @IBOutlet weak var bottomButton: UIButton!
     @IBOutlet weak var unreadIndicator: UILabel!
     @IBOutlet weak var linkPreviewContainer: UIView!
@@ -55,13 +82,17 @@ open class QiscusChatVC: UIViewController{
     @IBOutlet weak var linkImageWidth: NSLayoutConstraint!
     @IBOutlet public weak var collectionViewTopMargin: NSLayoutConstraint!
     
+    public var delegate:QiscusChatVCDelegate?
+    public var configDelegate:QiscusChatVCConfigDelegate?
+    
+    public var data:Any?
+    
     var isPresence:Bool = false
     public var titleLabel = UILabel()
     public var subtitleLabel = UILabel()
     internal var subtitleText:String = ""
     var roomAvatarImage:UIImage?
     public var roomAvatar = UIImageView()
-    var roomAvatarLabel = UILabel()
     public var titleView = UIView()
     
     var isBeforeTranslucent = false
@@ -72,7 +103,11 @@ open class QiscusChatVC: UIViewController{
     var selectedCellIndex:IndexPath? = nil
     let locationManager = CLLocationManager()
     var didFindLocation = true
-    var topComment:QComment?
+    var prefetch:Bool = false
+    var presentingLoading = false
+    
+    internal let currentNavbarTint = UINavigationBar.appearance().tintColor
+    static let currentNavbarTint = UINavigationBar.appearance().tintColor
     
     var replyData:QComment? = nil {
         didSet{
@@ -83,22 +118,22 @@ open class QiscusChatVC: UIViewController{
     public var defaultBack:Bool = true
     
     // MARK: - Data Properties
-    var hasMoreComment = true // rmove
     var loadMoreControl = UIRefreshControl()
     var processingFile = false
     var processingAudio = false
+    var loadingMore = false
     
     // MARK: -  Data load configuration
     public var chatRoom:QRoom?{
         didSet{
             if let room = self.chatRoom {
                 room.subscribeRealtimeStatus()
+                self.collectionView.room = self.chatRoom
             }
             if oldValue == nil && self.chatRoom != nil {
-                if Qiscus.shared.connected {
-                    self.chatRoom?.sync()
-                }
-                //self.chatRoom!.delegate = self
+                let _ = self.view
+                self.view.layoutSubviews()
+                self.view.layoutIfNeeded()
                 let delay = 0.5 * Double(NSEC_PER_SEC)
                 let time = DispatchTime.now() + delay / Double(NSEC_PER_SEC)
                 DispatchQueue.main.asyncAfter(deadline: time, execute: {
@@ -127,18 +162,6 @@ open class QiscusChatVC: UIViewController{
     var chatService = QChatService()
     var collectionWidth:CGFloat = 0
     
-    var topicId:Int? // will be removed
-    
-    var users:[String]? // will be removed
-    var roomId:Int? // will be removed
-    var distincId:String = "" // will be removed
-    var optionalData:String? // will be removed
-    var message:String? // will be removed
-    var newRoom = false // will be removed
-    var uniqueId = "" // will be removed
-    var avatarURL = "" // will be removed
-    var roomTitle = "" // will be removed
-    
     var topColor = Qiscus.shared.styleConfiguration.color.topColor
     var bottomColor = Qiscus.shared.styleConfiguration.color.bottomColor
     var tintColor = Qiscus.shared.styleConfiguration.color.tintColor
@@ -151,10 +174,6 @@ open class QiscusChatVC: UIViewController{
     
     //MARK: - external action
     @objc public var unlockAction:(()->Void) = {}
-    @objc public var titleAction:(()->Void) = {}
-    @objc public var backAction:(()->Void)? = nil
-    @objc public var forwardAction:((QComment)->Void)? = nil
-    @objc public var infoAction:((QComment)->Void)? = nil
     
     var audioPlayer: AVAudioPlayer?
     var audioTimer: Timer?
@@ -162,12 +181,7 @@ open class QiscusChatVC: UIViewController{
     
     var cellDelegate:QiscusChatCellDelegate?
     var loadingView = QLoadingViewController.sharedInstance
-    var typingIndicatorUser:String = ""
-    var isTypingOn:Bool = false
-    var linkData:QiscusLinkData?
-    var roomName:String? // will be removed
     
-    var isSelfTyping = false
     var firstLoad = true
     
     // MARK: - Audio recording variable
@@ -193,59 +207,9 @@ open class QiscusChatVC: UIViewController{
     public var navSubtitle:String = ""
     var dataLoaded = false
     
-    var showLink:Bool = false{
-        didSet{
-            if !showLink{
-                hideLinkContainer()
-                linkData = nil
-            }else{
-                getLinkPreview(url: linkToPreview)
-            }
-        }
-    }
-    var permanentlyDisableLink:Bool = false
-    var linkToPreview:String = ""{
-        didSet{
-            if linkToPreview == ""{
-                showLink = false
-                permanentlyDisableLink = false
-            }else{
-                if !permanentlyDisableLink{
-                    showLink = true
-                }
-            }
-        }
-    }
-    
-    var unreadIndexPath = [IndexPath](){
-        didSet{
-            if unreadIndexPath.count > 99 {
-                unreadIndicator.text = "99+"
-            }else{
-                unreadIndicator.text = "\(unreadIndexPath.count)"
-            }
-            if unreadIndexPath.count == 0 {
-                unreadIndicator.isHidden = true
-            }else{
-                unreadIndicator.isHidden = isLastRowVisible
-            }
-        }
-    }
-    
     var bundle:Bundle {
         get{
             return Qiscus.bundle
-        }
-    }
-    
-    var isLastRowVisible: Bool = false {
-        didSet{
-            bottomButton.isHidden = isLastRowVisible
-            if self.chatRoom!.unreadCommentCount > 0 {
-                unreadIndicator.isHidden = isLastRowVisible
-            }else{
-                unreadIndicator.isHidden = true
-            }
         }
     }
     
@@ -278,36 +242,14 @@ open class QiscusChatVC: UIViewController{
         }
     }
     var contactVC = CNContactPickerViewController()
+    var typingUsers = [String:QUser]()
+    var typingUserTimer = [String:Timer]()
+    var processingTyping = false
+    var previewedTypingUsers = [String]()
     
     public init() {
         super.init(nibName: "QiscusChatVC", bundle: Qiscus.bundle)
         let _ = self.view
-        self.collectionView.register(UINib(nibName: "QChatHeaderCell",bundle: Qiscus.bundle), forSupplementaryViewOfKind: UICollectionElementKindSectionHeader, withReuseIdentifier: "cellHeader")
-        self.collectionView.register(UINib(nibName: "QChatFooterLeft",bundle: Qiscus.bundle), forSupplementaryViewOfKind: UICollectionElementKindSectionFooter, withReuseIdentifier: "cellFooterLeft")
-        self.collectionView.register(UINib(nibName: "QChatFooterRight",bundle: Qiscus.bundle), forSupplementaryViewOfKind: UICollectionElementKindSectionFooter, withReuseIdentifier: "cellFooterRight")
-        self.collectionView.register(UINib(nibName: "QCellSystem",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellSystem")
-        self.collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "EmptyCell")
-        self.collectionView.register(UINib(nibName: "QCellCardLeft",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellCardLeft")
-        self.collectionView.register(UINib(nibName: "QCellCardRight",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellCardRight")
-        self.collectionView.register(UINib(nibName: "QCellTextLeft",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellTextLeft")
-        self.collectionView.register(UINib(nibName: "QCellPostbackLeft",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellPostbackLeft")
-        self.collectionView.register(UINib(nibName: "QCellTextRight",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellTextRight")
-        self.collectionView.register(UINib(nibName: "QCellMediaLeft",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellMediaLeft")
-        self.collectionView.register(UINib(nibName: "QCellMediaRight",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellMediaRight")
-        self.collectionView.register(UINib(nibName: "QCellAudioLeft",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellAudioLeft")
-        self.collectionView.register(UINib(nibName: "QCellAudioRight",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellAudioRight")
-        self.collectionView.register(UINib(nibName: "QCellFileLeft",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellFileLeft")
-        self.collectionView.register(UINib(nibName: "QCellFileRight",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellFileRight")
-        self.collectionView.register(UINib(nibName: "QCellContactRight",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellContactRight")
-        self.collectionView.register(UINib(nibName: "QCellContactLeft",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellContactLeft")
-        self.collectionView.register(UINib(nibName: "QCellLocationRight",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellLocationRight")
-        self.collectionView.register(UINib(nibName: "QCellLocationLeft",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellLocationLeft")
-        let layout = collectionView.collectionViewLayout as? UICollectionViewFlowLayout
-        layout?.sectionHeadersPinToVisibleBounds = true
-        layout?.sectionFootersPinToVisibleBounds = true
-        
-        self.loadMoreControl.addTarget(self, action: #selector(QiscusChatVC.loadMore), for: UIControlEvents.valueChanged)
-        self.collectionView.addSubview(self.loadMoreControl)
         
         let lightColor = self.topColor.withAlphaComponent(0.4)
         recordBackground.backgroundColor = lightColor
@@ -319,7 +261,7 @@ open class QiscusChatVC: UIViewController{
         unreadIndicator.layer.cornerRadius = 11.5
         unreadIndicator.clipsToBounds = true
         backgroundView.image = Qiscus.image(named: "chat_bg")
-        collectionView.decelerationRate = UIScrollViewDecelerationRateNormal
+        
         linkPreviewContainer.layer.shadowColor = UIColor.black.cgColor
         linkPreviewContainer.layer.shadowOpacity = 0.6
         linkPreviewContainer.layer.shadowOffset = CGSize(width: -5, height: 0)
@@ -327,8 +269,7 @@ open class QiscusChatVC: UIViewController{
         linkCancelButton.setImage(Qiscus.image(named: "ar_cancel")?.withRenderingMode(.alwaysTemplate), for: .normal)
         roomAvatar.contentMode = .scaleAspectFill
         inputText.font = Qiscus.style.chatFont
-        self.collectionView.delegate = self
-        self.collectionView.dataSource = self
+        
         self.emptyChatImage.tintColor = self.topColor
         
         self.emptyChatImage.image = QiscusAssetsConfiguration.shared.emptyChat
@@ -369,13 +310,7 @@ open class QiscusChatVC: UIViewController{
         // Keyboard stuff.
         self.qiscusAutoHideKeyboard()
         
-        unreadIndexPath = [IndexPath]()
         bottomButton.isHidden = true
-        
-        
-        if self.loadMoreControl.isRefreshing {
-            self.loadMoreControl.endRefreshing()
-        }
         
         self.inputBarBottomMargin.constant = 0
         
@@ -391,24 +326,17 @@ open class QiscusChatVC: UIViewController{
         
         titleLabel = UILabel(frame:CGRect(x: 40, y: 7, width: titleWidth, height: 17))
         titleLabel.backgroundColor = UIColor.clear
-        titleLabel.textColor = self.tintColor
+        titleLabel.textColor = QiscusChatVC.currentNavbarTint
         titleLabel.font = UIFont.boldSystemFont(ofSize: UIFont.systemFontSize)
         titleLabel.text = self.chatTitle
         titleLabel.textAlignment = .left
         
         subtitleLabel = UILabel(frame:CGRect(x: 40, y: 25, width: titleWidth, height: 13))
         subtitleLabel.backgroundColor = UIColor.clear
-        subtitleLabel.textColor = self.tintColor
+        subtitleLabel.textColor = QiscusChatVC.currentNavbarTint
         subtitleLabel.font = UIFont.systemFont(ofSize: 11)
         subtitleLabel.text = self.chatSubtitle
         subtitleLabel.textAlignment = .left
-        
-        self.roomAvatarLabel = UILabel(frame:CGRect(x: 0,y: 6,width: 32,height: 32))
-        self.roomAvatarLabel.font = UIFont.boldSystemFont(ofSize: 25)
-        self.roomAvatarLabel.textColor = UIColor.white
-        self.roomAvatarLabel.backgroundColor = UIColor.clear
-        self.roomAvatarLabel.text = "Q"
-        self.roomAvatarLabel.textAlignment = .center
         
         self.roomAvatar = UIImageView()
         self.roomAvatar.contentMode = .scaleAspectFill
@@ -425,73 +353,92 @@ open class QiscusChatVC: UIViewController{
         self.titleView.addSubview(self.titleLabel)
         self.titleView.addSubview(self.subtitleLabel)
         self.titleView.addSubview(self.roomAvatar)
-        self.titleView.addSubview(self.roomAvatarLabel)
         
-    }
-    open func setupTitleView(){
+        let center: NotificationCenter = NotificationCenter.default
+        center.addObserver(self, selector: #selector(QiscusChatVC.appDidEnterBackground), name: NSNotification.Name.UIApplicationDidEnterBackground, object: nil)
         
+        self.welcomeView.isHidden = false
+        self.collectionView.isHidden = true
     }
+    
     required public init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
     // MARK: - UI Lifecycle
-    override open func viewDidLoad() {
+    override public func viewDidLoad() {
         super.viewDidLoad()
-        
-    }
-    private func firstLoadSetup(){
         self.chatService.delegate = self
         
-        let resendMenuItem: UIMenuItem = UIMenuItem(title: "Resend", action: #selector(QChatCell.resend))
-        let deleteMenuItem: UIMenuItem = UIMenuItem(title: "Delete", action: #selector(QChatCell.deleteComment))
-        let replyMenuItem: UIMenuItem = UIMenuItem(title: "Reply", action: #selector(QChatCell.reply))
-        
-        var menuItems:[UIMenuItem] = [resendMenuItem,deleteMenuItem,replyMenuItem]
-        if self.forwardAction != nil {
-            let forwardMenuItem: UIMenuItem = UIMenuItem(title: "Forward", action: #selector(QChatCell.forward))
-            menuItems.append(forwardMenuItem)
-        }
-        if self.infoAction != nil {
-            let infoMenuItem: UIMenuItem = UIMenuItem(title: "Info", action: #selector(QChatCell.info))
-            menuItems.append(infoMenuItem)
-        }
-        let shareMenuItem: UIMenuItem = UIMenuItem(title: "Share", action: #selector(QChatCell.share))
-        menuItems.append(shareMenuItem)
-
-        UIMenuController.shared.menuItems = menuItems
-        
-        //self.navigationController?.navigationBar.verticalGradientColor(topColor, bottomColor: bottomColor)
-        //self.navigationController?.navigationBar.tintColor = tintColor
-        
-        if let _ = self.navigationController {
-            //self.isBeforeTranslucent = navController.navigationBar.isTranslucent
-            self.navigationController?.navigationBar.isTranslucent = false
-            self.defaultNavBarVisibility = self.navigationController!.isNavigationBarHidden
+        if let delegate = self.delegate{
+            delegate.chatVC?(onViewDidLoad: self)
         }
         
-        setupNavigationTitle()
-        
-        setupPage()
     }
     
-    override open func viewWillDisappear(_ animated: Bool) {
+    override public func viewWillDisappear(_ animated: Bool) {
+        if let room = self.chatRoom {
+            room.readAll()
+        }
         self.isPresence = false
         self.dataLoaded = false
         super.viewWillDisappear(animated)
         view.endEditing(true)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillHide, object: nil)
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillChangeFrame, object: nil)
+        NotificationCenter.default.removeObserver(self, name: .UIKeyboardWillChangeFrame, object: nil)
+        NotificationCenter.default.removeObserver(self, name: .UIApplicationDidBecomeActive, object: nil)
+        
         view.endEditing(true)
         
         self.dismissLoading()
+        if let delegate = self.delegate {
+            delegate.chatVC?(viewController: self, willDisappear: animated)
+        }
     }
-    override open func viewDidDisappear(_ animated: Bool) {
-        //self.scrollToBottom()
-    }
-    override open func viewWillAppear(_ animated: Bool) {
+    override public func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        if #available(iOS 11.0, *) {
+            self.navigationController?.navigationBar.prefersLargeTitles = false
+            self.navigationController?.navigationItem.largeTitleDisplayMode = .never
+        }
+        if !self.prefetch {
+            if let room = self.chatRoom {
+                let rid = room.id
+                QiscusBackgroundThread.async {
+                    if let rts = QRoom.threadSaveRoom(withId: rid){
+                        rts.readAll()
+                    }
+                }
+            }
+        }
+        titleLabel.textColor = QiscusChatVC.currentNavbarTint
+        subtitleLabel.textColor = QiscusChatVC.currentNavbarTint
         
+        self.collectionView.viewDelegate = self
+        self.collectionView.roomDelegate = self
+        self.collectionView.cellDelegate = self
+        self.collectionView.configDelegate = self
+        
+        UINavigationBar.appearance().tintColor = self.currentNavbarTint
+        
+        if let _ = self.navigationController {
+            self.navigationController?.navigationBar.isTranslucent = false
+            self.defaultNavBarVisibility = self.navigationController!.isNavigationBarHidden
+        }
+        
+        setupNavigationTitle()
+        setupPage()
+        
+        if !self.prefetch {
+            self.isPresence = true
+            let center: NotificationCenter = NotificationCenter.default
+            center.addObserver(self, selector: #selector(QiscusChatVC.keyboardWillHide(_:)), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
+            center.addObserver(self, selector: #selector(QiscusChatVC.keyboardChange(_:)), name: NSNotification.Name.UIKeyboardWillChangeFrame, object: nil)
+            center.addObserver(self, selector: #selector(QiscusChatVC.applicationDidBecomeActive), name: .UIApplicationDidBecomeActive, object: nil)
+        }
+        if self.loadMoreControl.isRefreshing {
+            self.loadMoreControl.endRefreshing()
+        }
         if self.defaultBack {
             self.defaultBackButtonVisibility = self.navigationItem.hidesBackButton
         }
@@ -510,27 +457,14 @@ open class QiscusChatVC: UIViewController{
         
         if self.defaultBack {
             let backButton = QiscusChatVC.backButton(self, action: #selector(QiscusChatVC.goBack))
-
             self.navigationItem.setHidesBackButton(true, animated: false)
             self.navigationItem.leftBarButtonItems = [backButton]
         }
         
         self.clearAllNotification()
-        
-        let center: NotificationCenter = NotificationCenter.default
-        center.addObserver(self, selector: #selector(QiscusChatVC.keyboardWillHide(_:)), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
-        center.addObserver(self, selector: #selector(QiscusChatVC.keyboardChange(_:)), name: NSNotification.Name.UIKeyboardWillChangeFrame, object: nil)
-        center.addObserver(self, selector: #selector(QiscusChatVC.newCommentNotif(_:)), name: QiscusNotification.GOT_NEW_COMMENT, object: nil)
-        center.addObserver(self, selector: #selector(QiscusChatVC.commentDeleted(_:)), name: QiscusNotification.COMMENT_DELETE, object: nil)
-        center.addObserver(self, selector: #selector(QiscusChatVC.userPresenceChanged(_:)), name: QiscusNotification.USER_PRESENCE, object: nil)
-        center.addObserver(self, selector: #selector(QiscusChatVC.userTyping(_:)), name: QiscusNotification.USER_TYPING, object: nil)
-        center.addObserver(self, selector: #selector(QiscusChatVC.appDidEnterBackground), name: NSNotification.Name.UIApplicationDidEnterBackground, object: nil)
         view.endEditing(true)
-        if firstLoad {
-            self.firstLoadSetup()
-            self.collectionView.isHidden = true
-            self.showLoading("Load data ...")
-        }
+        
+        
         if inputText.value == "" {
             sendButton.isEnabled = false
             sendButton.isHidden = true
@@ -538,74 +472,69 @@ open class QiscusChatVC: UIViewController{
         }else{
             sendButton.isEnabled = true
         }
-        self.chatRoom?.updateUnreadCommentCount(count: 0)
+        
+        if let room = self.chatRoom {
+            if self.collectionView.room == nil {
+                self.collectionView.room = room
+            }
+            self.loadTitle()
+            self.loadSubtitle()
+            self.unreadIndicator.isHidden = true
+            if let r = self.collectionView.room {
+                if r.comments.count == 0 {
+                    if self.isPresence && !self.prefetch {
+                        self.showLoading("Load data ...")
+                    }
+                    self.collectionView.loadData()
+                }
+            }
+            if self.chatMessage != nil && self.chatMessage != "" {
+                let newMessage = self.chatRoom!.newComment(text: self.chatMessage!)
+                self.postComment(comment: newMessage)
+                self.chatMessage = nil
+            }
+            setupNavigationTitle()
+            setupPage()
+        }else{
+            self.loadData()
+        }
+        if let delegate = self.delegate {
+            delegate.chatVC?(viewController: self, willAppear: animated)
+        }
     }
     
-    override open func viewDidAppear(_ animated: Bool) {
+    override public func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        if self.chatRoom == nil {
-            self.collectionView.isHidden = true
-            self.loadData()
-        }else if self.firstLoad {
-            self.loadRoomView()
-            if self.chatRoom!.commentsGroupCount == 0 {
-                self.showLoading("Load Data ...")
-                self.chatRoom!.sync()
-            }else{
-                if let target = self.chatTarget {
-                    if let indexPath = self.chatRoom?.getIndexPath(ofComment: target){
-                        self.selectedCellIndex = indexPath
-                        self.collectionView.scrollToItem(at: indexPath, at: UICollectionViewScrollPosition.top, animated: true)
-                    }else{
-                        QToasterSwift.toast(target: self, text: "Can't find message", backgroundColor: UIColor(red: 0.9, green: 0,blue: 0,alpha: 0.8), textColor: UIColor.white)
-                    }
-                    self.chatTarget = nil
-                }
+        if firstLoad {
+            if self.isPresence && !self.prefetch {
+                self.showLoading("Load data ...")
             }
-            
-        }else{
-            self.collectionView.reloadData()
-            self.chatRoom?.updateUnreadCommentCount {
-                if self.chatRoom!.unreadCommentCount > 0 {
-                    self.isLastRowVisible = false
-                    var unreadText = "\(self.chatRoom!.unreadCommentCount)"
-                    if self.chatRoom!.unreadCommentCount > 99 {
-                        unreadText = "99+"
-                    }
-                    self.unreadIndicator.text = unreadText
-                    self.unreadIndicator.isHidden = false
-                    self.dataLoaded = true
-                    self.chatRoom!.delegate = self
-                }else{
-                    self.dataLoaded = true
-                    self.chatRoom!.delegate = self
-                }
-            }
-            if let target = self.chatTarget {
-                if let indexPath = self.chatRoom?.getIndexPath(ofComment: target){
-                    self.selectedCellIndex = indexPath
-                    self.collectionView.scrollToItem(at: indexPath, at: UICollectionViewScrollPosition.top, animated: true)
-                }else{
-                    QToasterSwift.toast(target: self, text: "Can't find message", backgroundColor: UIColor(red: 0.9, green: 0,blue: 0,alpha: 0.8), textColor: UIColor.white)
-                }
-                self.chatTarget = nil
-            }
-            self.chatService.delegate = self
-            self.chatRoom!.subscribeRealtimeStatus()
-            
-            self.chatRoom!.sync()
+            self.collectionView.room = self.chatRoom
         }
-        
-        self.isPresence = true
-        self.firstLoad = false
+        if let room = self.chatRoom {
+            Qiscus.shared.chatViews[room.id] = self
+        }else{
+            if self.isPresence && !self.prefetch {
+                self.showLoading("Load data ...")
+            }
+        }
+        if let target = self.chatTarget {
+            if let commentTarget = QComment.comment(withUniqueId: target.uniqueId){
+                self.collectionView.scrollToComment(comment: commentTarget)
+            }else{
+                QToasterSwift.toast(target: self, text: "Can't find message", backgroundColor: UIColor(red: 0.9, green: 0,blue: 0,alpha: 0.8), textColor: UIColor.white)
+            }
+            self.chatTarget = nil
+        }
+        self.prefetch = false
     }
     
     // MARK: - Memory Warning
-    override open func didReceiveMemoryWarning() {
+    override public func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
     }
     // MARK: - Clear Notification Method
-    open func clearAllNotification(){
+    public func clearAllNotification(){
         if #available(iOS 10.0, *) {
             let center = UNUserNotificationCenter.current()
             center.removeAllDeliveredNotifications() // To remove all delivered notifications
@@ -625,9 +554,6 @@ open class QiscusChatVC: UIViewController{
             totalButton += rightButtons.count
         }
         
-        let bgColor = QiscusColorConfiguration.sharedInstance.avatarBackgroundColor
-        
-        
         let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(QiscusChatVC.goToTitleAction))
         self.titleView.addGestureRecognizer(tapRecognizer)
         
@@ -636,18 +562,9 @@ open class QiscusChatVC: UIViewController{
         
         self.titleLabel.frame = CGRect(x: 40, y: 7, width: titleWidth, height: 17)
         self.subtitleLabel.frame = CGRect(x: 40, y: 25, width: titleWidth, height: 13)
-        self.roomAvatarLabel.frame = CGRect(x: 0,y: 6,width: 32,height: 32)
         self.roomAvatar.frame = CGRect(x: 0,y: 6,width: 32,height: 32)
         self.titleView.frame = CGRect(x: 0, y: 0, width: containerWidth, height: 44)
         if self.chatTitle != nil {
-            let roomTitle = self.chatTitle!.trimmingCharacters(in: .whitespacesAndNewlines)
-            if roomTitle != "" {
-                let index = roomTitle.index(roomTitle.startIndex, offsetBy: 0)
-                self.roomAvatarLabel.text = String(roomTitle[index]).uppercased()
-                //self.roomAvatarLabel.text = String(roomTitle.characters.first!).uppercased()
-                let colorIndex = roomTitle.count % bgColor.count
-                self.roomAvatar.backgroundColor = bgColor[colorIndex]
-            }
             self.titleLabel.text = self.chatTitle
         }
         self.navigationItem.titleView = titleView
@@ -663,7 +580,7 @@ open class QiscusChatVC: UIViewController{
     }
     
     // MARK: - Keyboard Methode
-    @objc func keyboardWillHide(_ notification: Notification){
+    func keyboardWillHide(_ notification: Notification){
         let info: NSDictionary = (notification as NSNotification).userInfo! as NSDictionary
         
         let animateDuration = info[UIKeyboardAnimationDurationUserInfoKey] as! Double
@@ -672,11 +589,12 @@ open class QiscusChatVC: UIViewController{
         UIView.animate(withDuration: animateDuration, delay: 0, options: UIViewAnimationOptions(), animations: {
             self.view.layoutIfNeeded()
             if goToRow != nil {
-                self.collectionView.scrollToItem(at: goToRow!, at: .bottom, animated: true)
+                self.collectionView.scrollToItem(at: goToRow!, at: .bottom, animated: false)
             }
         }, completion: nil)
     }
-    @objc func keyboardChange(_ notification: Notification){
+    
+    func keyboardChange(_ notification: Notification){
         let info:NSDictionary = (notification as NSNotification).userInfo! as NSDictionary
         let keyboardSize = (info[UIKeyboardFrameEndUserInfoKey] as! NSValue).cgRectValue
         
@@ -698,261 +616,97 @@ open class QiscusChatVC: UIViewController{
     }
     func righRightButtonAction(_ sender: AnyObject) {
     }
-    @objc func goBack() {
+    func goBack() {
         self.isPresence = false
         view.endEditing(true)
-        if let room = self.chatRoom {
-            //room.unsubscribeRealtimeStatus()
-            room.delegate = nil
-        }
-//        audioPlayer?.pause()
-//        stopTimer()
-//        updateAudioDisplay()
-        if self.backAction != nil{
-            self.backAction!()
+        if let delegate = self.delegate{
+            if delegate.chatVC(overrideBackAction: self){
+                delegate.chatVC?(backAction: self, room: self.chatRoom, data:data)
+            }else{
+                let _ = self.navigationController?.popViewController(animated: true)
+            }
         }else{
             let _ = self.navigationController?.popViewController(animated: true)
         }
     }
-    
+    func unsubscribeNotificationCenter(){
+        let center: NotificationCenter = NotificationCenter.default
+        center.removeObserver(self)
+    }
     // MARK: - Button Action
-    @objc func appDidEnterBackground(){
+    func appDidEnterBackground(){
         self.isPresence = false
         view.endEditing(true)
         self.dismissLoading()
     }
-    open func resendMessage(){
+    public func resendMessage(){
         
     }
     
     @IBAction func goToBottomTapped(_ sender: UIButton) {
-        scrollToBottom(true)
+        self.collectionView.scrollToBottom()
     }
     
     @IBAction func hideLinkPreview(_ sender: UIButton) {
         if replyData != nil {
             replyData = nil
-        }else{
-            permanentlyDisableLink = true
-            showLink = false
         }
     }
     
     @IBAction func showAttcahMenu(_ sender: UIButton) {
         self.showAttachmentMenu()
     }
-    override open func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+    override public func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
         collectionView.collectionViewLayout.invalidateLayout()
     }
     
     @IBAction func doNothing(_ sender: Any) {}
     
-    public func loadRoomView(){
-        self.chatRoom?.delegate = self
-        self.chatRoom!.subscribeRealtimeStatus()
-        self.loadTitle()
-        self.loadSubtitle()
-        self.unreadIndicator.isHidden = true
-        if firstLoad {
-            if self.chatRoom!.commentsGroupCount > 0 {
-                self.collectionView.reloadData()
-                let section = self.chatRoom!.commentsGroupCount - 1
-                let row = self.chatRoom!.commentGroup(index: section)!.commentsCount - 1
-                let indexPath = IndexPath(item: row, section: section)
-                DispatchQueue.main.async {
-                    self.collectionView.scrollToItem(at: indexPath, at: .bottom, animated: false)
-                    self.dismissLoading()
-                    self.dataLoaded = true
-                    self.collectionView.isHidden = false
-                }
-            }else{
-                self.dismissLoading()
-                self.dataLoaded = true
-                self.collectionView.isHidden = false
-            }
-        }else{
-            if self.chatRoom!.commentsGroupCount > 0 {
-                let delay = 0.5 * Double(NSEC_PER_SEC)
-                let time = DispatchTime.now() + delay / Double(NSEC_PER_SEC)
-                let section = self.chatRoom!.commentsGroupCount - 1
-                let group = self.chatRoom!.commentGroup(index: section)!
-                let row = group.commentsCount - 1
-                let indexPath = IndexPath(item: row, section: section)
-                self.collectionView.reloadData()
-                DispatchQueue.main.asyncAfter(deadline: time, execute: {
-                    self.collectionView.scrollToItem(at: indexPath, at: .bottom, animated: false)
-                    self.dismissLoading()
-                    self.dataLoaded = true
-                    self.collectionView.isHidden = false
-                })
-                
-            }else{
-                let delay = 0.5 * Double(NSEC_PER_SEC)
-                let time = DispatchTime.now() + delay / Double(NSEC_PER_SEC)
-                DispatchQueue.main.asyncAfter(deadline: time, execute: {
-                    self.dismissLoading()
-                    self.dataLoaded = true
-                    self.collectionView.isHidden = false
-                })
+    public func postComment(comment : QComment) {
+        var postedComment = comment
+        if let delegate = self.delegate {
+            if let temp = delegate.chatVC?(viewController: self, willPostComment: postedComment, room: self.chatRoom, data: self.data){
+                postedComment = temp
             }
         }
-        
-        if self.chatMessage != nil && self.chatMessage != "" {
-            let newMessage = self.chatRoom!.newComment(text: self.chatMessage!)
-            self.postComment(comment: newMessage)
-            self.chatMessage = nil
-        }
+        chatRoom?.post(comment: postedComment)
     }
-    // MARK: - userPresence Handler
-    @objc private func userPresenceChanged(_ notification: Notification) {
-        if let room = self.chatRoom {
-            if let userInfo = notification.userInfo {
-                let user = userInfo["user"] as! QUser
-                if let participantData = room.participant(withEmail: user.email){
-                    if let participant = participantData.user {
-                        self.participantPresenceChanged(participant: participant)
-                    }
-                }
-            }
-        }
+    public func register(_ nib: UINib?, forChatCellWithReuseIdentifier identifier: String) {
+        self.collectionView.register(nib, forCellWithReuseIdentifier: identifier)
     }
-    open func participantPresenceChanged(participant: QUser){
-        if let room = self.chatRoom {
-            if room.type == .single {
-                self.loadSubtitle()
-            }
-        }
+    public func register(_ chatCellClass: AnyClass?, forCellWithReuseIdentifier identifier: String) {
+        self.collectionView.register(chatCellClass, forCellWithReuseIdentifier: identifier)
     }
-    
-    // MARK: - userTyping handler
-    @objc private func userTyping(_ notification: Notification){
-        if let userInfo = notification.userInfo {
-            let user = userInfo["user"] as! QUser
-            let typing = userInfo["typing"] as! Bool
-            let room = userInfo["room"] as! QRoom
-            if room.isInvalidated || user.isInvalidated {
-                return
-            }
-            if let currentRoom = self.chatRoom {
-                if currentRoom.isInvalidated { return }
-            }
-            if self.chatRoom!.id == room.id {
-                self.userTypingChanged(user: user, typing: typing)
-            }
+    internal func applicationDidBecomeActive(){
+        if let room = self.collectionView.room{
+            room.syncRoom()
         }
-    }
-    open func userTypingChanged(user: QUser, typing:Bool){
-        if user.isInvalidated {return}
-        print("typing: \(typing) ::: \(user.fullname) ::: \(self.typingIndicatorUser)")
-        if !typing {
-            self.stopTypingIndicator()
-        }else{
-            self.startTypingIndicator(withUser: user.fullname)
-        }
-    }
-    // MARK: - New Comment Handler
-    @objc private func newCommentNotif(_ notification: Notification){
-        if let userInfo = notification.userInfo {
-            let comment = userInfo["comment"] as! QComment
-            let room = userInfo["room"] as! QRoom
-            if room.isInvalidated { return }
-            if let currentRoom = self.chatRoom {
-                if !currentRoom.isInvalidated {
-                    if currentRoom.id == comment.roomId {
-                        self.gotNewComment(comment: comment, room: room)
-                    }
-                }
-            }
-        }
-    }
-    
-    @objc private func commentDeleted(_ notification: Notification) {
-        if let userInfo = notification.userInfo {
-            let room = userInfo["room"] as! QRoom
-            
-            if let currentRoom = self.chatRoom {
-                if !currentRoom.isInvalidated && !room.isInvalidated{
-                    if currentRoom.id == room.id {
-                        self.collectionView.reloadData()
-                    }
-                }
-            }
-        }
-    }
-    
-    open func gotNewComment(comment: QComment, room:QRoom) {
-        self.chatRoom = room
-        self.collectionView.reloadData()
-        self.chatRoom!.updateUnreadCommentCount(count: 0)
-        if let indexPath = self.chatRoom!.getIndexPath(ofComment: comment){
-            if self.isLastRowVisible || comment.senderEmail == QiscusMe.sharedInstance.email{
-                self.collectionView.scrollToItem(at: indexPath, at: .bottom, animated: true)
-            }
-        }
-    }
-    open func postComment(comment : QComment) {
-//        let extraData : [String: Any] = [
-//            "key1":"value1",
-//            "key2":2,
-//            "key3":true,
-//            "key4": [
-//                "subKey 1": 1,
-//                "subKey 2": "value subkey2"
-//            ]
-//        ]
-//        comment.set(extras: extraData, onSuccess: { (comment) in
-//            self.chatRoom?.post(comment: comment)
-//        }) { (_, error) in
-//            comment.updateStatus(status: .failed)
-//            print(error)
-//        }
-
-        chatRoom?.post(comment: comment)
-    }
-    
-    open func qiscusChatView(cellHeightForComment comment:QComment, defaultHeight height:CGFloat, firstInSection first:Bool)->CGFloat{
-        var retHeight = height
-        
-        switch comment.type {
-        case .card, .contact    : break
-        case .video, .image     :
-            if retHeight > 0 {
-                retHeight += 151 ;
-            }else{
-                retHeight = 140
-            }
-            break
-        case .audio             : retHeight = 83 ; break
-        case .file              : retHeight = 67  ; break
-        case .reply             : retHeight += 88 ; break
-        case .system            : retHeight += 46 ; break
-        case .text              : retHeight += 15 ; break
-        default                 : retHeight += 20 ; break
-        }
-        
-        if (comment.type != .system && first) {
-            retHeight += 20
-        }
-        return retHeight
     }
 }
 
 extension QiscusChatVC:QChatServiceDelegate{
     public func chatService(didFinishLoadRoom inRoom: QRoom, withMessage message: String?) {
         self.chatRoom = inRoom
-        self.chatRoom?.delegate = self
-        self.loadRoomView()
-        Qiscus.shared.chatViews[inRoom.id] = self
-        if let target = self.chatTarget {
-            if let indexPath = self.chatRoom?.getIndexPath(ofComment: target){
-                self.selectedCellIndex = indexPath
-                self.collectionView.scrollToItem(at: indexPath, at: UICollectionViewScrollPosition.top, animated: true)
-            }else{
-                QToasterSwift.toast(target: self, text: "Can't find message", backgroundColor: UIColor(red: 0.9, green: 0,blue: 0,alpha: 0.8), textColor: UIColor.white)
-            }
-            self.chatTarget = nil
+        self.loadTitle()
+        self.loadSubtitle()
+        self.unreadIndicator.isHidden = true
+        if self.chatMessage != nil && self.chatMessage != "" {
+            let newMessage = self.chatRoom!.newComment(text: self.chatMessage!)
+            self.postComment(comment: newMessage)
+            self.chatMessage = nil
         }
+        Qiscus.shared.chatViews[inRoom.id] = self
+        if inRoom.comments.count > 0 {
+            self.collectionView.refreshData()
+            if let target = self.chatTarget {
+                self.collectionView.scrollToComment(comment: target)
+                self.chatTarget = nil
+            }else{
+                self.collectionView.scrollToBottom()
+            }
+        }
+        self.dismissLoading()
     }
     public func chatService(didFailLoadRoom error: String) {
         let delay = 1.5 * Double(NSEC_PER_SEC)
@@ -963,212 +717,53 @@ extension QiscusChatVC:QChatServiceDelegate{
         QToasterSwift.toast(target: self, text: "Can't load chat room", backgroundColor: UIColor(red: 0.9, green: 0,blue: 0,alpha: 0.8), textColor: UIColor.white)
         self.dataLoaded = false
     }
+    
 }
-extension QiscusChatVC:QRoomDelegate{
-    public func room(didChangeName room: QRoom) {
-        if self.chatTitle == nil || self.chatTitle == ""{
-            self.loadTitle()
+extension QiscusChatVC:QConversationViewRoomDelegate{
+    public func roomDelegate(didChangeName room: QRoom, name:String){
+        if name != self.titleLabel.text{
+            self.titleLabel.text = name
         }
     }
-    public func room(didFinishSync room: QRoom) {
-        let delay = 0.5 * Double(NSEC_PER_SEC)
-        let time = DispatchTime.now() + delay / Double(NSEC_PER_SEC)
-        DispatchQueue.main.asyncAfter(deadline: time, execute: {
-            self.dismissLoading()
+    public func roomDelegate(didFinishSync room: QRoom){
+        self.dismissLoading()
+        if self.chatRoom!.comments.count > 0 {
+            self.collectionView.refreshData()
             if let target = self.chatTarget {
-                if let indexPath = self.chatRoom?.getIndexPath(ofComment: target){
-                    self.selectedCellIndex = indexPath
-                    self.collectionView.scrollToItem(at: indexPath, at: UICollectionViewScrollPosition.top, animated: true)
-                }else{
-                    QToasterSwift.toast(target: self, text: "Can't find message", backgroundColor: UIColor(red: 0.9, green: 0,blue: 0,alpha: 0.8), textColor: UIColor.white)
-                }
-                self.chatTarget = nil
+                self.collectionView.layoutIfNeeded()
+                self.collectionView.scrollToComment(comment: target)
+            }else{
+                self.collectionView.scrollToBottom()
             }
-        })
+        }
     }
-    public func room(didChangeAvatar room: QRoom) {
-        self.roomAvatar.loadAsync(room.avatarURL, onLoaded: { (image, _) in
-            self.roomAvatarImage = image
-            self.roomAvatar.backgroundColor = UIColor.clear
-            self.roomAvatarLabel.isHidden = true
-            self.chatRoom?.saveAvatar(image: image)
-            self.roomAvatar.image = image
-        })
+    public func roomDelegate(didChangeAvatar room: QRoom, avatar:UIImage){
+        self.roomAvatar.image = avatar
     }
-    public func room(didFailUpdate error: String) {
-        
-    }
-    public func room(didChangeUser room: QRoom, user: QUser) {
+    public func roomDelegate(didFailUpdate error: String){}
+    public func roomDelegate(didChangeUser room: QRoom, user: QUser){
         if self.chatRoom!.type == .single {
-            if user.email != QiscusMe.sharedInstance.email && self.chatRoom!.typingUser == ""{
+            if user.email != QiscusMe.shared.email && self.chatRoom!.typingUser == ""{
                 self.loadSubtitle()
             }
         }
     }
-    public func room(didChangeParticipant room: QRoom) {
+    public func roomDelegate(didChangeParticipant room: QRoom){
         if self.chatRoom?.type == .group && (self.chatSubtitle == "" || self.chatSubtitle == nil){
             self.loadSubtitle()
         }
     }
-    public func room(didChangeGroupComment section: Int) {
-        if let firstCell = self.collectionView.cellForItem(at: IndexPath(item: 0, section: section)) as? QChatCell {
-            firstCell.updateUserName()
-        }
-    }
-    public func room(didChangeComment section: Int, row: Int, action: String) {
-        
-    }
-    
-    public func room(gotNewComment comment: QComment) {
-//        self.collectionView.reloadData()
-//        self.chatRoom!.updateUnreadCommentCount(count: 0)
-//        if let indexPath = self.chatRoom!.getIndexPath(ofComment: comment){
-//            if self.isLastRowVisible || comment.senderEmail == QiscusMe.sharedInstance.email{
-//                self.collectionView.scrollToItem(at: indexPath, at: .bottom, animated: true)
-//            }
-//        }
-    }
-    
-    public func room(userDidTyping userEmail: String) {
-//        if userEmail == "" {
-//            self.stopTypingIndicator()
-//        }else{
-//            if let user = QUser.user(withEmail: userEmail) {
-//                self.startTypingIndicator(withUser: user.fullname)
-//            }
-//        }
-    }
-    public func room(didDeleteComment section: Int, row: Int) {
-        self.collectionView.reloadData()
-    }
-    public func room(didDeleteGroupComment section: Int) {
-        self.collectionView.reloadData()
-    }
-    public func room(didFinishLoadMore inRoom: QRoom, success: Bool, gotNewComment: Bool) {
-        self.loadMoreControl.endRefreshing()
-        if success && gotNewComment {
-            self.collectionView.reloadData()
-            if let targetComment = self.topComment {
-                if let indexPath = self.chatRoom!.getIndexPath(ofComment: targetComment){
-                    self.collectionView.scrollToItem(at: indexPath, at: .top, animated: false)
-                }
-            }else{
-                let section = self.chatRoom!.commentsGroupCount - 1
-                let item = self.chatRoom!.commentGroup(index: section)!.commentsCount - 1
-                let indexPath = IndexPath(item: item, section: section)
-                self.collectionView.scrollToItem(at: indexPath, at: .top, animated: false)
-            }
-            self.topComment = nil
-        }
-    }
-    public func room(didChangeUnread lastReadCommentId:Int, unreadCount:Int) {
-        if unreadCount > 0 {
-            var unreadText = "\(unreadCount)"
-            if unreadCount > 99 {
-                unreadText = "99+"
-            }
-            self.unreadIndicator.text = unreadText
-            self.unreadIndicator.isHidden = self.isLastRowVisible
-        }else{
+    public func roomDelegate(didChangeUnread room:QRoom, unreadCount:Int){
+        if unreadCount == 0 {
             self.unreadIndicator.text = ""
             self.unreadIndicator.isHidden = true
-        }
-    }
-    public func hideInputBar(){
-        self.inputBarHeight.constant = 0
-        self.minInputHeight.constant = 0
-    }
-    open func reply(toComment comment:QComment?){
-        if comment == nil {
-            Qiscus.uiThread.async { autoreleasepool{
-                self.linkPreviewTopMargin.constant = 0
-                UIView.animate(withDuration: 0.65, animations: {
-                    self.view.layoutIfNeeded()
-                }, completion: {(_) in
-                    if self.inputText.value == "" {
-                        self.sendButton.isEnabled = false
-                        self.sendButton.isHidden = true
-                        self.recordButton.isHidden = false
-                        self.linkImage.image = nil
-                    }
-                })
-                }}
-        }
-        else{
-            Qiscus.uiThread.async {autoreleasepool{
-                switch comment!.type {
-                case .text:
-                    self.linkDescription.text = comment!.text
-                    self.linkImageWidth.constant = 0
-                    break
-                case .video, .image:
-                    self.linkImage.contentMode = .scaleAspectFill
-                    if let file = comment!.file {
-                        if comment!.type == .video || comment!.type == .image {
-                            if QFileManager.isFileExist(inLocalPath: file.localThumbPath){
-                                self.linkImage.loadAsync(fromLocalPath: file.localThumbPath, onLoaded: { (image, _) in
-                                    self.linkImage.image = image
-                                })
-                            }
-                            else if QFileManager.isFileExist(inLocalPath: file.localMiniThumbPath){
-                                self.linkImage.loadAsync(fromLocalPath: file.localMiniThumbPath, onLoaded: { (image, _) in
-                                    self.linkImage.image = image
-                                })
-                            }
-                            else{
-                                self.linkImage.loadAsync(file.thumbURL, onLoaded: { (image, _) in
-                                    self.linkImage.image = image
-                                })
-                            }
-                            self.linkImageWidth.constant = 55
-                        }
-                        self.linkDescription.text = file.filename
-                    }
-                    break
-                case .location:
-                    let payload = JSON(parseJSON: comment!.data)
-                    self.linkImage.contentMode = .scaleAspectFill
-                    self.linkImage.image = Qiscus.image(named: "map_ico")
-                    self.linkImageWidth.constant = 55
-                    self.linkDescription.text = "\(payload["name"].stringValue) - \(payload["address"].stringValue)"
-                    break
-                case .contact:
-                    let payload = JSON(parseJSON: comment!.data)
-                    self.linkImage.contentMode = .top
-                    self.linkImage.image = Qiscus.image(named: "contact")
-                    self.linkImageWidth.constant = 55
-                    self.linkDescription.text = "\(payload["name"].stringValue) - \(payload["value"].stringValue)"
-                    break
-                case .reply:
-                    self.linkDescription.text = comment!.text
-                    self.linkImageWidth.constant = 0
-                    break
-                default:
-                    break
-                }
-                
-                if let user = self.replyData!.sender {
-                    self.linkTitle.text = user.fullname
-                }else{
-                    self.linkTitle.text = comment!.senderName
-                }
-                self.linkPreviewTopMargin.constant = -65
-                
-                UIView.animate(withDuration: 0.35, animations: {
-                    self.view.layoutIfNeeded()
-                    if self.lastVisibleRow != nil {
-                        self.collectionView.scrollToItem(at: self.lastVisibleRow!, at: .bottom, animated: true)
-                    }
-                }, completion: { (_) in
-                    if self.inputText.value == "" {
-                        self.sendButton.isEnabled = false
-                    }else{
-                        self.sendButton.isEnabled = true
-                    }
-                    self.sendButton.isHidden = false
-                    self.recordButton.isHidden = true
-                })
-                }}
+        }else{
+            if unreadCount > 99 {
+                self.unreadIndicator.text = "99+"
+            }else{
+                self.unreadIndicator.text = "\(unreadCount)"
+            }
+            self.unreadIndicator.isHidden = self.bottomButton.isHidden
         }
     }
 }

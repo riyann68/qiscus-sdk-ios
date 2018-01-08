@@ -13,7 +13,6 @@ protocol ChatCellAudioDelegate {
     func didTapDownloadButton(_ button: UIButton, onCell cell: QCellAudio)
     func didStartSeekTimeSlider(_ slider: UISlider, onCell cell: QCellAudio)
     func didEndSeekTimeSlider(_ slider: UISlider, onCell cell: QCellAudio)
-    func didChangeData(onCell cell:QCellAudio , withData comment:QComment, dataTypeChanged:String)
 }
 class QCellAudio: QChatCell {
 

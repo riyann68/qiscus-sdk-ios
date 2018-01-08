@@ -13,23 +13,54 @@ import RealmSwift
     case image
     case video
     case audio
+    case document
     case file
 }
 
 public class QFile:Object{
-    @objc public dynamic var id:String = ""
-    @objc public dynamic var url:String = ""
-    @objc public dynamic var localPath:String = ""
-    @objc public dynamic var localThumbPath:String = ""
-    @objc public dynamic var localMiniThumbPath:String = ""
-    @objc public dynamic var roomId:String = ""
-    @objc public dynamic var mimeType:String = ""
-    @objc public dynamic var senderEmail:String = ""
+    public dynamic var id:String = ""
+    public dynamic var url:String = ""
+    public dynamic var localPath:String = ""
+    public dynamic var localThumbPath:String = ""
+    public dynamic var localMiniThumbPath:String = ""
+    public dynamic var roomId:String = ""
+    public dynamic var mimeType:String = ""
+    public dynamic var senderEmail:String = ""
+    public dynamic var size:Double = 0
+    public dynamic var pages:Int = 0
+    public dynamic var filename:String = ""
     
     var uploadProgress:Double = 0
     var downloadProgress:Double = 0
     
+    override public static func primaryKey() -> String? {
+        return "id"
+    }
+    override public static func ignoredProperties() -> [String] {
+        return ["uploadProgress","downloadProgress"]
+    }
+    
     // MARK: - Getter Variable
+    public var sizeString:String{
+        get{
+            if self.size > Double(1024 * 1024) {
+                var count = self.size / (Double(1024 * 1024))
+                count = Double(round(100 * count)/100)
+
+                return "\(count) MB"
+            }else if self.size > Double(1024) {
+                var count = self.size / (Double(1024))
+                count = Double(round(100 * count)/100)
+                
+                return "\(count) KB"
+            }else if self.size > Double(0){
+                
+                return "\(self.size) Byte"
+            }else{
+                return ""
+            }
+        }
+    }
     public var thumbURL:String{
         get{
             var thumbURL = self.url.replacingOccurrences(of: "/upload/", with: "/upload/w_30,c_scale/").replacingOccurrences(of: " ", with: "%20")
@@ -56,22 +87,7 @@ public class QFile:Object{
             return QUser.user(withEmail: self.senderEmail)
         }
     }
-    public var filename:String {
-        get {
-            var mediaURL:URL?
-            var fileName:String = ""
-            if(self.localPath == ""){
-                let remoteURL = self.url.replacingOccurrences(of: " ", with: "%20")
-                mediaURL = URL(string: remoteURL)!
-                fileName = mediaURL!.lastPathComponent.replacingOccurrences(of: "%20", with: "_")
-            }else if self.localPath.range(of: "/") == nil{
-                fileName = self.localPath as String
-            }else{
-                fileName = String(self.localPath.split(separator: "/").last!)
-            }
-            return fileName
-        }
-    }
+    
     public var ext:String {
         get{
             var ext = ""
@@ -92,6 +108,8 @@ public class QFile:Object{
                 return .video
             case "m4a","m4a_","aac","aac_","mp3","mp3_":
                 return .audio
+            case "pdf","pdf_":
+                return .document
             default:
                 return .file
             }
@@ -100,6 +118,7 @@ public class QFile:Object{
     
     public class func file(withURL url:String) -> QFile?{
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
         var file:QFile? = nil
         let data =  realm.objects(QFile.self).filter("url == '\(url)'")
         
@@ -144,33 +163,73 @@ public class QFile:Object{
     }
     internal func updateLocalPath(path:String){
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
         try! realm.write {
             self.localPath = localPath
         }
     }
     public func saveFile(withData data:Data)->String{
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
         let localPath = QFileManager.saveFile(withData: data, fileName: self.filename, type: .comment)
         try! realm.write {
             self.localPath = localPath
         }
         return localPath
     }
+    public func updatePages(withTotalPage pages:Int){
+        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
+        
+        if self.pages != pages {
+            try! realm.write {
+                self.pages = pages
+            }
+        }
+    }
+    public func updateSize(withSize size:Double){
+        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
+        
+        if self.size != size {
+            try! realm.write {
+                self.size = size
+            }
+        }
+    }
     public func saveThumbImage(withImage image:UIImage){
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
         var data = Data()
-        if let imageData = UIImagePNGRepresentation(image){
+        var ext = "jpg"
+        let imageSize = image.size
+        var bigPart = CGFloat(0)
+        if(imageSize.width > imageSize.height){
+            bigPart = imageSize.width
+        }else{
+            bigPart = imageSize.height
+        }
+        
+        var compressVal = CGFloat(1)
+        
+        if(bigPart > 2000){
+            compressVal = 2000 / bigPart
+        }
+        if let imageData = UIImageJPEGRepresentation(image, compressVal) {
             data = imageData
         }else{
-            data = UIImageJPEGRepresentation(image, 1)!
+            data = UIImagePNGRepresentation(image)!
+            ext = "png"
         }
-        let localPath = QFileManager.saveFile(withData: data, fileName: "thumb-\(self.filename)", type: .comment)
+        
+        let localPath = QFileManager.saveFile(withData: data, fileName: "thumb-\(self.filename).\(ext)", type: .comment)
         try! realm.write {
             self.localThumbPath = localPath
         }
     }
     public func saveMiniThumbImage(withImage image:UIImage){
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
         var data = Data()
         if let imageData = UIImagePNGRepresentation(image){
             data = imageData
@@ -185,8 +244,18 @@ public class QFile:Object{
     internal func update(fileURL:String){
         if self.url != fileURL {
             let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
             try! realm.write {
                 self.url = fileURL
+            }
+        }
+    }
+    internal func update(fileSize:Double){
+        if self.size != fileSize {
+            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
+            try! realm.write {
+                self.size = fileSize
             }
         }
     }

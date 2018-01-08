@@ -24,19 +24,27 @@ class QCellPostbackLeft: QChatCell {
     @IBOutlet weak var textViewHeight: NSLayoutConstraint!
     @IBOutlet weak var textViewWidth: NSLayoutConstraint!
     @IBOutlet weak var balloonTopMargin: NSLayoutConstraint!
-    @IBOutlet weak var leftMargin: NSLayoutConstraint!
     @IBOutlet weak var balloonWidth: NSLayoutConstraint!
     @IBOutlet weak var cellHeight: NSLayoutConstraint!
     @IBOutlet weak var balloonHeight: NSLayoutConstraint!
     @IBOutlet weak var textLeading: NSLayoutConstraint!
     @IBOutlet weak var textTopMargin: NSLayoutConstraint!
     @IBOutlet weak var buttonsViewHeight: NSLayoutConstraint!
+    @IBOutlet weak var balloonLeftMargin: NSLayoutConstraint!
     
     override func awakeFromNib() {
         super.awakeFromNib()
         textView.contentInset = UIEdgeInsets.zero
     }
     public override func commentChanged() {
+        if hideAvatar {
+            self.balloonLeftMargin.constant = 0
+        }else{
+            self.balloonLeftMargin.constant = 27
+        }
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         self.textView.attributedText = self.comment?.attributedText
         self.textView.linkTextAttributes = self.linkTextAttributes
         balloonView.image = getBallon()
@@ -62,7 +70,7 @@ class QCellPostbackLeft: QChatCell {
         balloonView.tintColor = QiscusColorConfiguration.sharedInstance.leftBaloonColor
         dateLabel.textColor = QiscusColorConfiguration.sharedInstance.leftBaloonTextColor
         
-        if self.comment!.cellPos == .first || self.comment!.cellPos == .single{
+        if self.showUserName{
             if let sender = self.comment?.sender {
                 self.userNameLabel.text = sender.fullname
             }else{
@@ -113,19 +121,26 @@ class QCellPostbackLeft: QChatCell {
        
     }
     
-    @objc func postback(sender:UIButton){
+    func postback(sender:UIButton){
         let allData = JSON(parseJSON: self.comment!.data).arrayValue
         if allData.count > sender.tag {
-            let data = allData[sender.tag]
-            self.delegate?.didTapPostbackButton(withData: data)
+            self.delegate?.didTapPostbackButton(onComment: self.comment!, index: sender.tag)
         }
     }
     
-    @objc func accountLinking(sender:UIButton){
-        let data = JSON(parseJSON: self.comment!.data)
-        self.delegate?.didTapAccountLinking(withData: data)
+    func accountLinking(sender:UIButton){
+        self.delegate?.didTapAccountLinking(onComment: self.comment!)
     }
-    public override func comment(didChangePosition position: QCellPosition) {
-        self.balloonView.image = self.getBallon()
+    public override func comment(didChangePosition comment:QComment, position: QCellPosition) {
+        if comment.uniqueId == self.comment?.uniqueId {
+            self.balloonView.image = self.getBallon()
+        }
+    }
+    public override func updateUserName() {
+        if let sender = self.comment?.sender {
+            self.userNameLabel.text = sender.fullname
+        }else{
+            self.userNameLabel.text = self.comment?.senderName
+        }
     }
 }

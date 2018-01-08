@@ -53,6 +53,11 @@ extension UIImage {
                     onSuccess(image)
                 }}
             }else{
+                if QChatService.downloadTasks.contains(urlString) {
+                    return
+                }else{
+                    QChatService.downloadTasks.append(urlString)
+                }
                 if let url = URL(string: urlString){
                     var urlRequest = URLRequest(url: url)
                     
@@ -66,6 +71,8 @@ extension UIImage {
                             DispatchQueue.main.async { autoreleasepool{
                                 onError()
                             }}
+                            let downloadTask = QChatService.downloadTasks.filter { $0 != urlString}
+                            QChatService.downloadTasks = downloadTask
                             Qiscus.printLog(text: "[QiscusImage] : \(String(describing: error!))")
                             return
                         }
@@ -73,10 +80,14 @@ extension UIImage {
                         if let data = data {
                             if let image = UIImage(data: data) {
                                 QiscusImageCache.setObject(image, forKey: urlString as NSString)
+                                let downloadTask = QChatService.downloadTasks.filter { $0 != urlString}
+                                QChatService.downloadTasks = downloadTask
                                 DispatchQueue.main.async { autoreleasepool{
                                     onSuccess(image)
                                 }}
                             }else{
+                                let downloadTask = QChatService.downloadTasks.filter { $0 != urlString}
+                                QChatService.downloadTasks = downloadTask
                                 DispatchQueue.main.async {autoreleasepool{
                                     onError()
                                 }}
@@ -102,9 +113,9 @@ extension UIImage {
 
 extension UIImageView {
     
-    public func loadGif(name: String) {
+    public func loadQiscusGif(name: String) {
         DispatchQueue.global().async { autoreleasepool{
-            let image = UIImage.gif(name: name)
+            let image = UIImage.qiscusGIF(name: name)
             DispatchQueue.main.async { autoreleasepool{
                 self.image = image
             }}
@@ -115,7 +126,7 @@ extension UIImageView {
 
 extension UIImage {
     
-    public class func gif(data: Data) -> UIImage? {
+    public class func qiscusGIF(data: Data) -> UIImage? {
         // Create source from data
         guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
             Qiscus.printLog(text: "SwiftGif: Source for the image does not exist")
@@ -125,7 +136,7 @@ extension UIImage {
         return UIImage.animatedImageWithSource(source)
     }
     
-    public class func gif(url: String) -> UIImage? {
+    public class func qiscusGIF(url: String) -> UIImage? {
         // Validate URL
         guard let bundleURL = URL(string: url) else {
             Qiscus.printLog(text: "SwiftGif: This image named \"\(url)\" does not exist")
@@ -138,12 +149,12 @@ extension UIImage {
             return nil
         }
         
-        return gif(data: imageData)
+        return qiscusGIF(data: imageData)
     }
     
-    public class func gif(name: String) -> UIImage? {
+    public class func qiscusGIF(name: String) -> UIImage? {
         // Check for existance of gif
-        guard let bundleURL = Bundle.main
+        guard let bundleURL = Qiscus.bundle
             .url(forResource: name, withExtension: "gif") else {
                 Qiscus.printLog(text: "SwiftGif: This image named \"\(name)\" does not exist")
                 return nil
@@ -155,7 +166,7 @@ extension UIImage {
             return nil
         }
         
-        return gif(data: imageData)
+        return qiscusGIF(data: imageData)
     }
     
     internal class func delayForImageAtIndex(_ index: Int, source: CGImageSource!) -> Double {

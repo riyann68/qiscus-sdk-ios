@@ -13,7 +13,7 @@ import Foundation
     case room
 }
 public class QFileManager:NSObject{
-    private class func directoryPath(forDirectory directory:QDirectoryType)->String{
+    internal class func directoryPath(forDirectory directory:QDirectoryType)->String{
         var dir = ""
         switch directory {
         case .comment:
@@ -48,7 +48,6 @@ public class QFileManager:NSObject{
     internal class func saveFile(withData fileData: Data, fileName: String, type:QDirectoryType)->String{
         let directoryPath = QFileManager.directoryPath(forDirectory: type)
         let path = "\(directoryPath)/\(fileName.replacingOccurrences(of: " ", with: "_"))"
-        print("qiscus file path: \(path)")
         try? fileData.write(to: URL(fileURLWithPath: path), options: [.atomic])
         return path
     }
@@ -73,7 +72,6 @@ extension FileManager {
     func clearTmpDirectory() {
         do {
             let tmpDirectory = try contentsOfDirectory(atPath: NSTemporaryDirectory())
-            print("tempDirectory: \(tmpDirectory)")
             try tmpDirectory.forEach {[unowned self] file in
                 let path = String.init(format: "%@%@", NSTemporaryDirectory(), file)
                 try self.removeItem(atPath: path)

@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
 s.name         = "Qiscus"
-s.version      = "2.6.0"
+s.version      = "2.7.2"
 s.summary      = "Qiscus SDK for iOS"
 
 s.description  = <<-DESC
@@ -18,7 +18,7 @@ s.source       = { :git => "https://github.com/qiscus/qiscus-sdk-ios.git", :tag 
 
 s.source_files  = "Qiscus/**/*.{swift}"
 s.resource_bundles = {
-    'Qiscus' => ['Qiscus/**/*.{storyboard,xib,xcassets,json,imageset,png}']
+    'Qiscus' => ['Qiscus/**/*.{storyboard,xib,xcassets,json,imageset,png,gif}']
 }
 
 s.platform      = :ios, "9.0"

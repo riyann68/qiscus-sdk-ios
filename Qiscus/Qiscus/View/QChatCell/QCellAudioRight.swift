@@ -76,12 +76,15 @@ class QCellAudioRight: QCellAudio {
         fileContainer.layer.cornerRadius = 10
     }
     public override func commentChanged() {
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         self.progressHeight.constant = 0
         self.progressContainer.isHidden = true
         self.currentTimeSlider.setValue(self.comment!.currentTimeSlider, animated: true)
         self.durationLabel.text = self.comment!.durationLabel
         
-        if self.comment!.cellPos == .first || self.comment!.cellPos == .single{
+        if self.showUserName{
             userNameLabel.text = "You"
             userNameLabel.isHidden = false
             balloonTopMargin.constant = 20
@@ -121,7 +124,6 @@ class QCellAudioRight: QCellAudio {
                                     self.currentTimeSlider.maximumValue = Float(duration)
                                     if let durationString = self.timeFormatter?.string(from: duration) {
                                         self.comment!.updateDurationLabel(label: durationString)
-                                        self.audioCellDelegate?.didChangeData(onCell: self, withData: self.comment!, dataTypeChanged: "durationLabel")
                                         self.durationLabel.text = durationString
                                     }
                                 }
@@ -162,7 +164,6 @@ class QCellAudioRight: QCellAudio {
         DispatchQueue.main.async {
             autoreleasepool{
                 self.comment?.updatePlaying(playing: true)
-                self.audioCellDelegate?.didChangeData(onCell: self, withData: self.comment!, dataTypeChanged: "audioIsPlaying")
                 self.audioCellDelegate?.didTapPlayButton(sender, onCell: self)
             }
         }
@@ -173,7 +174,6 @@ class QCellAudioRight: QCellAudio {
         DispatchQueue.main.async {
             autoreleasepool{
                 self.comment?.updatePlaying(playing: false)
-                self.audioCellDelegate?.didChangeData(onCell: self, withData: self.comment!, dataTypeChanged: "audioIsPlaying")
                 self.audioCellDelegate?.didTapPauseButton(sender, onCell: self)
             }
         }
@@ -190,7 +190,6 @@ class QCellAudioRight: QCellAudio {
                     self.comment?.updateTimeSlider(value: self.currentTimeSlider.value)
                     self.comment?.updateSeekLabel(label: seekTimeString)
                     
-                    self.audioCellDelegate?.didChangeData(onCell: self, withData: self.comment!, dataTypeChanged: "seekTimeLabel")
                     self.seekTimeLabel.text = seekTimeString
                 }
                 self.audioCellDelegate?.didStartSeekTimeSlider(sender, onCell: self)
@@ -201,7 +200,6 @@ class QCellAudioRight: QCellAudio {
         DispatchQueue.main.async {
             autoreleasepool{
                 self.comment!.updateTimeSlider(value: self.currentTimeSlider.value)
-                self.audioCellDelegate?.didChangeData(onCell: self, withData: self.comment!, dataTypeChanged: "currentTimeSlider")
                 self.audioCellDelegate?.didEndSeekTimeSlider(sender, onCell: self)
             }
         }
@@ -267,7 +265,6 @@ class QCellAudioRight: QCellAudio {
         DispatchQueue.main.async {
             autoreleasepool{
                 self.comment?.updateDownloading(downloading: true)
-                self.audioCellDelegate?.didChangeData(onCell: self, withData: self.comment!, dataTypeChanged: "isDownloading")
                 self.playButton.removeTarget(nil, action: nil, for: .allEvents)
             }
         }
@@ -277,7 +274,6 @@ class QCellAudioRight: QCellAudio {
         DispatchQueue.main.async {
             autoreleasepool{
                 self.comment?.updateTimeSlider(value: Float(timeInterval))
-                self.audioCellDelegate?.didChangeData(onCell: self, withData: self.comment!, dataTypeChanged: "currentTimeSlider")
                 self.currentTimeSlider.setValue(Float(timeInterval), animated: true)
                 
                 self.seekTimeLabel.text = self.timeFormatter?.string(from: timeInterval)
@@ -368,25 +364,39 @@ class QCellAudioRight: QCellAudio {
             self.userNameLabel.text = self.comment?.senderName
         }
     }
-    public override func comment(didChangePosition position: QCellPosition) {
-        self.balloonView.image = self.getBallon()
-    }
-    public override func comment(didDownload downloading:Bool){
-        if !downloading {
-            self.downloadFinished()
+    public override func comment(didChangePosition comment:QComment, position: QCellPosition) {
+        if comment.uniqueId == self.comment?.uniqueId {
+            self.balloonView.image = self.getBallon()
         }
     }
-    public override func comment(didUpload uploading:Bool){
-        self.uploadFinished()
+    public override func comment(didDownload comment:QComment, downloading:Bool){
+        if comment.uniqueId == self.comment?.uniqueId {
+            if !downloading {
+                self.downloadFinished()
+            }else{
+                self.downloadingMedia()
+            }
+        }
     }
-    public override func comment(didChangeProgress progress:CGFloat){
-        self.progressImageView.image = Qiscus.image(named: "audio_download")
-        self.progressContainer.isHidden = false
-        self.progressHeight.constant = progress * 30
-        let percentage = Int(progress * 100)
-        self.dateLabel.text = "Downloading \(QChatCellHelper.getFormattedStringFromInt(percentage)) %"
-        UIView.animate(withDuration: 0.65, animations: {
-            self.progressView.layoutIfNeeded()
-        })
+    public override func comment(didUpload comment:QComment, uploading:Bool){
+        if self.comment?.uniqueId == comment.uniqueId {
+            if !uploading {
+                self.uploadFinished()
+            }else{
+                self.uploadingMedia()
+            }
+        }
+    }
+    public override func comment(didChangeProgress comment:QComment, progress:CGFloat){
+        if comment.uniqueId == self.comment?.uniqueId {
+            self.progressImageView.image = Qiscus.image(named: "audio_download")
+            self.progressContainer.isHidden = false
+            self.progressHeight.constant = progress * 30
+            let percentage = Int(progress * 100)
+            self.dateLabel.text = "Downloading \(QChatCellHelper.getFormattedStringFromInt(percentage)) %"
+            UIView.animate(withDuration: 0.65, animations: {
+                self.progressView.layoutIfNeeded()
+            })
+        }
     }
 }

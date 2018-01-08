@@ -38,6 +38,7 @@ class QCellTextLeft: QChatCell, UITextViewDelegate {
     @IBOutlet weak var textTopMargin: NSLayoutConstraint!
     @IBOutlet weak var ballonHeight: NSLayoutConstraint!
     @IBOutlet weak var cellWidth: NSLayoutConstraint!
+    @IBOutlet weak var balloonLeftMargin: NSLayoutConstraint!
     
     
     override func awakeFromNib() {
@@ -61,8 +62,8 @@ class QCellTextLeft: QChatCell, UITextViewDelegate {
         textView.layoutIfNeeded()
         LinkContainer.isHidden = true
     }
-    @objc func openLink(){
-        self.delegate?.didTouchLink(onCell: self)
+    func openLink(){
+        self.delegate?.didTouchLink(onComment: self.comment!)
     }
     
     func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange) -> Bool {
@@ -70,6 +71,14 @@ class QCellTextLeft: QChatCell, UITextViewDelegate {
     }
 
     public override func commentChanged() {
+        if hideAvatar {
+            self.balloonLeftMargin.constant = 0
+        }else{
+            self.balloonLeftMargin.constant = 27
+        }
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         self.textView.comment = self.comment
         
         self.balloonView.image = self.getBallon()
@@ -83,20 +92,6 @@ class QCellTextLeft: QChatCell, UITextViewDelegate {
             textWidth = self.minWidth
         }
         
-//        if self.data.showLink {
-//            self.linkTitle.text = self.data.linkTitle
-//            self.linkDescription.text = self.data.linkDescription
-//            self.linkImage.image = self.data.linkImage
-//            self.LinkContainer.isHidden = false
-//            self.ballonHeight.constant = 83
-//            self.textTopMargin.constant = 73
-//            self.linkHeight.constant = 65
-//            textWidth = self.maxWidth
-//            
-//            if !self.data.linkSaved{
-//                QiscusDataPresenter.getLinkData(withData: self.data)
-//            }
-//        }else
         if self.comment!.type == .reply{
             let replyData = JSON(parseJSON: self.comment!.data)
             var text = replyData["replied_comment_message"].stringValue
@@ -116,7 +111,7 @@ class QCellTextLeft: QChatCell, UITextViewDelegate {
             }
             var username = replyData["replied_comment_sender_username"].stringValue
             let repliedEmail = replyData["replied_comment_sender_email"].stringValue
-            if repliedEmail == QiscusMe.sharedInstance.email {
+            if repliedEmail == QiscusMe.shared.email {
                 username = "You"
             }else{
                 if let user = QUser.user(withEmail: repliedEmail){
@@ -174,6 +169,39 @@ class QCellTextLeft: QChatCell, UITextViewDelegate {
                 }
                 text = filename
                 
+                break
+            case .document :
+                self.linkImage.contentMode = .scaleAspectFill
+                self.linkImage.image = nil
+                let filename = self.comment!.fileName(text: text)
+                let url = self.comment!.getAttachmentURL(message: text)
+                
+                self.linkImageWidth.constant = 55
+                self.linkImage.isHidden = false
+                text = filename
+                if let file = QFile.file(withURL: url){
+                    if QFileManager.isFileExist(inLocalPath: file.localThumbPath){
+                        self.linkImage.loadAsync(fromLocalPath: file.localThumbPath, onLoaded: { (image, _) in
+                            self.linkImage.image = image
+                        })
+                    }else if QFileManager.isFileExist(inLocalPath: file.localMiniThumbPath){
+                        self.linkImage.loadAsync(fromLocalPath: file.localMiniThumbPath, onLoaded: { (image, _) in
+                            self.linkImage.image = image
+                        })
+                    }else{
+                        self.linkImage.loadAsync(file.thumbURL, onLoaded: { (image, _) in
+                            self.linkImage.image = image
+                        })
+                    }
+                    var description = "\(file.filename)\nPDF File"
+                    if file.pages > 0 {
+                        description = "\(description), \(file.pages) page"
+                    }
+                    if file.sizeString != "" {
+                        description = "\(description), \(file.sizeString)"
+                    }
+                    text = description
+                }
                 break
             case .location :
                 self.linkImage.contentMode = .scaleAspectFill
@@ -241,7 +269,7 @@ class QCellTextLeft: QChatCell, UITextViewDelegate {
         self.dateLabel.textColor = QiscusColorConfiguration.sharedInstance.leftBaloonTextColor
         
         
-        if self.comment?.cellPos == .first || self.comment?.cellPos == .single{
+        if self.showUserName{
             if let sender = self.comment?.sender {
                 self.userNameLabel.text = sender.fullname
             }else{
@@ -256,22 +284,7 @@ class QCellTextLeft: QChatCell, UITextViewDelegate {
             self.balloonTopMargin.constant = 0
             self.cellHeight.constant = 0
         }
-        
-        // last cell
-//        if self.comment?.cellPos == .single{
-//            self.leftMargin.constant = 35
-//            self.textLeading.constant = 23
-//            self.balloonWidth.constant = 31
-//        }
-//        else if self.comment?.cellPos == .last {
-//            self.leftMargin.constant = 35
-//            self.textLeading.constant = 23
-//            self.balloonWidth.constant = 31
-//        }else{
-//            self.textLeading.constant = 8
-//            self.leftMargin.constant = 50
-//            self.balloonWidth.constant = 16
-//        }
+
         self.textView.layoutIfNeeded()
     }
     public override func updateUserName() {
@@ -281,7 +294,9 @@ class QCellTextLeft: QChatCell, UITextViewDelegate {
             self.userNameLabel.text = self.comment?.senderName
         }
     }
-    public override func comment(didChangePosition position: QCellPosition) {
-        self.balloonView.image = self.getBallon()
+    public override func comment(didChangePosition comment:QComment, position: QCellPosition) {
+        if comment.uniqueId == self.comment?.uniqueId {
+            self.balloonView.image = self.getBallon()
+        }
     }
 }

@@ -53,6 +53,9 @@ class QCellTextRight: QChatCell {
         
     }
     public override func commentChanged() {
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         self.textView.comment = self.comment
         
         self.balloonView.image = self.getBallon()
@@ -65,28 +68,6 @@ class QCellTextRight: QChatCell {
         }else{
             textWidth = self.minWidth
         }
-        
-//        self.linkTitle.text = ""
-//        self.linkDescription.text = ""
-//        self.linkImage.image = self.data.linkImage
-//        self.LinkContainer.isHidden = true
-//        self.balloonHeight.constant = 10
-//        self.textTopMargin.constant = 0
-//        
-//        if self.data.showLink {
-//            self.linkTitle.text = self.data.linkTitle
-//            self.linkDescription.text = self.data.linkDescription
-//            self.linkImage.image = self.data.linkImage
-//            self.LinkContainer.isHidden = false
-//            self.balloonHeight.constant = 83
-//            self.textTopMargin.constant = 73
-//            self.linkHeight.constant = 65
-//            textWidth = self.maxWidth
-//            
-//            if !self.data.linkSaved{
-//                QiscusDataPresenter.getLinkData(withData: self.data)
-//            }
-//        }else
         
         if self.comment?.type == .reply{
             let replyData = JSON(parseJSON: self.comment!.data)
@@ -106,7 +87,7 @@ class QCellTextRight: QChatCell {
             }
             var username = replyData["replied_comment_sender_username"].stringValue
             let repliedEmail = replyData["replied_comment_sender_email"].stringValue
-            if repliedEmail == QiscusMe.sharedInstance.email {
+            if repliedEmail == QiscusMe.shared.email {
                 username = "You"
             }else{
                 if let user = QUser.user(withEmail: repliedEmail){
@@ -164,6 +145,39 @@ class QCellTextRight: QChatCell {
                 }
                 text = filename
                 
+                break
+            case .document :
+                self.linkImage.contentMode = .scaleAspectFill
+                self.linkImage.image = nil
+                let filename = self.comment!.fileName(text: text)
+                let url = self.comment!.getAttachmentURL(message: text)
+                
+                self.linkImageWidth.constant = 55
+                self.linkImage.isHidden = false
+                text = filename
+                if let file = QFile.file(withURL: url){
+                    if QFileManager.isFileExist(inLocalPath: file.localThumbPath){
+                        self.linkImage.loadAsync(fromLocalPath: file.localThumbPath, onLoaded: { (image, _) in
+                            self.linkImage.image = image
+                        })
+                    }else if QFileManager.isFileExist(inLocalPath: file.localMiniThumbPath){
+                        self.linkImage.loadAsync(fromLocalPath: file.localMiniThumbPath, onLoaded: { (image, _) in
+                            self.linkImage.image = image
+                        })
+                    }else{
+                        self.linkImage.loadAsync(file.thumbURL, onLoaded: { (image, _) in
+                            self.linkImage.image = image
+                        })
+                    }
+                    var description = "\(file.filename)\nPDF File"
+                    if file.pages > 0 {
+                        description = "\(description), \(file.pages) page"
+                    }
+                    if file.sizeString != "" {
+                        description = "\(description), \(file.sizeString)"
+                    }
+                    text = description
+                }
                 break
             case .location :
                 self.linkImage.contentMode = .scaleAspectFill
@@ -230,7 +244,7 @@ class QCellTextRight: QChatCell {
         
         
         // first cell
-        if self.comment?.cellPos == .first || self.comment?.cellPos == .single{
+        if self.showUserName{
             self.userNameLabel.text = "You"
             self.userNameLabel.isHidden = false
             self.balloonTopMargin.constant = 20
@@ -289,8 +303,8 @@ class QCellTextRight: QChatCell {
         textView.text = ""
         textView.font = UIFont.systemFont(ofSize: 14)
     }
-    @objc func openLink(){
-        self.delegate?.didTouchLink(onCell: self)
+    func openLink(){
+        self.delegate?.didTouchLink(onComment: self.comment!)
     }
     public override func updateUserName() {
         if let sender = self.comment?.sender {
@@ -299,7 +313,9 @@ class QCellTextRight: QChatCell {
             self.userNameLabel.text = self.comment?.senderName
         }
     }
-    public override func comment(didChangePosition position: QCellPosition) {
-        self.balloonView.image = self.getBallon()
+    public override func comment(didChangePosition comment:QComment, position: QCellPosition) {
+        if comment.uniqueId == self.comment?.uniqueId {
+            self.balloonView.image = self.getBallon()
+        }
     }
 }

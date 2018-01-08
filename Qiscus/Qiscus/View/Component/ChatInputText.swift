@@ -34,14 +34,14 @@ open class ChatInputText: UITextView, UITextViewDelegate {
     
     override open func draw(_ rect: CGRect) {
         super.draw(rect)
-        //self.commonInit()
+        self.commonInit()
     }
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         self.commonInit()
     }
     
-    fileprivate func commonInit(){
+    internal func commonInit(){
         self.delegate = self
         self.placeholder = ""
         self.font = Qiscus.sharedInstance.styleConfiguration.chatFont

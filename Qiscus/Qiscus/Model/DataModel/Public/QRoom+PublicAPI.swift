@@ -30,7 +30,7 @@ public extension QRoom {
             return nil
         }
     }
-    public class func addRoom(fromJSON json:JSON)->QRoom{
+    public class func room(fromJSON json:JSON)->QRoom{
         return QRoom.addNewRoom(json:json)
     }
     public class func deleteRoom(room:QRoom){
@@ -44,9 +44,6 @@ public extension QRoom {
     public func unpin(){
         self.unpinRoom()
     }
-    public func commentGroup(index:Int)->QCommentGroup?{
-        return self.getCommentGroup(index:index)
-    }
     public func update(roomName:String? = nil, roomAvatarURL:String? = nil, roomOptions:String? = nil, onSuccess:@escaping ((_ room: QRoom)->Void),onError:@escaping ((_ error: String)->Void)){
         self.updateRoom(roomName: roomName, roomAvatarURL: roomAvatarURL, roomOptions: roomOptions, onSuccess: onSuccess, onError: onError)
     }
@@ -55,9 +52,6 @@ public extension QRoom {
     }
     public func publishStartTyping(){
         self.publishStartTypingRoom()
-    }
-    public func saveAvatar(image:UIImage){
-        self.saveRoomAvatar(image: image)
     }
     public func subscribeRealtimeStatus(){
         self.subscribeRoomChannel()
@@ -76,5 +70,17 @@ public extension QRoom {
     }
     public func publishCommentStatus(withStatus status:QCommentStatus){
         self.publishStatus(withStatus: status)
+    }
+    public func downloadAvatar(){
+        self.downloadRoomAvatar()
+    }
+    public func loadAvatar(onSuccess:  @escaping (UIImage)->Void, onError:  @escaping (String)->Void){
+        self.loadRoomAvatar(onSuccess: onSuccess, onError: onError)
+    }
+    public func add(newComment comment:QComment){
+        self.addComment(newComment: comment)
+    }
+    public func loadData(limit:Int = 20, offset:String? = nil, onSuccess:@escaping (QRoom)->Void, onError:@escaping (String)->Void){
+        self.loadRoomData(limit: limit, offset: offset, onSuccess: onSuccess, onError: onError)
     }
 }

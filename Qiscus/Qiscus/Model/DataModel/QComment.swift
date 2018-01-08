@@ -18,6 +18,7 @@ public enum QReplyType:Int{
     case document
     case location
     case contact
+    case file
     case other
 }
 @objc public enum QCellPosition:Int {
@@ -37,6 +38,7 @@ public enum QReplyType:Int{
     case contact
     case location
     case custom
+    case document
     
     static let all = [text.name(), image.name(), video.name(), audio.name(),file.name(),postback.name(),account.name(), reply.name(), system.name(), card.name(), contact.name(), location.name(), custom.name()]
     
@@ -53,8 +55,9 @@ public enum QReplyType:Int{
             case .system    : return "system"
             case .card      : return "card"
             case .contact   : return "contact_person"
-            case .location : return "location"
+            case .location  : return "location"
             case .custom    : return "custom"
+            case .document  : return "document"
         }
     }
     init(name:String) {
@@ -71,6 +74,7 @@ public enum QReplyType:Int{
             case "card"             : self = .card ; break
             case "contact_person"   : self = .contact ; break
             case "location"         : self = .location; break
+            case "document"         : self = .document; break
             default                 : self = .custom ; break
         }
     }
@@ -84,63 +88,78 @@ public enum QReplyType:Int{
     case failed
 }
 @objc public protocol QCommentDelegate {
-    func comment(didChangeStatus status:QCommentStatus)
-    func comment(didChangePosition position:QCellPosition)
+    func comment(didChangeStatus comment:QComment, status:QCommentStatus)
+    func comment(didChangePosition comment:QComment, position:QCellPosition)
     
     // Audio comment delegate
-    @objc optional func comment(didChangeDurationLabel label:String)
-    @objc optional func comment(didChangeCurrentTimeSlider value:Float)
-    @objc optional func comment(didChangeSeekTimeLabel label:String)
-    @objc optional func comment(didChangeAudioPlaying playing:Bool)
+    @objc optional func comment(didChangeDurationLabel comment:QComment, label:String)
+    @objc optional func comment(didChangeCurrentTimeSlider comment:QComment, value:Float)
+    @objc optional func comment(didChangeSeekTimeLabel comment:QComment, label:String)
+    @objc optional func comment(didChangeAudioPlaying comment:QComment, playing:Bool)
     
     // File comment delegate
-    @objc optional func comment(didDownload downloading:Bool)
-    @objc optional func comment(didUpload uploading:Bool)
-    @objc optional func comment(didChangeProgress progress:CGFloat)
+    @objc optional func comment(didDownload comment:QComment, downloading:Bool)
+    @objc optional func comment(didUpload comment:QComment, uploading:Bool)
+    @objc optional func comment(didChangeProgress comment:QComment, progress:CGFloat)
+}
+@objc public enum QCommentProperty:Int{
+    case status
+    case uploading
+    case downloading
+    case uploadProgress
+    case downloadProgress
+    case cellPosition
+    case cellSize
 }
 public class QComment:Object {
     static var cache = [String: QComment]()
     
-    @objc public dynamic var uniqueId: String = ""
-    @objc public dynamic var id:Int = 0
-    @objc public dynamic var roomId:String = ""
-    @objc public dynamic var beforeId:Int = 0
-    @objc public dynamic var text:String = ""
-    @objc public dynamic var createdAt: Double = 0
-    @objc public dynamic var senderEmail:String = ""
-    @objc public dynamic var senderName:String = ""
-    @objc public dynamic var senderAvatarURL:String = ""
-    @objc public dynamic var statusRaw:Int = QCommentStatus.sending.rawValue
-    @objc public dynamic var typeRaw:String = QCommentType.text.name()
-    @objc public dynamic var data:String = ""
-    @objc public dynamic var cellPosRaw:Int = 0
+    public dynamic var uniqueId: String = ""
+    public dynamic var id:Int = 0
+    public dynamic var roomId:String = ""
+    public dynamic var beforeId:Int = 0
+    public dynamic var text:String = ""
+    public dynamic var createdAt: Double = 0
+    public dynamic var senderEmail:String = ""
+    public dynamic var senderName:String = ""
+    public dynamic var senderAvatarURL:String = ""
+    public dynamic var statusRaw:Int = QCommentStatus.sending.rawValue
+    public dynamic var typeRaw:String = QCommentType.text.name()
+    public dynamic var data:String = ""
+    public dynamic var cellPosRaw:Int = 0
     
-    @objc public dynamic var roomName:String = ""
-    @objc internal dynamic var roomTypeRaw:Int = 0
-    @objc public dynamic var roomAvatar:String = ""
+    public dynamic var roomName:String = ""
+    internal dynamic var roomTypeRaw:Int = 0
+    public dynamic var roomAvatar:String = ""
     
-    @objc private dynamic var cellWidth:Float = 0
-    @objc private dynamic var cellHeight:Float = 0
-    @objc internal dynamic var textFontName:String = ""
-    @objc internal dynamic var textFontSize:Float = 0
-    @objc internal dynamic var rawExtra:String = ""
+    private dynamic var cellWidth:Float = 0
+    private dynamic var cellHeight:Float = 0
+    internal dynamic var textFontName:String = ""
+    internal dynamic var textFontSize:Float = 0
+    internal dynamic var rawExtra:String = ""
     // MARK : - Ignored Parameters
     var displayImage:UIImage?
     public var delegate:QCommentDelegate?
     
     // audio variable
-    @objc public dynamic var durationLabel = ""
-    @objc public dynamic var currentTimeSlider = Float(0)
-    @objc public dynamic var seekTimeLabel = "00:00"
-    @objc public dynamic var audioIsPlaying = false
+    public dynamic var durationLabel = ""
+    public dynamic var currentTimeSlider = Float(0)
+    public dynamic var seekTimeLabel = "00:00"
+    public dynamic var audioIsPlaying = false
     // file variable
-    @objc public dynamic var isDownloading = false
-    @objc public dynamic var isUploading = false
-    @objc public dynamic var progress = CGFloat(0)
+    public var isDownloading = false
+    public var isUploading = false
+    public var progress = CGFloat(0)
     
     
+    // read mark
+    internal dynamic var isRead:Bool = false
+    
+    override public static func primaryKey() -> String? {
+        return "uniqueId"
+    }
     override public static func ignoredProperties() -> [String] {
-        return ["displayImage","delegate"]
+        return ["displayImage","delegate", "isDownloading","isUploading","progress"]
     }
     
     //MARK : - Getter variable
@@ -164,15 +183,15 @@ public class QComment:Object {
         get{
             var foregroundColorAttributeName = QiscusColorConfiguration.sharedInstance.leftBaloonLinkColor
             var underlineColorAttributeName = QiscusColorConfiguration.sharedInstance.leftBaloonLinkColor
-            if self.senderEmail == QiscusMe.sharedInstance.email{
+            if self.senderEmail == QiscusMe.shared.email{
                 foregroundColorAttributeName = QiscusColorConfiguration.sharedInstance.rightBaloonLinkColor
                 underlineColorAttributeName = QiscusColorConfiguration.sharedInstance.rightBaloonLinkColor
             }
             return [
-                NSAttributedStringKey.foregroundColor.rawValue: foregroundColorAttributeName,
-                NSAttributedStringKey.underlineColor.rawValue: underlineColorAttributeName,
-                NSAttributedStringKey.underlineStyle.rawValue: NSUnderlineStyle.styleSingle.rawValue,
-                NSAttributedStringKey.font.rawValue: Qiscus.style.chatFont
+                NSForegroundColorAttributeName: foregroundColorAttributeName,
+                NSUnderlineColorAttributeName: underlineColorAttributeName,
+                NSUnderlineStyleAttributeName: NSUnderlineStyle.styleSingle.rawValue,
+                NSFontAttributeName: Qiscus.style.chatFont
             ]
         }
     }
@@ -196,6 +215,7 @@ public class QComment:Object {
     public var file:QFile? {
         get{
             let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
             let files = realm.objects(QFile.self).filter("id == '\(self.uniqueId)'")
             if files.count > 0 {
                 return files.first!
@@ -241,7 +261,7 @@ public class QComment:Object {
     public var cellIdentifier:String{
         get{
             var position = "Left"
-            if self.senderEmail == QiscusMe.sharedInstance.email {
+            if self.senderEmail == QiscusMe.shared.email {
                 position = "Right"
             }
             switch self.type {
@@ -261,6 +281,8 @@ public class QComment:Object {
                 return "cellContact\(position)"
             case .location:
                 return "cellLocation\(position)"
+            case .document:
+                return "cellDoc\(position)"
             default:
                 return "cellText\(position)"
             }
@@ -278,6 +300,7 @@ public class QComment:Object {
         }
     }
     public var textSize:CGSize {
+        if !Thread.isMainThread { return CGSize() }
         var recalculate = false
         
         func recalculateSize()->CGSize{
@@ -331,12 +354,16 @@ public class QComment:Object {
                 }
                 size.height = height
                 break
+            case .document :
+                size.height = 200
+                break
             default:
                 break
             }
             return size
         }
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
         if Float(Qiscus.style.chatFont.pointSize) != self.textFontSize || Qiscus.style.chatFont.familyName != self.textFontName{
             recalculate = true
             try! realm.write {
@@ -358,21 +385,21 @@ public class QComment:Object {
         }
     }
     
-    var textAttribute:[NSAttributedStringKey: Any]{
+    var textAttribute:[String: Any]{
         get{
             if self.type == .location {
                 let style = NSMutableParagraphStyle()
                 style.alignment = NSTextAlignment.left
                 let systemFont = UIFont.systemFont(ofSize: 14.0)
                 var foregroundColorAttributeName = QiscusColorConfiguration.sharedInstance.leftBaloonTextColor
-                if self.senderEmail == QiscusMe.sharedInstance.email{
+                if self.senderEmail == QiscusMe.shared.email{
                     foregroundColorAttributeName = QiscusColorConfiguration.sharedInstance.rightBaloonTextColor
                 }
                 
                 return [
-                    NSAttributedStringKey.foregroundColor: foregroundColorAttributeName,
-                    NSAttributedStringKey.font: systemFont,
-                    NSAttributedStringKey.paragraphStyle: style
+                    NSForegroundColorAttributeName: foregroundColorAttributeName,
+                    NSFontAttributeName: systemFont,
+                    NSParagraphStyleAttributeName: style
                 ]
             }
             else if self.type == .system {
@@ -383,18 +410,18 @@ public class QComment:Object {
                 let foregroundColorAttributeName = QiscusColorConfiguration.sharedInstance.systemBalloonTextColor
                 
                 return [
-                    NSAttributedStringKey.foregroundColor: foregroundColorAttributeName,
-                    NSAttributedStringKey.font: systemFont,
-                    NSAttributedStringKey.paragraphStyle: style
+                    NSForegroundColorAttributeName: foregroundColorAttributeName,
+                    NSFontAttributeName: systemFont,
+                    NSParagraphStyleAttributeName: style
                 ]
             }else{
                 var foregroundColorAttributeName = QiscusColorConfiguration.sharedInstance.leftBaloonTextColor
-                if self.senderEmail == QiscusMe.sharedInstance.email{
+                if self.senderEmail == QiscusMe.shared.email{
                     foregroundColorAttributeName = QiscusColorConfiguration.sharedInstance.rightBaloonTextColor
                 }
                 return [
-                    NSAttributedStringKey.foregroundColor: foregroundColorAttributeName,
-                    NSAttributedStringKey.font: Qiscus.style.chatFont
+                    NSForegroundColorAttributeName: foregroundColorAttributeName,
+                    NSFontAttributeName: Qiscus.style.chatFont
                 ]
             }
         }
@@ -439,7 +466,7 @@ public class QComment:Object {
                 commentInfo.readUser = [QParticipant]()
                 commentInfo.undeliveredUser = [QParticipant]()
                 for participant in room.participants {
-                    if participant.email != QiscusMe.sharedInstance.email{
+                    if participant.email != QiscusMe.shared.email{
                         if participant.lastReadCommentId >= self.id {
                             commentInfo.readUser.append(participant)
                         }else if participant.lastDeliveredCommentId >= self.id{
@@ -454,48 +481,64 @@ public class QComment:Object {
             return nil
         }
     }
-    
-    public class func comment(withUniqueId uniqueId:String)->QComment?{
+    public class func threadSaveComment(withUniqueId uniqueId:String)->QComment?{
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-        if let comment = QComment.cache[uniqueId] {
-            if !comment.isInvalidated{
-                return comment
-            }
-        }
+        realm.refresh()
         let comments = realm.objects(QComment.self).filter("uniqueId == '\(uniqueId)'")
         if comments.count > 0 {
             let comment = comments.first!
-            let _ = comment.textSize
-            comment.cacheObject()
             return comment
         }
-        
+        return nil
+    }
+    public class func comment(withUniqueId uniqueId:String)->QComment?{
+        if Thread.isMainThread {
+            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
+            if let comment = QComment.cache[uniqueId] {
+                if !comment.isInvalidated{
+                    return comment
+                }
+            }
+            let comments = realm.objects(QComment.self).filter("uniqueId == '\(uniqueId)'")
+            if comments.count > 0 {
+                let comment = comments.first!
+                let _ = comment.textSize
+                comment.cacheObject()
+                return comment
+            }
+        }
         return nil
     }
     public class func comment(withId id:Int)->QComment?{
-        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-        let data =  realm.objects(QComment.self).filter("id == \(id) && id != 0")
-        
-        if data.count > 0 {
-            let commentData = data.first!
-            return QComment.comment(withUniqueId: commentData.uniqueId)
-        }else{
-            return nil
+        if Thread.isMainThread {
+            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
+            let data =  realm.objects(QComment.self).filter("id == \(id) && id != 0")
+            
+            if data.count > 0 {
+                let commentData = data.first!
+                return QComment.comment(withUniqueId: commentData.uniqueId)
+            }
         }
+        return nil
     }
     public class func comment(withBeforeId id:Int)->QComment?{
-        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-        let data =  realm.objects(QComment.self).filter("beforeId == \(id) && id != 0")
-        
-        if data.count > 0 {
-            let commentData = data.first!
-            return QComment.comment(withUniqueId: commentData.uniqueId)
-        }else{
-            return nil
+        if Thread.isMainThread {
+            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
+            let data =  realm.objects(QComment.self).filter("beforeId == \(id) && id != 0")
+            
+            if data.count > 0 {
+                let commentData = data.first!
+                return QComment.comment(withUniqueId: commentData.uniqueId)
+            }
         }
+        return nil
     }
     internal class func countComments(afterId id:Int, roomId:String)->Int{
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
         let data =  realm.objects(QComment.self).filter("id > \(id) AND roomId = \'(roomId)'").sorted(byKeyPath: "createdAt", ascending: true)
         
         return data.count
@@ -546,8 +589,10 @@ public class QComment:Object {
                 return .audio
             case "mov","mov_","mp4","mp4_":
                 return .video
-            case "pdf","pdf_","doc","docx","ppt","pptx","xls","xlsx","txt":
+            case "pdf","pdf_":
                 return .document
+            case "doc","docx","ppt","pptx","xls","xlsx","txt":
+                return .file
             default:
                 return .other
             }
@@ -565,8 +610,8 @@ public class QComment:Object {
         comment.roomId = roomId
         comment.text = self.text
         comment.createdAt = Double(Date().timeIntervalSince1970)
-        comment.senderEmail = QiscusMe.sharedInstance.email
-        comment.senderName = QiscusMe.sharedInstance.userName
+        comment.senderEmail = QiscusMe.shared.email
+        comment.senderName = QiscusMe.shared.userName
         comment.statusRaw = QCommentStatus.sending.rawValue
         comment.data = self.data
         comment.typeRaw = self.type.name()
@@ -577,23 +622,28 @@ public class QComment:Object {
         }
         
         var file:QFile? = nil
+        
         if let fileRef = self.file {
             file = QFile()
             file!.id = uniqueID
             file!.roomId = roomId
             file!.url = fileRef.url
-            file!.senderEmail = QiscusMe.sharedInstance.email
+            file!.filename = fileRef.filename
+            file!.senderEmail = QiscusMe.shared.email
             file!.localPath = fileRef.localPath
             file!.mimeType = fileRef.mimeType
             file!.localThumbPath = fileRef.localThumbPath
             file!.localMiniThumbPath = fileRef.localMiniThumbPath
+            file!.pages = fileRef.pages
+            file!.size = fileRef.size
         }
         
         if let room = QRoom.room(withId: roomId){
             let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
             if file != nil {
                 try! realm.write {
-                    realm.add(file!)
+                    realm.add(file!, update:true)
                 }
             }
             room.addComment(newComment: comment)
@@ -605,41 +655,21 @@ public class QComment:Object {
     
     // MARK : updater method
     public func updateStatus(status:QCommentStatus){
-        if self.status != status && (self.statusRaw < status.rawValue || self.status == .failed){
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            try! realm.write {
-                self.statusRaw = status.rawValue
-            }
-            let delay = 0.4 * Double(NSEC_PER_SEC)
-            
-            let time = DispatchTime.now() + delay / Double(NSEC_PER_SEC)
-            let uniqueId = self.uniqueId
-            let roomId = self.roomId
-            
-            func update(){
-                if let room = QRoom.room(withId: roomId){
-                    if uniqueId == room.lastCommentUniqueId {
-                        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-                        try! realm.write {
-                            room.lastCommentStatusRaw = status.rawValue
+        let uId = self.uniqueId
+        QiscusDBThread.async {
+            if let c = QComment.threadSaveComment(withUniqueId: uId){
+                if c.status != status {
+                    let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+                    realm.refresh()
+                    try! realm.write {
+                        c.statusRaw = status.rawValue
+                    }
+                    DispatchQueue.main.async {
+                        if let cache = QComment.cache[uId]{
+                            QiscusNotification.publish(messageStatus: cache, status: status)
+                            cache.delegate?.comment(didChangeStatus: cache, status: status)
                         }
                     }
-                }
-                if let cache = QComment.cache[uniqueId] {
-                    if !cache.isInvalidated {
-                        cache.delegate?.comment(didChangeStatus: status)
-                    }
-                }
-                if let comment = QComment.comment(withUniqueId: uniqueId) {
-                    QiscusNotification.publish(messageStatus: comment, status: status)
-                }
-            }
-            
-            if Thread.isMainThread {
-                update()
-            }else{
-                DispatchQueue.main.sync {
-                    update()
                 }
             }
         }
@@ -648,11 +678,14 @@ public class QComment:Object {
         let uId = self.uniqueId
         if self.cellPos != cellPos {
             let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
             try! realm.write {
                 self.cellPosRaw = cellPos.rawValue
             }
             func execute(){
-                QComment.cache[uId]?.delegate?.comment(didChangePosition: cellPos)
+                if let cache = QComment.cache[uId] {
+                    cache.delegate?.comment(didChangePosition: cache, position: cellPos)
+                }
             }
             if Thread.isMainThread{
                 execute()
@@ -667,11 +700,14 @@ public class QComment:Object {
         let uId = self.uniqueId
         if self.durationLabel != label {
             let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
             try! realm.write {
                 self.durationLabel = label
             }
             func execute(){
-                QComment.cache[uId]?.delegate?.comment?(didChangeDurationLabel: label)
+                if let cache = QComment.cache[uId] {
+                    cache.delegate?.comment?(didChangeDurationLabel: cache, label: label)
+                }
             }
             if Thread.isMainThread{
                 execute()
@@ -686,11 +722,14 @@ public class QComment:Object {
         let uId = self.uniqueId
         if self.currentTimeSlider != value {
             let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
             try! realm.write {
                 self.currentTimeSlider = value
             }
             func execute(){
-                QComment.cache[uId]?.delegate?.comment?(didChangeCurrentTimeSlider: value)
+                if let cache = QComment.cache[uId] {
+                    cache.delegate?.comment?(didChangeCurrentTimeSlider: cache, value: value)
+                }
             }
             if Thread.isMainThread{
                 execute()
@@ -705,11 +744,14 @@ public class QComment:Object {
         let uId = self.uniqueId
         if self.seekTimeLabel != label {
             let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
             try! realm.write {
                 self.seekTimeLabel = label
             }
             func execute(){
-                QComment.cache[uId]?.delegate?.comment?(didChangeSeekTimeLabel: label)
+                if let cache = QComment.cache[uId] {
+                    cache.delegate?.comment?(didChangeSeekTimeLabel: cache, label: label)
+                }
             }
             if Thread.isMainThread{
                 execute()
@@ -724,11 +766,14 @@ public class QComment:Object {
         let uId = self.uniqueId
         if self.audioIsPlaying != playing {
             let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
             try! realm.write {
                 self.audioIsPlaying = playing
             }
             func execute(){
-                QComment.cache[uId]?.delegate?.comment?(didChangeAudioPlaying: playing)
+                if let cache = QComment.cache[uId] {
+                    cache.delegate?.comment?(didChangeAudioPlaying: cache, playing: playing)
+                }
             }
             if Thread.isMainThread{
                 execute()
@@ -741,57 +786,35 @@ public class QComment:Object {
     }
     public func updateUploading(uploading:Bool){
         let uId = self.uniqueId
-        if self.isUploading != uploading {
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            try! realm.write {
-                self.isUploading = uploading
-            }
-            func execute(){
-                QComment.cache[uId]?.delegate?.comment?(didUpload: uploading)
-            }
-            if Thread.isMainThread{
-                execute()
-            }else{
-                DispatchQueue.main.sync {
-                    execute()
+        DispatchQueue.main.async {
+            if let comment = QComment.cache[uId] {
+                if comment.isUploading != uploading {
+                    comment.isUploading = uploading
+                    comment.delegate?.comment?(didUpload: comment, uploading: uploading)
                 }
             }
         }
     }
     public func updateDownloading(downloading:Bool){
         let uId = self.uniqueId
-        if self.isDownloading != downloading {
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            try! realm.write {
-                self.isDownloading = downloading
-            }
-            func execute(){
-                QComment.cache[uId]?.delegate?.comment?(didDownload: downloading)
-            }
-            if Thread.isMainThread{
-                execute()
-            }else{
-                DispatchQueue.main.sync {
-                    execute()
+        DispatchQueue.main.async {
+            if let comment = QComment.cache[uId] {
+                if comment.isDownloading != downloading {
+                    comment.isDownloading = downloading
+                    if let delegate = comment.delegate {
+                        delegate.comment?(didDownload: comment, downloading: downloading)
+                    }
                 }
             }
         }
     }
     public func updateProgress(progress:CGFloat){
         let uId = self.uniqueId
-        if self.progress != progress {
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            try! realm.write {
-                self.progress = progress
-            }
-            func execute() {
-                QComment.cache[uId]?.delegate?.comment?(didChangeProgress: progress)
-            }
-            if Thread.isMainThread{
-                execute()
-            }else{
-                DispatchQueue.main.sync {
-                    execute()
+        DispatchQueue.main.async {
+            if let comment = QComment.cache[uId] {
+                if comment.progress != progress {
+                    comment.progress = progress
+                    comment.delegate?.comment?(didChangeProgress: comment, progress: progress)
                 }
             }
         }
@@ -838,6 +861,52 @@ public class QComment:Object {
             }
         }
         return nil
+    }
+    public func read(check:Bool = true){
+        let uniqueId = self.uniqueId
+        if self.isRead {return}
+        QiscusDBThread.async {
+            if let comment = QComment.threadSaveComment(withUniqueId: uniqueId){
+                let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+                realm.refresh()
+                try! realm.write {
+                    comment.isRead = true
+                }
+                if check {
+                    let data = realm.objects(QComment.self).filter("isRead == false AND createdAt < \(comment.createdAt) AND roomId == '\(comment.roomId)'")
+                    for olderComment in data {
+                        try! realm.write {
+                            olderComment.isRead = true
+                        }
+                    }
+                }
+                if let room = QRoom.threadSaveRoom(withId: comment.roomId) {
+                    room.updateUnreadCommentCount()
+                    if comment.id > 0 {
+                        let roomId = room.id
+                        let commentId = comment.id
+                        QRoom.publishStatus(roomId: roomId, commentId: commentId, status: .read)
+                    }
+                }
+            }
+        }
+    }
+    public func receive(){
+        let uniqueId = self.uniqueId
+        QiscusDBThread.async {
+            if let comment = QComment.threadSaveComment(withUniqueId: uniqueId){
+                if let room = QRoom.threadSaveRoom(withId: comment.roomId) {
+                    if room.lastDeliveredCommentId < comment.id {
+                        QRoom.publishStatus(roomId: room.id, commentId: comment.id, status: .delivered)
+                        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+                        realm.refresh()
+                        try! realm.write {
+                            room.lastDeliveredCommentId = comment.id
+                        }
+                    }
+                }
+            }
+        }
     }
     public func encodeDictionary()->[AnyHashable : Any]{
         var data = [AnyHashable : Any]()
@@ -891,6 +960,7 @@ public class QComment:Object {
         temp.senderEmail = senderEmail
         temp.cellPosRaw = QCellPosition.single.rawValue
         temp.rawExtra = commentExtras
+        temp.statusRaw = QCommentStatus.sent.rawValue
         
         if let roomName = json["room_name"].string {
             temp.roomName = roomName
@@ -947,10 +1017,25 @@ public class QComment:Object {
             temp.data = "\(json["payload"])"
             var type = QiscusFileType.file
             let fileURL = json["payload"]["url"].stringValue
+            var filename = temp.fileName(text: fileURL)
+            
+            if filename.contains("-"){
+                let nameArr = filename.split(separator: "-")
+                var i = 0
+                for comp in nameArr {
+                    switch i {
+                    case 0 : filename = "" ; break
+                    case 1 : filename = "\(String(comp))"
+                    default: filename = "\(filename)-\(comp)"
+                    }
+                    i += 1
+                }
+            }
             if temp.file == nil {
                 let file = QFile()
                 file.id = temp.uniqueId
                 file.url = fileURL
+                file.filename = filename
                 file.senderEmail = temp.senderEmail
                 type = file.type
             }
@@ -964,6 +1049,9 @@ public class QComment:Object {
             case .audio:
                 temp.typeRaw = QCommentType.audio.name()
                 break
+            case .document:
+                temp.typeRaw = QCommentType.document.name()
+                break
             default:
                 temp.typeRaw = QCommentType.file.name()
                 break
@@ -973,11 +1061,26 @@ public class QComment:Object {
             if temp.text.hasPrefix("[file]"){
                 var type = QiscusFileType.file
                 let fileURL = QFile.getURL(fromString: temp.text)
+                var filename = temp.fileName(text: fileURL)
+                
+                if filename.contains("-"){
+                    let nameArr = filename.split(separator: "-")
+                    var i = 0
+                    for comp in nameArr {
+                        switch i {
+                        case 0 : filename = "" ; break
+                        case 1 : filename = "\(String(comp))"
+                        default: filename = "\(filename)-\(comp)"
+                        }
+                        i += 1
+                    }
+                }
                 if temp.file == nil {
                     let file = QFile()
                     file.id = temp.uniqueId
                     file.url = fileURL
                     file.senderEmail = temp.senderEmail
+                    file.filename = filename
                     type = file.type
                 }
                 switch type {
@@ -989,6 +1092,9 @@ public class QComment:Object {
                     break
                 case .audio:
                     temp.typeRaw = QCommentType.audio.name()
+                    break
+                case .document:
+                    temp.typeRaw = QCommentType.document.name()
                     break
                 default:
                     temp.typeRaw = QCommentType.file.name()
@@ -1007,6 +1113,7 @@ public class QComment:Object {
     }
     internal func update(commentId:Int, beforeId:Int){
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
         try! realm.write {
             self.id = commentId
             self.beforeId = beforeId
@@ -1015,6 +1122,7 @@ public class QComment:Object {
     internal func update(text:String){
         if self.text != text {
             let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
             try! realm.write {
                 self.text = text
             }
@@ -1023,6 +1131,7 @@ public class QComment:Object {
     internal func update(data:String){
         if self.data != data {
             let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
             try! realm.write {
                 self.data = data
             }
@@ -1030,6 +1139,7 @@ public class QComment:Object {
     }
     public class func all() -> [QComment]{
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
         let data = realm.objects(QComment.self)
         
         if data.count > 0 {
@@ -1047,6 +1157,7 @@ public class QComment:Object {
     internal class func resendPendingMessage(){
         QiscusDBThread.async {
             let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
             let data = realm.objects(QComment.self).filter("statusRaw == 1")
             
             if data.count > 0 {
@@ -1060,6 +1171,7 @@ public class QComment:Object {
                         let commentTS = ThreadSafeReference(to: comment)
                         DispatchQueue.main.sync {
                             let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+                            realm.refresh()
                             guard let c = realm.resolve(commentTS) else { return }
                             if let room = QRoom.room(withId: c.roomId){
                                 room.updateCommentStatus(inComment: c, status: .sending)
@@ -1080,6 +1192,7 @@ public class QComment:Object {
     }
     public func set(extras data:[String:Any], onSuccess: @escaping (QComment)->Void, onError: @escaping (QComment, String)->Void){
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
         if let jsonData = try? JSONSerialization.data(withJSONObject: data as Any, options: []){
             if let jsonString = String(data: jsonData,
                                        encoding: .ascii){
@@ -1094,6 +1207,25 @@ public class QComment:Object {
         }else{
             Qiscus.printLog(text: "invalid json object")
             onError(self,"invalid json object")
+        }
+    }
+    public func set(extras data:[String:Any])->QComment?{
+        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+        realm.refresh()
+        if let jsonData = try? JSONSerialization.data(withJSONObject: data as Any, options: []){
+            if let jsonString = String(data: jsonData,
+                                       encoding: .ascii){
+                try! realm.write {
+                    self.rawExtra = jsonString
+                }
+                return self
+            }else{
+                Qiscus.printLog(text: "cant parse object")
+                return nil
+            }
+        }else{
+            Qiscus.printLog(text: "invalid json object")
+            return nil
         }
     }
 }

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -26,7 +27,7 @@
                                     <constraint firstAttribute="width" constant="200" id="DOi-C0-cPK"/>
                                     <constraint firstAttribute="height" constant="20" id="yUD-b3-Jj9"/>
                                 </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="11"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="12"/>
                                 <color key="textColor" red="0.43529411759999997" green="0.4431372549" blue="0.47450980390000003" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
@@ -147,6 +148,7 @@
             <connections>
                 <outlet property="LinkContainer" destination="0db-y1-yFM" id="ivQ-tb-AAE"/>
                 <outlet property="ballonHeight" destination="oS9-sh-3WD" id="Hsi-Px-3eU"/>
+                <outlet property="balloonLeftMargin" destination="T2q-hK-ErK" id="GtK-t4-Od6"/>
                 <outlet property="balloonTopMargin" destination="Afh-rP-y3Q" id="1tE-Dg-dTs"/>
                 <outlet property="balloonView" destination="fMF-Uw-jWN" id="TD5-H9-osX"/>
                 <outlet property="balloonWidth" destination="XgA-oA-0j1" id="YiY-dW-1dN"/>

@@ -9,14 +9,7 @@
 import UIKit
 
 class QChatFooterRight: UICollectionReusableView {
-
-    @IBOutlet weak var avatarImage: UIImageView!
-    
     override func awakeFromNib() {
         super.awakeFromNib()
-        avatarImage.layer.cornerRadius = 19
-        avatarImage.clipsToBounds = true
     }
-    
-    
 }

@@ -22,6 +22,7 @@ class QiscusUploaderVC: UIViewController, UIScrollViewDelegate {
     @IBOutlet weak var mediaCaption: ChatInputText!
     @IBOutlet weak var minInputHeight: NSLayoutConstraint!
     
+    var chatView:QiscusChatVC?
     var type = QUploaderType.image
     var data   : Data?
     var fileName :String?
@@ -75,7 +76,9 @@ class QiscusUploaderVC: UIViewController, UIScrollViewDelegate {
             if type == .image {
                 let newComment = self.room!.newFileComment(type: .image, filename: self.fileName!, caption: self.mediaCaption.value, data: self.data!)
                 self.room!.upload(comment: newComment, onSuccess: { (roomResult, commentResult) in
-                    self.room!.post(comment: commentResult)
+                    if let chatView = self.chatView {
+                        chatView.postComment(comment: commentResult)
+                    }
                 }, onError: { (roomResult, commentResult, error) in
                     Qiscus.printLog(text:"Error: \(error)")
                 })

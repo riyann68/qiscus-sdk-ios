@@ -41,12 +41,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, QiscusConfigDelegate {
         Qiscus.saveLog = true
         window?.makeKeyAndVisible()
         
+//        Qiscus.setBaseURL(withURL: "https://kiwari-prod.qiscus.com")
+//        QiscusMe.shared.email = "userid_201_6285877700050@kiwari-prod.com"
+//        QiscusMe.shared.appId = "kiwari-prod"
+//        QiscusMe.shared.token = "DykfFX1HYiNQclcz2pDK"
+        
         if !Qiscus.isLoggedIn{
             goToLoginView()
         }else{
             Qiscus.connect(delegate: self)
             let rooms = QRoom.all()
             if rooms.count > 0 {
+                Qiscus.prepareView()
                 goToRoomList(rooms: rooms)
             }else{
                 goToFetch()
@@ -144,15 +150,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, QiscusConfigDelegate {
         let chatView = goToChatVC()
         self.navigationController = UINavigationController(rootViewController: chatView)
         window?.rootViewController = navigationController
-        view.titleAction = {
-            print("title clicked")
-        }
-        view.forwardAction = {(comment) in
-            view.navigationController?.popViewController(animated: true)
-            comment.forward(toRoomWithId: "13006")
-            let newView = Qiscus.chatView(withRoomId: "13006")
-            self.navigationController?.pushViewController(newView, animated: true)
-        }
+//        view.titleAction = {
+//            print("title clicked")
+//        }
+//        view.forwardAction = {(comment) in
+//            view.navigationController?.popViewController(animated: true)
+//            comment.forward(toRoomWithId: "13006")
+//            let newView = Qiscus.chatView(withRoomId: "13006")
+//            self.navigationController?.pushViewController(newView, animated: true)
+//        }
         self.navigationController?.pushViewController(view, animated: true)
     }
 }

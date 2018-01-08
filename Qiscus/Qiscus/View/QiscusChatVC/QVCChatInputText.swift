@@ -11,20 +11,18 @@ import UIKit
 extension QiscusChatVC: ChatInputTextDelegate {
     // MARK: - ChatInputTextDelegate Delegate
     open func chatInputTextDidChange(chatInput input: ChatInputText, height: CGFloat) {
-        QiscusBackgroundThread.async { autoreleasepool{
+        if input.value.count > 0 {
+            self.chatRoom?.publishStartTyping()
+        }
+        QiscusBackgroundThread.sync {
             let currentHeight = self.minInputHeight.constant
             if currentHeight != height {
                 DispatchQueue.main.async { autoreleasepool{
                     self.minInputHeight.constant = height
                     input.layoutIfNeeded()
-                    self.chatRoom?.publishStartTyping()
                 }}
-            }else{
-                DispatchQueue.main.async {
-                    self.chatRoom?.publishStartTyping()
-                }
             }
-        }}
+        }
     }
     open func valueChanged(value:String){
 

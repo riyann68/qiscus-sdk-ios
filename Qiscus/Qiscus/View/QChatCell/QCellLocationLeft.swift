@@ -22,6 +22,7 @@ class QCellLocationLeft: QChatCell {
     
     @IBOutlet weak var topMargin: NSLayoutConstraint!
     @IBOutlet weak var addressHeight: NSLayoutConstraint!
+    @IBOutlet weak var balloonLeftMargin: NSLayoutConstraint!
     
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -52,6 +53,14 @@ class QCellLocationLeft: QChatCell {
         self.mapView.addAnnotation(newPin)
     }
     override func commentChanged() {
+        if hideAvatar {
+            self.balloonLeftMargin.constant = 0
+        }else{
+            self.balloonLeftMargin.constant = 27
+        }
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         let payload = JSON(parseJSON: self.comment!.data)
         
         //set region on the map
@@ -59,8 +68,12 @@ class QCellLocationLeft: QChatCell {
         self.addressView.attributedText = self.comment?.attributedText
         self.locationLabel.text = payload["name"].stringValue
         
-        if self.comment?.cellPos == .first || self.comment?.cellPos == .single{
-            self.userNameLabel.text = "You"
+        if self.showUserName{
+            if let sender = self.comment?.sender {
+                self.userNameLabel.text = sender.fullname
+            }else{
+                self.userNameLabel.text = self.comment?.senderName
+            }
             self.userNameLabel.isHidden = false
             self.topMargin.constant = 20
         }else{
@@ -92,7 +105,16 @@ class QCellLocationLeft: QChatCell {
         mapItem.name = payload["name"].stringValue
         mapItem.openInMaps(launchOptions: options)
     }
-    public override func comment(didChangePosition position: QCellPosition) {
-        self.balloonView.image = self.getBallon()
+    public override func comment(didChangePosition comment:QComment, position: QCellPosition) {
+        if comment.uniqueId == self.comment?.uniqueId {
+            self.balloonView.image = self.getBallon()
+        }
+    }
+    public override func updateUserName() {
+        if let sender = self.comment?.sender {
+            self.userNameLabel.text = sender.fullname
+        }else{
+            self.userNameLabel.text = self.comment?.senderName
+        }
     }
 }

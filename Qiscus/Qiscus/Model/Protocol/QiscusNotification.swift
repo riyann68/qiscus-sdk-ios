@@ -16,15 +16,21 @@ public class QiscusNotification: NSObject {
     
     private static var typingTimer = [String:Timer]()
     
-    public static let GOT_NEW_ROOM = NSNotification.Name("qiscus_gotNewRoom")
-    public static let GOT_NEW_COMMENT = NSNotification.Name("qiscus_gotNewComment")
+    
     public static let COMMENT_DELETE = NSNotification.Name("qiscus_commentDelete")
+    public static let MESSAGE_STATUS = NSNotification.Name("qiscus_messageStatus")
+    
     public static let USER_PRESENCE = NSNotification.Name("quscys_userPresence")
     public static let USER_TYPING = NSNotification.Name("qiscus_userTyping")
-    public static let MESSAGE_STATUS = NSNotification.Name("qiscus_messageStatus")
+    public static let USER_AVATAR_CHANGE = NSNotification.Name("qiscus_userAvatarChange")
+    public static let USER_NAME_CHANGE = NSNotification.Name("qiscus_userNameChange")
+    
+    public static let GOT_NEW_ROOM = NSNotification.Name("qiscus_gotNewRoom")
+    public static let GOT_NEW_COMMENT = NSNotification.Name("qiscus_gotNewComment")
     public static let ROOM_CHANGE = NSNotification.Name("qiscus_roomChange")
     public static let ROOM_DELETED = NSNotification.Name("qiscus_roomDeleted")
     public static let ROOM_ORDER_MAY_CHANGE = NSNotification.Name("qiscus_romOrderChange")
+    
     public static let FINISHED_CLEAR_MESSAGES = NSNotification.Name("qiscus_finishedClearMessages")
     public static let FINISHED_SYNC_ROOMLIST = NSNotification.Name("qiscus_finishedSyncRoomList")
     public static let START_CLOUD_SYNC = NSNotification.Name("qiscus_startCloudSync")
@@ -33,6 +39,14 @@ public class QiscusNotification: NSObject {
     
     override private init(){
         super.init()
+    }
+    internal class func publish(userNameChange user:QUser){
+        let notification = QiscusNotification.shared
+        notification.publish(userNameChange: user)
+    }
+    internal class func publish(userAvatarChange user:QUser){
+        let notification = QiscusNotification.shared
+        notification.publish(userAvatarChange: user)
     }
     internal class func publish(userPresence user:QUser){
         let notification = QiscusNotification.shared
@@ -62,9 +76,9 @@ public class QiscusNotification: NSObject {
         let notification = QiscusNotification.shared
         notification.roomOrderChange()
     }
-    public class func publish(roomChange room:QRoom){
+    public class func publish(roomChange room:QRoom, onProperty property:QRoomProperty){
         let notification = QiscusNotification.shared
-        notification.publish(roomChange: room)
+        notification.publish(roomChange: room, property: property)
     }
     public class func publish(roomDeleted roomId:String){
         let notification = QiscusNotification.shared
@@ -85,6 +99,18 @@ public class QiscusNotification: NSObject {
             let notification = QiscusNotification.shared
             notification.publish(gotNewComment: comment, room: room)
             notification.roomOrderChange()
+            if let roomDelegate = QiscusCommentClient.shared.roomDelegate {
+                roomDelegate.gotNewComment(comment)
+            }
+            let id = room.id
+            let uid = comment.uniqueId
+            DispatchQueue.main.async {
+                if let mainRoom = QRoom.room(withId: id){
+                    if let c = QComment.comment(withUniqueId: uid){
+                        mainRoom.delegate?.room?(gotNewComment: c)
+                    }
+                }
+            }
         }
     }
     public class func publish(commentDeleteOnRoom room:QRoom){
@@ -119,6 +145,14 @@ public class QiscusNotification: NSObject {
         }
         self.roomOrderTimer = Timer.scheduledTimer(timeInterval: 1.3, target: self, selector: #selector(self.publishRoomOrderChange), userInfo: nil, repeats: false)
     }
+    private func publish(userNameChange user:QUser){
+        let userInfo: [AnyHashable: Any] = ["user" : user]
+        self.nc.post(name: QiscusNotification.USER_NAME_CHANGE, object: nil, userInfo: userInfo)
+    }
+    private func publish(userAvatarChange user:QUser){
+        let userInfo: [AnyHashable: Any] = ["user" : user]
+        self.nc.post(name: QiscusNotification.USER_AVATAR_CHANGE, object: nil, userInfo: userInfo)
+    }
     private func publish(userPresence user:QUser){
         let userInfo: [AnyHashable: Any] = ["user" : user]
         self.nc.post(name: QiscusNotification.USER_PRESENCE, object: nil, userInfo: userInfo)
@@ -132,9 +166,12 @@ public class QiscusNotification: NSObject {
         let userInfo: [AnyHashable: Any] = ["room_id" : roomId]
         self.nc.post(name: QiscusNotification.ROOM_DELETED, object: nil, userInfo: userInfo)
     }
-    private func publish(roomChange room:QRoom){
+    private func publish(roomChange room:QRoom, property:QRoomProperty){
         if !room.isInvalidated {
-            let userInfo: [AnyHashable: Any] = ["room" : room]
+            let userInfo: [AnyHashable: Any] = [
+                "room"      : room,
+                "property"  : property
+            ]
             self.nc.post(name: QiscusNotification.ROOM_CHANGE, object: nil, userInfo: userInfo)
         }
     }

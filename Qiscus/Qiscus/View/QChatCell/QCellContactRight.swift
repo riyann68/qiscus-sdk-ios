@@ -30,6 +30,9 @@ class QCellContactRight: QChatCell {
         self.balloonView.tintColor = QiscusColorConfiguration.sharedInstance.rightBaloonColor
     }
     override func commentChanged() {
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         let data = self.comment!.data
         let payloadJSON = JSON(parseJSON: data)
         
@@ -39,7 +42,7 @@ class QCellContactRight: QChatCell {
         
         self.balloonView.image = self.getBallon()
         
-        if self.comment?.cellPos == .first || self.comment?.cellPos == .single{
+        if self.showUserName{
             self.userNameLabel.text = "You"
             self.userNameLabel.isHidden = false
             self.topMargin.constant = 20
@@ -51,7 +54,7 @@ class QCellContactRight: QChatCell {
         self.updateStatus(toStatus: self.comment!.status)
     }
     @IBAction func saveContact(_ sender: Any) {
-        self.delegate?.didTapSaveContact(withData: self.comment!)
+        self.delegate?.didTapSaveContact(onComment: self.comment!)
     }
     public override func updateStatus(toStatus status:QCommentStatus){
         dateLabel.textColor = QiscusColorConfiguration.sharedInstance.rightBaloonTextColor
@@ -87,7 +90,16 @@ class QCellContactRight: QChatCell {
             break
         }
     }
-    public override func comment(didChangePosition position: QCellPosition) {
-        self.balloonView.image = self.getBallon()
+    public override func comment(didChangePosition comment:QComment, position: QCellPosition) {
+        if self.comment?.uniqueId == comment.uniqueId {
+            self.balloonView.image = self.getBallon()
+        }
+    }
+    public override func updateUserName() {
+        if let sender = self.comment?.sender {
+            self.userNameLabel.text = sender.fullname
+        }else{
+            self.userNameLabel.text = self.comment?.senderName
+        }
     }
 }

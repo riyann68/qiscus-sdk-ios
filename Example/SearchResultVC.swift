@@ -57,21 +57,21 @@ class SearchResultVC: UITableViewController {
         let view = Qiscus.chatView(withRoomId: comment.roomId)
         view.chatTarget = comment
         self.navigationController?.pushViewController(view, animated: true)
-        view.titleAction = {
-            print("title clicked")
-        }
-        view.forwardAction = {(comment) in
-            view.navigationController?.popViewController(animated: true)
-            comment.forward(toRoomWithId: "13006")
-            let newView = Qiscus.chatView(withRoomId: "13006")
-            self.navigationController?.pushViewController(newView, animated: true)
-        }
-        view.infoAction = {(comment) in
-            let statusInfo = comment.statusInfo!
-            print("commentInfo: \(statusInfo)")
-            print("delivered to: \(statusInfo.deliveredUser)")
-            print("read by: \(statusInfo.readUser)")
-        }
+//        view.titleAction = {
+//            print("title clicked")
+//        }
+//        view.forwardAction = {(comment) in
+//            view.navigationController?.popViewController(animated: true)
+//            comment.forward(toRoomWithId: "13006")
+//            let newView = Qiscus.chatView(withRoomId: "13006")
+//            self.navigationController?.pushViewController(newView, animated: true)
+//        }
+//        view.infoAction = {(comment) in
+//            let statusInfo = comment.statusInfo!
+//            print("commentInfo: \(statusInfo)")
+//            print("delivered to: \(statusInfo.deliveredUser)")
+//            print("read by: \(statusInfo.readUser)")
+//        }
     }
         
 }

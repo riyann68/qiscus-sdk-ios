@@ -9,6 +9,7 @@
 import UIKit
 import WebKit
 import SwiftyJSON
+import RealmSwift
 
 open class ChatPreviewDocVC: UIViewController, UIWebViewDelegate, WKNavigationDelegate {
     
@@ -22,6 +23,7 @@ open class ChatPreviewDocVC: UIViewController, UIWebViewDelegate, WKNavigationDe
     var accountData:JSON?
     var accountLinkURL:String = ""
     var accountRedirectURL:String = ""
+    var file:QFile? = nil
     
     deinit{
         self.webView.removeObserver(self, forKeyPath: "estimatedProgress")
@@ -31,14 +33,15 @@ open class ChatPreviewDocVC: UIViewController, UIWebViewDelegate, WKNavigationDe
         super.viewDidLoad()
         self.webView.navigationDelegate = self
         self.webView.addObserver(self, forKeyPath: "estimatedProgress", options: NSKeyValueObservingOptions.new, context: nil)
+        if !self.accountLinking {
+            let shareButton = UIBarButtonItem(title: "Share", style: .plain, target: self, action: #selector(ChatPreviewDocVC.share))
+            self.navigationItem.rightBarButtonItem = shareButton
+        }
     }
     
     override open func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        self.navigationController?.navigationBar.barStyle = UIBarStyle.black
-        self.navigationController?.navigationBar.isTranslucent = false
-        self.navigationController?.navigationBar.tintColor = UIColor.white
         if !accountLinking {
             self.navigationItem.setTitleWithSubtitle(title: self.roomName, subtitle: self.fileName)
         }else{
@@ -69,7 +72,16 @@ open class ChatPreviewDocVC: UIViewController, UIWebViewDelegate, WKNavigationDe
         //self.webView.backgroundColor = UIColor.red
         
         if !self.accountLinking{
-            if let openURL = URL(string:  self.url.replacingOccurrences(of: " ", with: "%20")){
+            if let openFile = self.file {
+                if QFileManager.isFileExist(inLocalPath: openFile.localPath) {
+                    let url = URL(fileURLWithPath: openFile.localPath)
+                    self.webView.loadFileURL(url, allowingReadAccessTo: url)
+                }else{
+                    if let openURL = URL(string: openFile.url.replacingOccurrences(of: " ", with: "%20")){
+                        self.webView.load(URLRequest(url: openURL))
+                    }
+                }
+            }else if let openURL = URL(string: self.url.replacingOccurrences(of: " ", with: "%20")){
                 self.webView.load(URLRequest(url: openURL))
             }
         }else{
@@ -106,6 +118,30 @@ open class ChatPreviewDocVC: UIViewController, UIWebViewDelegate, WKNavigationDe
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + Double(Int(0.2 * Double(NSEC_PER_SEC))) / Double(NSEC_PER_SEC)) { () -> Void in
             self.progressView.progress = 0.0
         }
+        if !self.accountLinking {
+            if let file = self.file {
+                if !QFileManager.isFileExist(inLocalPath: file.localPath){
+                    let remoteURL = file.url.replacingOccurrences(of: " ", with: "%20")
+                    if let url = URL(string: remoteURL) {
+                        do {
+                            let data = try Data(contentsOf: url as URL)
+                            let directoryPath = QFileManager.directoryPath(forDirectory: .comment)
+                            let path = "\(directoryPath)/\(file.filename.replacingOccurrences(of: " ", with: "_"))"
+                            try? data.write(to: URL(fileURLWithPath: path), options: [.atomic])
+                            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+                            realm.refresh()
+                            
+                            try! realm.write {
+                                file.localPath = path
+                            }
+                        } catch {
+                            
+                        }
+                    }
+                    
+                }
+            }
+        }
     }
     open func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + Double(Int(0.2 * Double(NSEC_PER_SEC))) / Double(NSEC_PER_SEC)) { () -> Void in
@@ -127,6 +163,7 @@ open class ChatPreviewDocVC: UIViewController, UIWebViewDelegate, WKNavigationDe
     
     open func webViewDidFinishLoad(_ webView: UIWebView) {
         self.progressView.isHidden = true
+        
     }
 
     // MARK: - Navigation
@@ -142,11 +179,12 @@ open class ChatPreviewDocVC: UIViewController, UIWebViewDelegate, WKNavigationDe
         let backLabel = UILabel()
         
         backLabel.text = ""
-        backLabel.textColor = UIColor.white
+        backLabel.textColor = QiscusChatVC.currentNavbarTint
         backLabel.font = UIFont.systemFont(ofSize: 12)
         
-        let image = Qiscus.image(named: "ic_back")
+        let image = Qiscus.image(named: "ic_back")?.withRenderingMode(.alwaysTemplate)
         backIcon.image = image
+        backIcon.tintColor = QiscusChatVC.currentNavbarTint
         
         
         if UIApplication.shared.userInterfaceLayoutDirection == .leftToRight {
@@ -164,5 +202,24 @@ open class ChatPreviewDocVC: UIViewController, UIWebViewDelegate, WKNavigationDe
         backButton.addTarget(target, action: action, for: UIControlEvents.touchUpInside)
         
         return UIBarButtonItem(customView: backButton)
+    }
+    
+    func share(){
+        if let file = self.file {
+            if QFileManager.isFileExist(inLocalPath: file.localPath){
+                let url = URL(fileURLWithPath: file.localPath)
+                let activityViewController = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+                
+                activityViewController.popoverPresentationController?.sourceView = self.view
+                self.present(activityViewController, animated: true, completion: nil)
+            }else{
+                if let url = URL(string: file.url) {
+                    let activityViewController = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+                    
+                    activityViewController.popoverPresentationController?.sourceView = self.view
+                    self.present(activityViewController, animated: true, completion: nil)
+                }
+            }
+        }
     }
 }

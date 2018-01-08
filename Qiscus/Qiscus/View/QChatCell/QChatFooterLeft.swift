@@ -10,48 +10,47 @@ import UIKit
 
 class QChatFooterLeft: UICollectionReusableView {
 
-    @IBOutlet weak var avatarLabel: UILabel!
     @IBOutlet weak var avatarImage: UIImageView!
     
     public var user:QUser?{
         didSet{
+            if oldValue != nil {
+                oldValue?.delegate = nil
+            }
             if let sender = self.user{
+                QUser.cache[sender.email] = sender
                 sender.delegate = self
-                if let avatar = sender.avatar {
-                    avatarLabel.isHidden = true
-                    avatarImage.image = avatar
-                    avatarImage.backgroundColor = UIColor.clear
-                }else{
-                    avatarImage.image = nil
-                    avatarLabel.isHidden = false
-                    let bgColor = QiscusColorConfiguration.sharedInstance.avatarBackgroundColor
-                    let colorIndex = sender.fullname.count % bgColor.count
-                    avatarImage.backgroundColor = bgColor[colorIndex]
-                    if sender.fullname.count > 0 {
-                        let index = sender.fullname.index(sender.fullname.startIndex, offsetBy: 0)
-                        avatarLabel.text = String(sender.fullname[index]).uppercased()
-                    }
-                    
-                    if QFileManager.isFileExist(inLocalPath: sender.avatarLocalPath){
-                        UIImage.loadAsync(fromLocalPath: sender.avatarLocalPath, onSuccess: { image in
-                            sender.avatar = image
-                        },
-                        onError: {
-                            sender.clearLocalPath()
-                        })
-                    }else{
-                        UIImage.loadAsync(url: sender.avatarURL, onSuccess: { (image) in
-                            sender.saveAvatar(withImage: image)
-                        }, onError: {
-                            Qiscus.printLog(text: "can't load user avatar for user: \(sender.fullname)")
-                        })
+                let email = sender.email
+                if let avatar = sender.cachedAvatar{
+                    self.avatarImage.image = avatar
+                }
+                else {
+                    QiscusBackgroundThread.async {
+                        if let userData = QUser.getUser(email: email) {
+                            if let avatar = userData.avatar {
+                                let emailData = userData.email
+                                DispatchQueue.main.async {
+                                    if emailData == self.user?.email {
+                                        self.avatarImage.image = avatar
+                                        self.user?.cachedAvatar = avatar
+                                    }
+                                }
+                            }else{
+                                DispatchQueue.main.async {
+                                    self.avatarImage.image = Qiscus.image(named: "avatar")
+                                }
+                                userData.downloadAvatar()
+                            }
+                        }else{
+                            DispatchQueue.main.async {
+                                self.avatarImage.image = Qiscus.image(named: "avatar")
+                            }
+                        }
                     }
                 }
+                
             }else{
                 avatarImage.image = nil
-                avatarLabel.isHidden = false
-                avatarLabel.text = "_"
-                avatarImage.backgroundColor = UIColor.black
             }
         }
     }
@@ -63,20 +62,39 @@ class QChatFooterLeft: UICollectionReusableView {
         avatarImage.clipsToBounds = true
         avatarImage.contentMode = .scaleAspectFill
         self.isUserInteractionEnabled = false
+        NotificationCenter.default.addObserver(self, selector: #selector(QChatFooterLeft.userAvatarChanged(_:)), name: QiscusNotification.USER_AVATAR_CHANGE, object: nil)
+    }
+    // MARK: - userAvatarChange Handler
+    @objc private func userAvatarChanged(_ notification: Notification) {
+        if let userInfo = notification.userInfo {
+            if let currentUser = self.user {
+                let userData = userInfo["user"] as! QUser
+                if currentUser.isInvalidated || userData.isInvalidated {
+                    return
+                }
+                if currentUser.email == userData.email {
+                    let email = currentUser.email
+                    QiscusBackgroundThread.async {
+                        if let thisUser = QUser.getUser(email: email){
+                            if let avatar = thisUser.avatar {
+                                DispatchQueue.main.async {
+                                    self.avatarImage.image = avatar
+                                }
+                            }else{
+                                thisUser.downloadAvatar()
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
 extension QChatFooterLeft:QUserDelegate{
     func user(didChangeAvatarURL avatarURL: String) {
         if let sender = self.user {
-            avatarImage.loadAsync(user!.avatarURL, onLoaded: { (image,_) in
-                sender.saveAvatar(withImage: image)
-            })
+            sender.downloadAvatar()
         }
-    }
-    func user(didChangeAvatar avatar: UIImage) {
-        self.avatarLabel.isHidden = true
-        self.avatarImage.image = avatar
-        self.avatarImage.backgroundColor = UIColor.clear
     }
 }

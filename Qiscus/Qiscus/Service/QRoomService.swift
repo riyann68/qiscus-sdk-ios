@@ -29,23 +29,32 @@ public class QRoomService:NSObject{
                 let results = json["results"]
                 let error = json["error"]
                 
-                if room.isInvalidated {
-                    return
-                }
+                
                 if results != JSON.null{
                     let roomData = results["room"]
-                    room.syncRoomData(withJSON: roomData)
-                    let commentPayload = results["comments"].arrayValue
-                    for json in commentPayload {
-                        let commentId = json["id"].intValue
+                    let roomId = "\(roomData["id"])"
+                    if let r = QRoom.threadSaveRoom(withId: roomId){
+                        if r.isInvalidated {
+                            return
+                        }
+                        r.syncRoomData(withJSON: roomData)
                         
-                        if commentId <= QiscusMe.sharedInstance.lastCommentId {
-                            room.saveOldComment(fromJSON: json)
-                        }else{
-                            QChatService.syncProcess()
+                        let commentPayload = results["comments"].arrayValue
+                        for json in commentPayload {
+                            let commentId = json["id"].intValue
+                            
+                            if commentId <= QiscusMe.shared.lastCommentId {
+                                r.saveOldComment(fromJSON: json)
+                            }else{
+                                QChatService.syncProcess()
+                            }
+                        }
+                        DispatchQueue.main.async {
+                            if let mainRoom = QRoom.room(withId: roomId){
+                                mainRoom.delegate?.room?(didFinishSync: room)
+                            }
                         }
                     }
-                    room.delegate?.room(didFinishSync: room)
                 }else if error != JSON.null{
                     Qiscus.printLog(text: "error getRoom")
                     
@@ -58,43 +67,75 @@ public class QRoomService:NSObject{
         })
     }
     public func loadMore(onRoom room:QRoom){
-        let loadURL = QiscusConfig.LOAD_URL
-        var parameters =  [
-            "topic_id" : room.id as AnyObject,
-            "token" : Qiscus.shared.config.USER_TOKEN as AnyObject
-        ]
-        if room.commentsGroupCount > 0 {
-            let firstComment = room.comments[0].comments[0]
-            parameters["last_comment_id"] = firstComment.id as AnyObject
-        }
-        Qiscus.printLog(text: "request loadMore parameters: \(parameters)")
-        Qiscus.printLog(text: "request loadMore url \(loadURL)")
-        
-        QiscusService.session.request(loadURL, method: .get, parameters: parameters, encoding: URLEncoding.default, headers: QiscusConfig.sharedInstance.requestHeader).responseJSON(completionHandler: {responseData in
-            Qiscus.printLog(text: "loadMore result: \(responseData)")
-            if let response = responseData.result.value{
-                let json = JSON(response)
-                let results = json["results"]
-                let error = json["error"]
-                if results != JSON.null{
-                    let comments = json["results"]["comments"].arrayValue
-                    if comments.count > 0 {
-                        for newComment in comments {
-                            room.saveOldComment(fromJSON: newComment)
-                        }
-                        room.delegate?.room(didFinishLoadMore: room, success: true, gotNewComment: true)
-                    }else{
-                        room.delegate?.room(didFinishLoadMore: room, success: true, gotNewComment: false)
-                    }
-                }else if error != JSON.null{
-                    room.delegate?.room(didFinishLoadMore: room, success: false, gotNewComment: false)
-                    Qiscus.printLog(text: "error loadMore: \(error)")
+        let id = room.id
+        QiscusBackgroundThread.async {
+            if let r = QRoom.threadSaveRoom(withId: id) {
+                let loadURL = QiscusConfig.LOAD_URL
+                var parameters =  [
+                    "topic_id" : r.id as AnyObject,
+                    "token" : Qiscus.shared.config.USER_TOKEN as AnyObject
+                ]
+                if r.comments.count > 0 {
+                    let firstComment = r.comments.first!
+                    parameters["last_comment_id"] = firstComment.id as AnyObject
                 }
-            }else{
-                room.delegate?.room(didFinishLoadMore: room, success: false, gotNewComment: false)
-                Qiscus.printLog(text: "fail to LoadMore Data")
+                Qiscus.printLog(text: "request loadMore parameters: \(parameters)")
+                Qiscus.printLog(text: "request loadMore url \(loadURL)")
+                
+                QiscusService.session.request(loadURL, method: .get, parameters: parameters, encoding: URLEncoding.default, headers: QiscusConfig.sharedInstance.requestHeader).responseJSON(completionHandler: {responseData in
+                    Qiscus.printLog(text: "loadMore result: \(responseData)")
+                    QiscusBackgroundThread.async {
+                        if let savedRoom = QRoom.threadSaveRoom(withId: id){
+                            if let response = responseData.result.value{
+                                let json = JSON(response)
+                                let results = json["results"]
+                                //let error = json["error"]
+                                if results != JSON.null{
+                                    let comments = json["results"]["comments"].arrayValue
+                                    if comments.count > 0 {
+                                        for newComment in comments {
+                                            savedRoom.saveOldComment(fromJSON: newComment)
+                                        }
+                                        DispatchQueue.main.async {
+                                            if let cache = QRoom.room(withId: id){
+                                                cache.delegate?.room?(didFinishLoadMore: cache, success: true, gotNewComment: true)
+                                            }
+                                        }
+                                    }else{
+                                        DispatchQueue.main.async {
+                                            if let cache = QRoom.room(withId: id){
+                                                cache.delegate?.room?(didFinishLoadMore: cache, success: true, gotNewComment: false)
+                                            }
+                                        }
+                                    }
+                                }else{
+                                    DispatchQueue.main.async {
+                                        if let cache = QRoom.room(withId: id){
+                                            cache.delegate?.room?(didFinishLoadMore: cache, success: false, gotNewComment: false)
+                                            Qiscus.printLog(text: "error loadMore: null response")
+                                        }
+                                    }
+                                }
+                            }else{
+                                DispatchQueue.main.async {
+                                    if let cache = QRoom.room(withId: id){
+                                        cache.delegate?.room?(didFinishLoadMore: cache, success: false, gotNewComment: false)
+                                        Qiscus.printLog(text: "error loadMore: cant get response from server")
+                                    }
+                                }
+                            }
+                        }else{
+                            DispatchQueue.main.async {
+                                if let cache = QRoom.room(withId: id){
+                                    cache.delegate?.room?(didFinishLoadMore: cache, success: false, gotNewComment: false)
+                                    Qiscus.printLog(text: "error loadMore: room not found")
+                                }
+                            }
+                        }
+                    }
+                })
             }
-        })
+        }
     }
     internal func updateRoom(onRoom room:QRoom, roomName:String? = nil, roomAvatarURL:String? = nil, roomOptions:String? = nil, onSuccess:@escaping ((_ room: QRoom)->Void),onError:@escaping ((_ error: String)->Void)){
         if Qiscus.isLoggedIn{
@@ -157,7 +198,7 @@ public class QRoomService:NSObject{
         }
     }
     public func publisComentStatus(onRoom room:QRoom, status:QCommentStatus){
-        if (status == QCommentStatus.delivered || status == QCommentStatus.read) && (room.commentsGroupCount > 0){
+        if (status == QCommentStatus.delivered || status == QCommentStatus.read) && (room.comments.count > 0){
             let loadURL = QiscusConfig.UPDATE_COMMENT_STATUS_URL
             let lastCommentId = room.lastComment!.id
             var parameters:[String : AnyObject] =  [
@@ -171,17 +212,8 @@ public class QRoomService:NSObject{
                 parameters["last_comment_read_id"] = lastCommentId as AnyObject
             }
             QiscusService.session.request(loadURL, method: .post, parameters: parameters, encoding: URLEncoding.default, headers: QiscusConfig.sharedInstance.requestHeader).responseJSON(completionHandler: {responseData in
-                if let response = responseData.result.value {
-                    Qiscus.printLog(text: "publish message status result: \(response)")
-                    let savedParticipant = room.participants.filter("email == '\(QiscusMe.sharedInstance.email)'")
-                    if savedParticipant.count > 0 {
-                        let participant = savedParticipant.first!
-                        if status == .delivered {
-                            participant.updateLastDeliveredId(commentId: lastCommentId)
-                        }else{
-                            participant.updateLastReadId(commentId: lastCommentId)
-                        }
-                    }
+                if let _ = responseData.result.value {
+                    Qiscus.printLog(text: "success update message status on comment : \(lastCommentId) to \(status)")
                 }else{
                     Qiscus.printLog(text: "error update message status")
                 }
@@ -199,7 +231,7 @@ public class QRoomService:NSObject{
             "disable_link_preview" : true as AnyObject,
             "token" : Qiscus.shared.config.USER_TOKEN as AnyObject
         ]
-        if comment.type == .image || comment.type == .video {
+        if comment.type == .image || comment.type == .video || comment.type == .audio || comment.type == .file || comment.type == .document{
             parameters["type"] = "file_attachment" as AnyObject
             parameters["payload"] = comment.data as AnyObject
         }
@@ -275,6 +307,7 @@ public class QRoomService:NSObject{
                 let commentTS = ThreadSafeReference(to: comment)
                 DispatchQueue.main.asyncAfter(deadline: time, execute: {
                     let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+                    realm.refresh()
                     guard let c = realm.resolve(commentTS) else { return }
                     if let room = QRoom.room(withId: roomId){
                         room.post(comment: c)
@@ -290,14 +323,15 @@ public class QRoomService:NSObject{
             comment.updateProgress(progress: 0)
             let fileURL = file.url.replacingOccurrences(of: " ", with: "%20")
             let ext = file.ext
-            
+            let type = file.type
             QiscusRequestThread.async {
                 QiscusService.session.request(fileURL, method: .get, parameters: nil, encoding: URLEncoding.default, headers: nil).responseData(completionHandler: { response in
                     Qiscus.printLog(text: "download result: \(response)")
                     switch response.result {
                     case .success:
                         if let imageData = response.data {
-                            if !isAudioFile{
+                            switch type {
+                            case .image:
                                 if let image = UIImage(data: imageData) {
                                     var thumbImage = UIImage()
                                     if !(ext == "gif" || ext == "gif_"){
@@ -321,41 +355,80 @@ public class QRoomService:NSObject{
                                         comment.updateDownloading(downloading: false)
                                         comment.updateProgress(progress: 1)
                                         comment.displayImage = thumbImage
-                                    }}
-                                }else{
-                                    DispatchQueue.main.async { autoreleasepool{
-                                        let path = file.saveFile(withData: imageData)
-                                        let assetMedia = AVURLAsset(url: URL(fileURLWithPath: "\(path)"))
-                                        let thumbGenerator = AVAssetImageGenerator(asset: assetMedia)
-                                        thumbGenerator.appliesPreferredTrackTransform = true
-                                        
-                                        let thumbTime = CMTimeMakeWithSeconds(0, 30)
-                                        let maxSize = CGSize(width: QiscusHelper.screenWidth(), height: QiscusHelper.screenWidth())
-                                        thumbGenerator.maximumSize = maxSize
-                                        var thumbImage:UIImage?
-                                        
-                                        do{
-                                            let thumbRef = try thumbGenerator.copyCGImage(at: thumbTime, actualTime: nil)
-                                            thumbImage = UIImage(cgImage: thumbRef)
-                                        }catch let error as NSError{
-                                            Qiscus.printLog(text: "error creating thumb image: \(error.localizedDescription)")
-                                        }
-                                        if thumbImage != nil {
-                                            file.saveThumbImage(withImage: thumbImage!)
-                                        }
-                                        comment.updateProgress(progress: 1)
-                                        comment.updateDownloading(downloading: false)
-                                    }}
+                                        }}
                                 }
-                            }
-                            else{
+                                break
+                            case .audio:
                                 DispatchQueue.main.async { autoreleasepool{
                                     let _ = file.saveFile(withData: imageData)
                                     comment.updateDownloading(downloading: false)
                                     comment.updateProgress(progress: 1)
-                                    
                                 }}
+                                break
+                            case .document:
+                                var pageNumber = 0
+                                let size = Double(imageData.count)
+                                var pdfImage:UIImage?
+                                if let provider = CGDataProvider(data: imageData as NSData) {
+                                    if let pdfDoc = CGPDFDocument(provider) {
+                                        pageNumber = pdfDoc.numberOfPages
+                                        if let pdfPage:CGPDFPage = pdfDoc.page(at: 1) {
+                                            var pageRect:CGRect = pdfPage.getBoxRect(.mediaBox)
+                                            pageRect.size = CGSize(width:pageRect.size.width, height:pageRect.size.height)
+                                            UIGraphicsBeginImageContext(pageRect.size)
+                                            if let context:CGContext = UIGraphicsGetCurrentContext(){
+                                                context.saveGState()
+                                                context.translateBy(x: 0.0, y: pageRect.size.height)
+                                                context.scaleBy(x: 1.0, y: -1.0)
+                                                context.concatenate(pdfPage.getDrawingTransform(.mediaBox, rect: pageRect, rotate: 0, preserveAspectRatio: true))
+                                                context.drawPDFPage(pdfPage)
+                                                context.restoreGState()
+                                                pdfImage = UIGraphicsGetImageFromCurrentImageContext()
+                                            }
+                                            UIGraphicsEndImageContext()
+                                        }
+                                    }
+                                }
+                                DispatchQueue.main.async { autoreleasepool{
+                                    let _ = file.saveFile(withData: imageData)
+                                    if let thumb = pdfImage {
+                                        file.saveThumbImage(withImage: thumb)
+                                    }
+                                    file.updateSize(withSize: size)
+                                    file.updatePages(withTotalPage: pageNumber)
+                                    comment.updateDownloading(downloading: false)
+                                    comment.updateProgress(progress: 1)
+                                }}
+                                break
+                            case .video:
+                                DispatchQueue.main.async { autoreleasepool{
+                                    let path = file.saveFile(withData: imageData)
+                                    let assetMedia = AVURLAsset(url: URL(fileURLWithPath: "\(path)"))
+                                    let thumbGenerator = AVAssetImageGenerator(asset: assetMedia)
+                                    thumbGenerator.appliesPreferredTrackTransform = true
+                                    
+                                    let thumbTime = CMTimeMakeWithSeconds(0, 30)
+                                    let maxSize = CGSize(width: QiscusHelper.screenWidth(), height: QiscusHelper.screenWidth())
+                                    thumbGenerator.maximumSize = maxSize
+                                    var thumbImage:UIImage?
+                                    
+                                    do{
+                                        let thumbRef = try thumbGenerator.copyCGImage(at: thumbTime, actualTime: nil)
+                                        thumbImage = UIImage(cgImage: thumbRef)
+                                    }catch let error as NSError{
+                                        Qiscus.printLog(text: "error creating thumb image: \(error.localizedDescription)")
+                                    }
+                                    if thumbImage != nil {
+                                        file.saveThumbImage(withImage: thumbImage!)
+                                    }
+                                    comment.updateProgress(progress: 1)
+                                    comment.updateDownloading(downloading: false)
+                                }}
+                                break
+                            default:
+                                break
                             }
+                            
                             DispatchQueue.main.async { autoreleasepool{
                                 onSuccess?(comment)
                             }}
@@ -400,7 +473,6 @@ public class QRoomService:NSObject{
                 DispatchQueue.global().async {
                     QiscusService.session.request(loadURL, method: .post, parameters: parameters, encoding: URLEncoding.default, headers: QiscusConfig.sharedInstance.requestHeader).responseJSON(completionHandler: {responseData in
                         if let response = responseData.result.value {
-                            Qiscus.printLog(text: "publish message response:\n\(response)")
                             let json = JSON(response)
                             let results = json["results"]
                             let error = json["error"]
@@ -425,7 +497,6 @@ public class QRoomService:NSObject{
         }
         if let file = comment.file {
             let localPath = file.localPath
-            let indexPath = room.getIndexPath(ofComment: comment)!
             let filename = file.filename
             let mimeType = file.mimeType
             
@@ -445,7 +516,7 @@ public class QRoomService:NSObject{
                     
                     QiscusService.session.upload(multipartFormData: {formData in
                         formData.append(data, withName: "file", fileName: filename, mimeType: mimeType)
-                        formData.append(QiscusMe.sharedInstance.token.data(using: .utf8)! , withName: "token")
+                        formData.append(QiscusMe.shared.token.data(using: .utf8)! , withName: "token")
                     }, with: urlUpload, encodingCompletion: {
                         encodingResult in
                         switch encodingResult{
@@ -454,24 +525,7 @@ public class QRoomService:NSObject{
                                 Qiscus.printLog(text: "success upload: \(response)")
                                 if let jsonData = response.result.value {
                                     let json = JSON(jsonData)
-                                    if let url = json["url"].string {
-                                        DispatchQueue.main.async { autoreleasepool{
-                                            if file.isInvalidated || comment.isInvalidated || room.isInvalidated {
-                                                return
-                                            }
-                                            file.update(fileURL: url)
-                                            comment.update(text: "[file]\(url) [/file]")
-                                            comment.updateUploading(uploading: false)
-                                            comment.updateProgress(progress: 1)
-                                            comment.updateStatus(status: .sent)
-                                            let fileInfo = JSON(parseJSON: comment.data)
-                                            let caption = fileInfo["caption"].stringValue
-                                            let newData = "{\"url\":\"\(url)\", \"caption\":\"\(caption)\"}"
-                                            comment.update(data: newData)
-                                            onSuccess(room,comment)
-                                        }}
-                                    }
-                                    else if json["results"].count > 0 {
+                                    if json["results"].count > 0 {
                                         let jsonData = json["results"]
                                         if jsonData["file"].count > 0 {
                                             let fileData = jsonData["file"]
@@ -480,15 +534,24 @@ public class QRoomService:NSObject{
                                                     if file.isInvalidated || comment.isInvalidated || room.isInvalidated {
                                                         return
                                                     }
+                                                    let size = fileData["size"].intValue
                                                     file.update(fileURL: url)
+                                                    file.update(fileSize: Double(size))
                                                     comment.update(text: "[file]\(url) [/file]")
                                                     comment.updateUploading(uploading: false)
                                                     comment.updateProgress(progress: 1)
                                                     comment.updateStatus(status: .sent)
                                                     let fileInfo = JSON(parseJSON: comment.data)
                                                     let caption = fileInfo["caption"].stringValue
-                                                    let newData = "{\"url\":\"\(url)\", \"caption\":\"\(caption)\"}"
-                                                    comment.update(data: newData)
+                                                    let newData:[AnyHashable:Any] = [
+                                                        "url" : url,
+                                                        "caption": caption,
+                                                        "size": size,
+                                                        "pages": fileData["pages"].intValue,
+                                                        "file_name": fileData["name"].stringValue
+                                                    ]
+                                                    let newDataJSON = JSON(newData)
+                                                    comment.update(data: "\(newDataJSON)")
                                                     onSuccess(room,comment)
                                                 }}
                                             }
@@ -501,7 +564,6 @@ public class QRoomService:NSObject{
                                             comment.updateUploading(uploading: false)
                                             comment.updateProgress(progress: 0)
                                             comment.updateStatus(status: .failed)
-                                            room.delegate?.room(didChangeComment: indexPath.section, row: indexPath.item, action: "status")
                                         }}
                                         onError(room,comment,"Fail to upload file, no readable response")
                                     }
@@ -513,7 +575,6 @@ public class QRoomService:NSObject{
                                         comment.updateUploading(uploading: false)
                                         comment.updateProgress(progress: 0)
                                         comment.updateStatus(status: .failed)
-                                        room.delegate?.room(didChangeComment: indexPath.section, row: indexPath.item, action: "status")
                                     }}
                                     onError(room,comment,"Fail to upload file, no readable response")
                                 }
@@ -538,7 +599,6 @@ public class QRoomService:NSObject{
                                 comment.updateUploading(uploading: false)
                                 comment.updateProgress(progress: 0)
                                 comment.updateStatus(status: .failed)
-                                room.delegate?.room(didChangeComment: indexPath.section, row: indexPath.item, action: "status")
                             }}
                             onError(room,comment,"Fail to upload file, \(error)")
                             break
@@ -558,6 +618,67 @@ public class QRoomService:NSObject{
                 onError(room, comment, "Local file not found")
             }
             }}
+        }
+    }
+    internal class func loadData(inRoom room:QRoom, limit:Int = 20, offset:String?, onSuccess:@escaping (QRoom)->Void, onError:@escaping (String)->Void){
+        let id = room.id
+//        if QChatService.inSyncProcess { return }
+        QiscusRequestThread.async {
+            if let r = QRoom.threadSaveRoom(withId: id){
+                let loadURL = QiscusConfig.LOAD_URL
+                var parameters =  [
+                    "topic_id" : r.id as AnyObject,
+                    "token" : Qiscus.shared.config.USER_TOKEN as AnyObject,
+                    "limit" : limit as AnyObject,
+                ]
+                if offset == nil {
+                    if r.comments.count != 0 {
+                        parameters["last_comment_id"] = r.lastCommentId as AnyObject
+                    }
+                }else{
+                    parameters["last_comment_id"] = offset as AnyObject
+                }
+                
+                Qiscus.printLog(text: "request loadData: \(loadURL) \nparameters: \(parameters)")
+                
+                QiscusService.session.request(loadURL, method: .get, parameters: parameters, encoding: URLEncoding.default, headers: QiscusConfig.sharedInstance.requestHeader).responseJSON(completionHandler: {responseData in
+                    if let response = responseData.result.value{
+                        let json = JSON(response)
+                        let results = json["results"]
+                        let error = json["error"]
+                        if results != JSON.null{
+                            let comments = json["results"]["comments"].arrayValue
+                            var needSync = false
+                            for newComment in comments {
+                                let comment = QComment.tempComment(fromJSON: newComment)
+                                if comment.id <= QiscusMe.shared.lastCommentId {
+                                    if let rd = QRoom.threadSaveRoom(withId: comment.roomId){
+                                        rd.saveOldComment(fromJSON: newComment)
+                                    }
+                                }else{
+                                   needSync = true
+                                }
+                            }
+                            DispatchQueue.main.async {
+                                if let mainRoom = QRoom.room(withId: id) {
+                                    onSuccess(mainRoom)
+                                }
+                            }
+                            if needSync {
+                                QChatService.syncProcess()
+                            }
+                        }else if error != JSON.null{
+                            DispatchQueue.main.async {
+                                onError("fail to load data: \(error)")
+                            }
+                        }
+                    }else{
+                        DispatchQueue.main.async {
+                            onError("fail to load data")
+                        }
+                    }
+                })
+            }
         }
     }
     internal class func loadComments(inRoom room:QRoom, limit:Int, offset:String, onSuccess:@escaping ([QComment])->Void, onError:@escaping (String)->Void){
