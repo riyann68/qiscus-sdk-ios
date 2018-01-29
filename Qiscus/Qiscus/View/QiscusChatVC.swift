@@ -99,8 +99,8 @@ public class QiscusChatVC: UIViewController{
     var prefetch:Bool = false
     var presentingLoading = false
     
-    internal let currentNavbarTint = UINavigationBar.appearance().tintColor
-    static let currentNavbarTint = UINavigationBar.appearance().tintColor
+    internal let currentNavbarTint = Qiscus.shared.styleConfiguration.color.tintColor
+    static let currentNavbarTint = Qiscus.shared.styleConfiguration.color.tintColor
     
     var replyData:QComment? = nil {
         didSet{
@@ -411,7 +411,7 @@ public class QiscusChatVC: UIViewController{
         self.collectionView.roomDelegate = self
         self.collectionView.cellDelegate = self
         
-        UINavigationBar.appearance().tintColor = self.currentNavbarTint
+        // UINavigationBar.appearance().tintColor = self.currentNavbarTint
         
         if let _ = self.navigationController {
             self.navigationController?.navigationBar.isTranslucent = false
