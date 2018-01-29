@@ -158,8 +158,8 @@ open class QiscusClient: NSObject {
         Qiscus.client.userData.set(json["rtKey"].stringValue, forKey: "qiscus_rt_key")
         Qiscus.client.userData.set(json["token"].stringValue, forKey: "qiscus_token")
         
-        QiscusMe.shared.userData.set(json["username"].stringValue, forKey: "qiscus_param_username")
-        QiscusMe.shared.userData.set(json["avatar"].stringValue, forKey: "qiscus_param_avatar")
+        Qiscus.client.userData.set(json["username"].stringValue, forKey: "qiscus_param_username")
+        Qiscus.client.userData.set(json["avatar"].stringValue, forKey: "qiscus_param_avatar")
         
         if !reconnect {
             Qiscus.client.userData.set(json["last_comment_id"].intValue, forKey: "qiscus_lastComment_id")
