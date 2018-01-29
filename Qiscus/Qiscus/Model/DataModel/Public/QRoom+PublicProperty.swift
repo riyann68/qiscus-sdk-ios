@@ -116,4 +116,9 @@ public extension QRoom {
             return comments
         }
     }
+    public var channel:String{
+        get{
+            return self.uniqueId
+        }
+    }
 }

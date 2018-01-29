@@ -76,12 +76,15 @@ class QCellAudioRight: QCellAudio {
         fileContainer.layer.cornerRadius = 10
     }
     public override func commentChanged() {
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         self.progressHeight.constant = 0
         self.progressContainer.isHidden = true
         self.currentTimeSlider.setValue(self.comment!.currentTimeSlider, animated: true)
         self.durationLabel.text = self.comment!.durationLabel
         
-        if self.comment!.cellPos == .first || self.comment!.cellPos == .single{
+        if self.showUserName{
             userNameLabel.text = "You"
             userNameLabel.isHidden = false
             balloonTopMargin.constant = 20
@@ -156,7 +159,7 @@ class QCellAudioRight: QCellAudio {
     open override func setupCell(){
         
     }
-    func playButtonTapped(_ sender: UIButton) {
+    @objc func playButtonTapped(_ sender: UIButton) {
         self.isPlaying = true
         DispatchQueue.main.async {
             autoreleasepool{
@@ -166,7 +169,7 @@ class QCellAudioRight: QCellAudio {
         }
     }
     
-    func pauseButtonTapped(_ sender: UIButton) {
+    @objc func pauseButtonTapped(_ sender: UIButton) {
         self.isPlaying = false
         DispatchQueue.main.async {
             autoreleasepool{
@@ -176,7 +179,7 @@ class QCellAudioRight: QCellAudio {
         }
     }
     
-    func downloadButtonTapped(_ sender: UIButton) {
+    @objc func downloadButtonTapped(_ sender: UIButton) {
         self.audioCellDelegate?.didTapDownloadButton(sender, onCell: self)
     }
     

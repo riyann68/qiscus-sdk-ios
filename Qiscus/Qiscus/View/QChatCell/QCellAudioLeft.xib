@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -21,12 +22,12 @@
                         <rect key="frame" x="0.0" y="0.0" width="364" height="83"/>
                         <subviews>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="E62-Fw-pkZ">
-                                <rect key="frame" x="60" y="0.0" width="200" height="20"/>
+                                <rect key="frame" x="46" y="0.0" width="200" height="20"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="200" id="AAq-i6-fLk"/>
                                     <constraint firstAttribute="height" constant="20" id="D8V-eV-BvO"/>
                                 </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="11"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="12"/>
                                 <color key="textColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
@@ -141,11 +142,11 @@
                             <constraint firstItem="3uQ-Hc-w5c" firstAttribute="leading" secondItem="XfR-Eh-fej" secondAttribute="leading" constant="27" id="7hA-UV-b25"/>
                             <constraint firstItem="D74-R1-h26" firstAttribute="trailing" secondItem="jRl-G6-Vld" secondAttribute="trailing" constant="-6" id="DoS-Dx-pyg"/>
                             <constraint firstItem="jRl-G6-Vld" firstAttribute="bottom" secondItem="3uQ-Hc-w5c" secondAttribute="bottom" constant="-23" id="FKU-ff-TCY"/>
+                            <constraint firstItem="E62-Fw-pkZ" firstAttribute="leading" secondItem="jRl-G6-Vld" secondAttribute="leading" id="ODH-my-xEa"/>
                             <constraint firstItem="3uQ-Hc-w5c" firstAttribute="top" secondItem="XfR-Eh-fej" secondAttribute="top" id="VJb-VX-ybQ"/>
                             <constraint firstAttribute="height" secondItem="3uQ-Hc-w5c" secondAttribute="height" constant="3" id="Wen-lD-fNq"/>
                             <constraint firstItem="jRl-G6-Vld" firstAttribute="top" secondItem="3uQ-Hc-w5c" secondAttribute="top" constant="4" id="c8v-vN-a90"/>
                             <constraint firstItem="E62-Fw-pkZ" firstAttribute="top" secondItem="XfR-Eh-fej" secondAttribute="top" id="hVU-zK-aOl"/>
-                            <constraint firstItem="E62-Fw-pkZ" firstAttribute="leading" secondItem="XfR-Eh-fej" secondAttribute="leading" constant="60" id="idX-6o-vw8"/>
                             <constraint firstItem="D74-R1-h26" firstAttribute="bottom" secondItem="3uQ-Hc-w5c" secondAttribute="bottom" constant="-2" id="uig-L7-HuE"/>
                             <constraint firstItem="jRl-G6-Vld" firstAttribute="trailing" secondItem="3uQ-Hc-w5c" secondAttribute="trailing" constant="-4" id="vBi-Ia-EiX"/>
                         </constraints>
@@ -160,6 +161,7 @@
             </constraints>
             <size key="customSize" width="364" height="92"/>
             <connections>
+                <outlet property="balloonLeftMargin" destination="7hA-UV-b25" id="g9q-HR-Gx9"/>
                 <outlet property="balloonTopMargin" destination="VJb-VX-ybQ" id="qVX-w4-PRB"/>
                 <outlet property="balloonView" destination="3uQ-Hc-w5c" id="4NM-Xl-Lhp"/>
                 <outlet property="cellHeight" destination="Wen-lD-fNq" id="aFf-LN-Rng"/>

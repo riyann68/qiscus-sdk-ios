@@ -13,7 +13,7 @@ open class QiscusConfig: NSObject {
     static let sharedInstance = QiscusConfig()
     
     open var commentPerLoad:Int = 10
-    open var dbSchemaVersion:UInt64 = 68
+    open var dbSchemaVersion:UInt64 = 71
     
     open var UPLOAD_URL = ""
     
@@ -23,31 +23,31 @@ open class QiscusConfig: NSObject {
     
     open var BASE_URL:String{
         get{
-            return QiscusMe.shared.baseUrl
+            return Qiscus.client.baseUrl
         }
     }
     open var USER_EMAIL:String{
         get{
-            return QiscusMe.shared.email
+            return Qiscus.client.email
         }
     }
     open var USER_TOKEN:String{
         get{
-            return QiscusMe.shared.token
+            return Qiscus.client.token
         }
     }
     open var PUSHER_KEY:String{
         get{
-            return QiscusMe.shared.rtKey
+            return Qiscus.client.rtKey
         }
     }
 
     internal var BASE_API_URL:String{
         get{
-            if QiscusMe.shared.baseUrl != "" {
-                return "\(QiscusMe.shared.baseUrl)/api/v\(self.API_VERSION)/mobile"
+            if Qiscus.client.baseUrl != "" {
+                return "\(Qiscus.client.baseUrl)/api/v\(self.API_VERSION)/mobile"
             }else{
-                return "\(QiscusMe.shared.appId).qiscus.com/api/v\(self.API_VERSION)/mobile"
+                return "\(Qiscus.client.appId).qiscus.com/api/v\(self.API_VERSION)/mobile"
             }
         }
     }
@@ -55,13 +55,13 @@ open class QiscusConfig: NSObject {
         get{
             var headers:[String:String] = [
                 "User-Agent" : "QiscusSDKIos/v\(Qiscus.versionNumber)",
-                "QISCUS_SDK_APP_ID" : QiscusMe.shared.appId,
+                "QISCUS_SDK_APP_ID" : Qiscus.client.appId,
             ]
-            if QiscusMe.shared.token != "" {
-                headers["QISCUS_SDK_TOKEN"] = QiscusMe.shared.token
+            if Qiscus.client.token != "" {
+                headers["QISCUS_SDK_TOKEN"] = Qiscus.client.token
             }
-            if QiscusMe.shared.email != "" {
-                headers["QISCUS_SDK_USER_ID"] = QiscusMe.shared.email
+            if Qiscus.client.email != "" {
+                headers["QISCUS_SDK_USER_ID"] = Qiscus.client.email
             }
             return headers
         }
@@ -135,6 +135,10 @@ open class QiscusConfig: NSObject {
         let config = QiscusConfig.sharedInstance
         return "\(config.BASE_API_URL)/load_comments/"
     }
+    internal class var CLEAR_MESSAGES:String{
+        let config = QiscusConfig.sharedInstance
+        return "\(config.BASE_API_URL)/clear_room_messages/"
+    }
     open class func LOAD_URL_(withTopicId topicId:Int, commentId:Int)->String{
         let config = QiscusConfig.sharedInstance
         return "\(config.BASE_API_URL)/topic/\(topicId)/comment/\(commentId)/token/\(config.USER_TOKEN)"
@@ -144,13 +148,13 @@ open class QiscusConfig: NSObject {
         return "\(config.BASE_API_URL)/get_room_by_id"
     }
     open func setUserConfig(withEmail email:String, userKey:String, rtKey:String){
-        QiscusMe.shared.email = email
-        QiscusMe.shared.userData.set(email, forKey: "qiscus_email")
+        Qiscus.client.email = email
+        Qiscus.client.userData.set(email, forKey: "qiscus_email")
         
-        QiscusMe.shared.token = userKey
-        QiscusMe.shared.userData.set(userKey, forKey: "qiscus_token")
+        Qiscus.client.token = userKey
+        Qiscus.client.userData.set(userKey, forKey: "qiscus_token")
         
-        QiscusMe.shared.rtKey = rtKey
-        QiscusMe.shared.userData.set(rtKey, forKey: "qiscus_rt_key")
+        Qiscus.client.rtKey = rtKey
+        Qiscus.client.userData.set(rtKey, forKey: "qiscus_rt_key")
     }
 }

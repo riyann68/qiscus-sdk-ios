@@ -23,7 +23,7 @@ class ProgressVC: UIViewController {
         self.navigationItem.leftBarButtonItems = [logoutButton]
         // Do any additional setup after loading the view.
     }
-    func logOut(){
+    @objc func logOut(){
         Qiscus.clear()
         self.appDelegate.goToLoginView()
     }

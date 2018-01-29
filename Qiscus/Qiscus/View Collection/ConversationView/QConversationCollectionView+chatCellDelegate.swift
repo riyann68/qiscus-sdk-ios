@@ -10,6 +10,14 @@ import UIKit
 import AVFoundation
 import SwiftyJSON
 
+extension QConversationCollectionView: QCellCarouselDelegate{
+    public func cellCarousel(carouselCell: QCellCarousel, didTapCard card: QCard) {
+        self.cellDelegate?.cellDelegate?(didTapCard: card)
+    }
+    public func cellCarousel(carouselCell: QCellCarousel, didTapAction action: QCardAction) {
+        self.cellDelegate?.cellDelegate?(didTapCardAction: action)
+    }
+}
 extension QConversationCollectionView: ChatCellDelegate, ChatCellAudioDelegate {
     func getInfo(comment: QComment) {
         self.cellDelegate?.cellDelegate?(didTapInfoOnComment: comment)

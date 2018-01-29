@@ -63,7 +63,7 @@ open class QLoadingViewController: UIViewController {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-    open func onTapLoading() {
+    @objc open func onTapLoading() {
         if !self.isBlocking{
             self.dismiss(animated: true, completion: {
                 self.interuptLoadingAction()

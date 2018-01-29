@@ -18,7 +18,7 @@ class QToasterConfig: NSObject {
     }
     class var titleFont:UIFont{
         get{
-            return UIFont.systemFont(ofSize: 11.0, weight: 0.8)
+            return UIFont.systemFont(ofSize: 11.0, weight: UIFont.Weight(rawValue: 0.8))
         }
     }
     
@@ -72,7 +72,7 @@ class QToasterConfig: NSObject {
     
     class func textSize(text: NSString, font: UIFont, maxWidth: CGFloat)->CGSize{
         let size = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
-        let rect = text.boundingRect(with: size, options: .usesLineFragmentOrigin, attributes: [NSFontAttributeName: font], context: nil) as CGRect
+        let rect = text.boundingRect(with: size, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil) as CGRect
         return rect.size
     }
     

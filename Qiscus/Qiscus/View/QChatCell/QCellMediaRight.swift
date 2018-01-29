@@ -62,6 +62,9 @@ class QCellMediaRight: QChatCell {
         mediaCaption.type = .caption
     }
     public override func commentChanged() {
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         captionWidth.constant = QiscusUIConfiguration.chatTextMaxWidth
         balloonView.tintColor = QiscusColorConfiguration.sharedInstance.rightBaloonColor
         self.balloonView.image = self.getBallon()
@@ -108,7 +111,7 @@ class QCellMediaRight: QChatCell {
                 imageDisplay.removeGestureRecognizer(self.tapRecognizer!)
                 tapRecognizer = nil
             }
-            if self.comment!.cellPos == .first || self.comment!.cellPos == .single{
+            if self.showUserName{
                 self.userNameLabel.text = "You"
                 self.userNameLabel.isHidden = false
                 self.topMargin.constant = 20
@@ -305,7 +308,7 @@ class QCellMediaRight: QChatCell {
             }
         }
     }
-    func didTapImage(){
+    @objc func didTapImage(){
         if !self.comment!.isUploading && !self.comment!.isDownloading{
             if let file = self.comment!.file{
                 if QFileManager.isFileExist(inLocalPath: file.localPath){

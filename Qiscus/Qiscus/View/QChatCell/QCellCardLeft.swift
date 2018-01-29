@@ -22,6 +22,7 @@ class QCellCardLeft: QChatCell {
     
     @IBOutlet weak var cardHeight: NSLayoutConstraint!
     @IBOutlet weak var topMargin: NSLayoutConstraint!
+    @IBOutlet weak var balloonLeftMargin: NSLayoutConstraint!
     
     var buttons = [UIButton]()
     
@@ -35,6 +36,14 @@ class QCellCardLeft: QChatCell {
         self.displayView.clipsToBounds = true
     }
     override func commentChanged() {
+        if self.hideAvatar {
+            self.balloonLeftMargin.constant = 15
+        }else{
+            self.balloonLeftMargin.constant = 42
+        }
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         let data = self.comment!.data
         let payload = JSON(parseJSON: data)
         
@@ -51,7 +60,7 @@ class QCellCardLeft: QChatCell {
         let buttonsData = payload["buttons"].arrayValue
         let buttonWidth = self.buttonArea.frame.size.width
         
-        if self.comment!.cellPos == .first || self.comment!.cellPos == .single{
+        if self.showUserName{
             if let sender = self.comment?.sender {
                 self.userNameLabel.text = sender.fullname.capitalized
             }else{
@@ -94,7 +103,7 @@ class QCellCardLeft: QChatCell {
         self.cardHeight.constant = 90 + yPos
         self.containerView.layoutIfNeeded()
     }
-    func cardButtonTapped(_ sender: UIButton) {
+    @objc func cardButtonTapped(_ sender: UIButton) {
         let data = self.comment!.data
         let payload = JSON(parseJSON: data)
         let buttonsData = payload["buttons"].arrayValue

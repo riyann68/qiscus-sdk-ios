@@ -157,7 +157,7 @@ class QToasterView: UIButton {
         self.addTarget(self, action: #selector(QToasterView.touchAction), for: UIControlEvents.touchUpInside)
         self.addSubview(viewArea)
     }
-    func touchAction(){
+    @objc func touchAction(){
         self.toaster.touchAction()
     }
     /**

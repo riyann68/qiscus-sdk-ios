@@ -85,7 +85,7 @@ class RoomListVC2: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    func searchText(){
+    @objc func searchText(){
         self.roomListView.search(text: "kiwari")
     }
     func loadRoomList(){
@@ -104,11 +104,11 @@ class RoomListVC2: UIViewController {
         }
     }
     
-    func logOut(){
+    @objc func logOut(){
         Qiscus.clear()
         self.appDelegate.goToLoginView()
     }
-    func addChat(){
+    @objc func addChat(){
         let actionSheetController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
         let cancelActionButton = UIAlertAction(title: "Cancel", style: .cancel) { action -> Void in

@@ -11,8 +11,8 @@ import RealmSwift
 import SwiftyJSON
 
 open class QiscusLinkData: Object {
-    open dynamic var localId:Int = 0
-    open dynamic var linkURL:String = ""{
+    @objc open dynamic var localId:Int = 0
+    @objc open dynamic var linkURL:String = ""{
         didSet{
             if localId > 0 {
                 let id = self.localId
@@ -36,7 +36,7 @@ open class QiscusLinkData: Object {
             }
         }
     }
-    open dynamic var linkTitle:String = ""{
+    @objc open dynamic var linkTitle:String = ""{
         didSet{
             if localId > 0 {
                 let id = self.localId
@@ -59,7 +59,7 @@ open class QiscusLinkData: Object {
             }
         }
     }
-    open dynamic var linkDescription: String = ""{
+    @objc open dynamic var linkDescription: String = ""{
         didSet{
             if localId > 0 {
                 let id = self.localId
@@ -82,7 +82,7 @@ open class QiscusLinkData: Object {
             }
         }
     }
-    open dynamic var linkImageURL: String = ""{
+    @objc open dynamic var linkImageURL: String = ""{
         didSet{
             if localId > 0 {
                 let id = self.localId
@@ -106,7 +106,7 @@ open class QiscusLinkData: Object {
             }
         }
     }
-    open dynamic var linkImageThumbURL: String = ""{
+    @objc open dynamic var linkImageThumbURL: String = ""{
         didSet{
             if localId > 0 {
                 let id = self.localId

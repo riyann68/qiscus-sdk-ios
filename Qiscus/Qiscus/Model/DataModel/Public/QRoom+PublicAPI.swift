@@ -47,7 +47,7 @@ public extension QRoom {
     public func update(roomName:String? = nil, roomAvatarURL:String? = nil, roomOptions:String? = nil, onSuccess:@escaping ((_ room: QRoom)->Void),onError:@escaping ((_ error: String)->Void)){
         self.updateRoom(roomName: roomName, roomAvatarURL: roomAvatarURL, roomOptions: roomOptions, onSuccess: onSuccess, onError: onError)
     }
-    public func publishStopTyping(){
+    @objc public func publishStopTyping(){
         self.publishStopTypingRoom()
     }
     public func publishStartTyping(){

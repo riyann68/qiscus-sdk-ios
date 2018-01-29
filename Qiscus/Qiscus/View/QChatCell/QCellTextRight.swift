@@ -53,6 +53,9 @@ class QCellTextRight: QChatCell {
         
     }
     public override func commentChanged() {
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         self.textView.comment = self.comment
         
         self.balloonView.image = self.getBallon()
@@ -84,7 +87,7 @@ class QCellTextRight: QChatCell {
             }
             var username = replyData["replied_comment_sender_username"].stringValue
             let repliedEmail = replyData["replied_comment_sender_email"].stringValue
-            if repliedEmail == QiscusMe.shared.email {
+            if repliedEmail == Qiscus.client.email {
                 username = "You"
             }else{
                 if let user = QUser.user(withEmail: repliedEmail){
@@ -241,7 +244,7 @@ class QCellTextRight: QChatCell {
         
         
         // first cell
-        if self.comment?.cellPos == .first || self.comment?.cellPos == .single{
+        if self.showUserName{
             self.userNameLabel.text = "You"
             self.userNameLabel.isHidden = false
             self.balloonTopMargin.constant = 20
@@ -300,7 +303,7 @@ class QCellTextRight: QChatCell {
         textView.text = ""
         textView.font = UIFont.systemFont(ofSize: 14)
     }
-    func openLink(){
+    @objc func openLink(){
         self.delegate?.didTouchLink(onComment: self.comment!)
     }
     public override func updateUserName() {

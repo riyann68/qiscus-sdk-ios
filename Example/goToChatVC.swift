@@ -143,7 +143,7 @@ class goToChatVC: UIViewController {
         Qiscus.clear()
         appDelegate.goToLoginView()
     }
-    func hideKeyboard(){
+    @objc func hideKeyboard(){
         self.view.endEditing(true)
     }
 }

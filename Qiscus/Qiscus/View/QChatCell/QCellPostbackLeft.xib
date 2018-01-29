@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -26,7 +27,7 @@
                                     <constraint firstAttribute="height" constant="20" id="kVK-Vm-4x9"/>
                                     <constraint firstAttribute="width" constant="200" id="q0k-k4-Eu0"/>
                                 </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="11"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="12"/>
                                 <color key="textColor" red="0.43529411759999997" green="0.4431372549" blue="0.47450980390000003" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
@@ -90,6 +91,7 @@
             <size key="customSize" width="408" height="221"/>
             <connections>
                 <outlet property="balloonHeight" destination="2GB-P6-pxU" id="fI6-1t-egZ"/>
+                <outlet property="balloonLeftMargin" destination="Xza-ww-iMK" id="hyb-cU-P4A"/>
                 <outlet property="balloonTopMargin" destination="27i-Re-dpM" id="lij-3p-rmd"/>
                 <outlet property="balloonView" destination="72O-5x-QSl" id="24C-GN-wdy"/>
                 <outlet property="balloonWidth" destination="aN6-GV-DZd" id="8OX-qM-N6X"/>
@@ -97,7 +99,6 @@
                 <outlet property="buttonsViewHeight" destination="vX1-lG-QfZ" id="RWB-db-APa"/>
                 <outlet property="cellHeight" destination="XJJ-Mo-nvi" id="Dnt-6S-nSx"/>
                 <outlet property="dateLabel" destination="fFB-0D-apw" id="FaP-tc-UXl"/>
-                <outlet property="leftMargin" destination="Xza-ww-iMK" id="GvZ-TU-QeZ"/>
                 <outlet property="textLeading" destination="aQ4-6Y-r3Q" id="BKw-Yb-fuY"/>
                 <outlet property="textTopMargin" destination="1je-4u-M2x" id="PZi-i2-zPS"/>
                 <outlet property="textView" destination="wmx-Cd-4mN" id="oMo-Yn-jV2"/>

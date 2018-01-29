@@ -30,6 +30,9 @@ class QCellContactRight: QChatCell {
         self.balloonView.tintColor = QiscusColorConfiguration.sharedInstance.rightBaloonColor
     }
     override func commentChanged() {
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         let data = self.comment!.data
         let payloadJSON = JSON(parseJSON: data)
         
@@ -39,7 +42,7 @@ class QCellContactRight: QChatCell {
         
         self.balloonView.image = self.getBallon()
         
-        if self.comment?.cellPos == .first || self.comment?.cellPos == .single{
+        if self.showUserName{
             self.userNameLabel.text = "You"
             self.userNameLabel.isHidden = false
             self.topMargin.constant = 20

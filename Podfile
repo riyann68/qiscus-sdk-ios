@@ -8,8 +8,8 @@ target 'Example' do
     pod 'AlamofireImage', '~> 3.3.0'
     pod 'RealmSwift', '~> 3.0.2'
     pod 'SwiftyJSON', '~> 3.1.4'
-    pod 'ImageViewer', '4.0'
-    pod 'CocoaMQTT', '1.0.19'
+    pod 'ImageViewer', '5.0.0'
+    pod 'CocoaMQTT', '1.1.1'
 end
 
 target 'Qiscus' do
@@ -19,15 +19,7 @@ target 'Qiscus' do
     pod 'AlamofireImage', '~> 3.3.0'
     pod 'RealmSwift', '~> 3.0.2'
     pod 'SwiftyJSON', '~> 3.1.4'
-    pod 'ImageViewer', '4.0'
-    pod 'CocoaMQTT', '1.0.19'
+    pod 'ImageViewer', '5.0.0'
+    pod 'CocoaMQTT', '1.1.1'
 end
 
-post_install do |installer|
-    installer.pods_project.targets.each do |target|
-        target.build_configurations.each do |config|
-            config.build_settings['ENABLE_BITCODE'] = 'YES'
-            config.build_settings['SWIFT_VERSION'] = '3.0'
-        end
-    end
-end

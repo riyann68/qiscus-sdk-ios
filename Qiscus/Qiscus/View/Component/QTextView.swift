@@ -17,15 +17,15 @@ class QTextView: UITextView {
         get{
             var foregroundColorAttributeName = QiscusColorConfiguration.sharedInstance.leftBaloonLinkColor
             var underlineColorAttributeName = QiscusColorConfiguration.sharedInstance.leftBaloonLinkColor
-            if self.comment?.senderEmail == QiscusMe.shared.email{
+            if self.comment?.senderEmail == Qiscus.client.email{
                 foregroundColorAttributeName = QiscusColorConfiguration.sharedInstance.rightBaloonLinkColor
                 underlineColorAttributeName = QiscusColorConfiguration.sharedInstance.rightBaloonLinkColor
             }
             return [
-                NSForegroundColorAttributeName: foregroundColorAttributeName,
-                NSUnderlineColorAttributeName: underlineColorAttributeName,
-                NSUnderlineStyleAttributeName: NSUnderlineStyle.styleSingle.rawValue,
-                NSFontAttributeName: Qiscus.style.chatFont
+                NSAttributedStringKey.foregroundColor.rawValue: foregroundColorAttributeName,
+                NSAttributedStringKey.underlineColor.rawValue: underlineColorAttributeName,
+                NSAttributedStringKey.underlineStyle.rawValue: NSUnderlineStyle.styleSingle.rawValue,
+                NSAttributedStringKey.font.rawValue: Qiscus.style.chatFont
             ]
         }
     }

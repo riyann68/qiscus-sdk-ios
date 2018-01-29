@@ -20,6 +20,7 @@ class QCellContactLeft: QChatCell {
     @IBOutlet weak var separator: UIView!
     @IBOutlet weak var balloonView: UIImageView!
     @IBOutlet weak var dateLabel: UILabel!
+    @IBOutlet weak var balloonLeftMargin: NSLayoutConstraint!
     
     @IBOutlet weak var topMargin: NSLayoutConstraint!
     
@@ -30,6 +31,14 @@ class QCellContactLeft: QChatCell {
         self.balloonView.tintColor = QiscusColorConfiguration.sharedInstance.leftBaloonColor
     }
     override func commentChanged() {
+        if hideAvatar {
+            self.balloonLeftMargin.constant = 0
+        }else{
+            self.balloonLeftMargin.constant = 27
+        }
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         let data = self.comment!.data
         let payloadJSON = JSON(parseJSON: data)
         
@@ -39,7 +48,7 @@ class QCellContactLeft: QChatCell {
         
         self.balloonView.image = self.getBallon()
         
-        if self.comment?.cellPos == .first || self.comment?.cellPos == .single{
+        if self.showUserName{
             if let sender = self.comment?.sender {
                 self.userNameLabel.text = sender.fullname
             }else{

@@ -29,9 +29,9 @@ class QSearchListDefaultCell: QSearchListCell {
         
     }
     override func searchTextChanged() {
-        let boldAttr = [NSForegroundColorAttributeName: UIColor.red,
-                        NSFontAttributeName: UIFont.boldSystemFont(ofSize: 14.0)]
-        let normalAttr = [NSFontAttributeName: UIFont.systemFont(ofSize: 14.0)]
+        let boldAttr = [NSAttributedStringKey.foregroundColor: UIColor.red,
+                        NSAttributedStringKey.font: UIFont.boldSystemFont(ofSize: 14.0)]
+        let normalAttr = [NSAttributedStringKey.font: UIFont.systemFont(ofSize: 14.0)]
         
         let message = self.comment!.text
         let newLabelText = NSMutableAttributedString(string: message)

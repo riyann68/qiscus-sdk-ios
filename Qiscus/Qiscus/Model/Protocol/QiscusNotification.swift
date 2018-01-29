@@ -30,6 +30,7 @@ public class QiscusNotification: NSObject {
     public static let ROOM_CHANGE = NSNotification.Name("qiscus_roomChange")
     public static let ROOM_DELETED = NSNotification.Name("qiscus_roomDeleted")
     public static let ROOM_ORDER_MAY_CHANGE = NSNotification.Name("qiscus_romOrderChange")
+    public static let ROOM_CLEARMESSAGES = NSNotification.Name("qiscus_clearMessages")
     
     public static let FINISHED_CLEAR_MESSAGES = NSNotification.Name("qiscus_finishedClearMessages")
     public static let FINISHED_SYNC_ROOMLIST = NSNotification.Name("qiscus_finishedSyncRoomList")
@@ -39,6 +40,10 @@ public class QiscusNotification: NSObject {
     
     override private init(){
         super.init()
+    }
+    internal class func publish(roomCleared room:QRoom){
+        let notification = QiscusNotification.shared
+        notification.publish(roomCleared: room)
     }
     internal class func publish(userNameChange user:QUser){
         let notification = QiscusNotification.shared
@@ -165,6 +170,14 @@ public class QiscusNotification: NSObject {
     private func publish(roomDeleted roomId:String){
         let userInfo: [AnyHashable: Any] = ["room_id" : roomId]
         self.nc.post(name: QiscusNotification.ROOM_DELETED, object: nil, userInfo: userInfo)
+    }
+    private func publish(roomCleared room:QRoom){
+        if !room.isInvalidated {
+            let userInfo: [AnyHashable: Any] = [
+                "room"      : room
+            ]
+            self.nc.post(name: QiscusNotification.ROOM_CLEARMESSAGES, object: nil, userInfo: userInfo)
+        }
     }
     private func publish(roomChange room:QRoom, property:QRoomProperty){
         if !room.isInvalidated {

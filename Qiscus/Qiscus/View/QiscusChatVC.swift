@@ -18,6 +18,11 @@ import CoreLocation
 //
 import RealmSwift
 
+@objc public protocol QiscusChatVCConfigDelegate{
+    @objc optional func chatVCConfigDelegate(userNameLabelColor viewController:QiscusChatVC, forUser user:QUser)->UIColor?
+    @objc optional func chatVCConfigDelegate(hideLeftAvatarOn viewController:QiscusChatVC)->Bool
+    @objc optional func chatVCConfigDelegate(hideUserNameLabel viewController:QiscusChatVC, forUser user:QUser)->Bool
+}
 @objc public protocol QiscusChatVCDelegate{
     func chatVC(enableForwardAction viewController:QiscusChatVC)->Bool
     func chatVC(enableInfoAction viewController:QiscusChatVC)->Bool
@@ -37,6 +42,8 @@ import RealmSwift
     @objc optional func chatVC(viewController:QiscusChatVC, cellForComment comment:QComment)->QChatCell?
     @objc optional func chatVC(viewController:QiscusChatVC, heightForComment comment:QComment)->QChatCellHeight?
     @objc optional func chatVC(viewController:QiscusChatVC, hideCellWith comment:QComment)->Bool
+    
+    @objc optional func chatVC(viewController:QiscusChatVC, didFailLoadRoom error:String)
 }
 
 public class QiscusChatVC: UIViewController{
@@ -78,6 +85,8 @@ public class QiscusChatVC: UIViewController{
     @IBOutlet public weak var collectionViewTopMargin: NSLayoutConstraint!
     
     public var delegate:QiscusChatVCDelegate?
+    public var configDelegate:QiscusChatVCConfigDelegate?
+    
     public var data:Any?
     
     var isPresence:Bool = false
@@ -368,7 +377,7 @@ public class QiscusChatVC: UIViewController{
         }
         
     }
-    
+
     override public func viewWillDisappear(_ animated: Bool) {
         if let room = self.chatRoom {
             room.readAll()
@@ -394,7 +403,9 @@ public class QiscusChatVC: UIViewController{
             self.navigationController?.navigationBar.prefersLargeTitles = false
             self.navigationController?.navigationItem.largeTitleDisplayMode = .never
         }
+        
         if !self.prefetch {
+            self.isPresence = true
             if let room = self.chatRoom {
                 let rid = room.id
                 QiscusBackgroundThread.async {
@@ -410,6 +421,7 @@ public class QiscusChatVC: UIViewController{
         self.collectionView.viewDelegate = self
         self.collectionView.roomDelegate = self
         self.collectionView.cellDelegate = self
+        self.collectionView.configDelegate = self
         
         // UINavigationBar.appearance().tintColor = self.currentNavbarTint
         
@@ -422,7 +434,6 @@ public class QiscusChatVC: UIViewController{
         setupPage()
         
         if !self.prefetch {
-            self.isPresence = true
             let center: NotificationCenter = NotificationCenter.default
             center.addObserver(self, selector: #selector(QiscusChatVC.keyboardWillHide(_:)), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
             center.addObserver(self, selector: #selector(QiscusChatVC.keyboardChange(_:)), name: NSNotification.Name.UIKeyboardWillChangeFrame, object: nil)
@@ -485,6 +496,7 @@ public class QiscusChatVC: UIViewController{
                 self.postComment(comment: newMessage)
                 self.chatMessage = nil
             }
+            room.resendPendingMessage()
             setupNavigationTitle()
             setupPage()
         }else{
@@ -572,7 +584,7 @@ public class QiscusChatVC: UIViewController{
     }
     
     // MARK: - Keyboard Methode
-    func keyboardWillHide(_ notification: Notification){
+    @objc func keyboardWillHide(_ notification: Notification){
         let info: NSDictionary = (notification as NSNotification).userInfo! as NSDictionary
         
         let animateDuration = info[UIKeyboardAnimationDurationUserInfoKey] as! Double
@@ -586,7 +598,7 @@ public class QiscusChatVC: UIViewController{
         }, completion: nil)
     }
     
-    func keyboardChange(_ notification: Notification){
+    @objc func keyboardChange(_ notification: Notification){
         let info:NSDictionary = (notification as NSNotification).userInfo! as NSDictionary
         let keyboardSize = (info[UIKeyboardFrameEndUserInfoKey] as! NSValue).cgRectValue
         
@@ -608,7 +620,7 @@ public class QiscusChatVC: UIViewController{
     }
     func righRightButtonAction(_ sender: AnyObject) {
     }
-    func goBack() {
+    @objc func goBack() {
         self.isPresence = false
         view.endEditing(true)
         if let delegate = self.delegate{
@@ -626,7 +638,7 @@ public class QiscusChatVC: UIViewController{
         center.removeObserver(self)
     }
     // MARK: - Button Action
-    func appDidEnterBackground(){
+    @objc func appDidEnterBackground(){
         self.isPresence = false
         view.endEditing(true)
         self.dismissLoading()
@@ -670,7 +682,7 @@ public class QiscusChatVC: UIViewController{
     public func register(_ chatCellClass: AnyClass?, forCellWithReuseIdentifier identifier: String) {
         self.collectionView.register(chatCellClass, forCellWithReuseIdentifier: identifier)
     }
-    internal func applicationDidBecomeActive(){
+    @objc internal func applicationDidBecomeActive(){
         if let room = self.collectionView.room{
             room.syncRoom()
         }
@@ -706,8 +718,9 @@ extension QiscusChatVC:QChatServiceDelegate{
         DispatchQueue.main.asyncAfter(deadline: time, execute: {
             self.dismissLoading()
         })
-        QToasterSwift.toast(target: self, text: "Can't load chat room", backgroundColor: UIColor(red: 0.9, green: 0,blue: 0,alpha: 0.8), textColor: UIColor.white)
+        QToasterSwift.toast(target: self, text: "Can't load chat room\n\(error)", backgroundColor: UIColor(red: 0.9, green: 0,blue: 0,alpha: 0.8), textColor: UIColor.white)
         self.dataLoaded = false
+        self.delegate?.chatVC?(viewController: self, didFailLoadRoom: error)
     }
     
 }
@@ -735,7 +748,7 @@ extension QiscusChatVC:QConversationViewRoomDelegate{
     public func roomDelegate(didFailUpdate error: String){}
     public func roomDelegate(didChangeUser room: QRoom, user: QUser){
         if self.chatRoom!.type == .single {
-            if user.email != QiscusMe.shared.email && self.chatRoom!.typingUser == ""{
+            if user.email != Qiscus.client.email && self.chatRoom!.typingUser == ""{
                 self.loadSubtitle()
             }
         }

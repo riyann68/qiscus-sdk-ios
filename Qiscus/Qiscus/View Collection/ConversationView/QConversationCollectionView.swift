@@ -36,8 +36,11 @@ public class QConversationCollectionView: UICollectionView {
                             self.messagesId = messages
                             self.reloadData()
                         }
+                        rts.resendPendingMessage()
+                        rts.sync()
                     }
                 }
+                
             }else{
                 self.messagesId = [[String]]()
                 self.unsubscribeEvent()
@@ -52,6 +55,7 @@ public class QConversationCollectionView: UICollectionView {
     public var viewDelegate:QConversationViewDelegate?
     public var roomDelegate:QConversationViewRoomDelegate?
     public var cellDelegate:QConversationViewCellDelegate?
+    public var configDelegate:QConversationViewConfigurationDelegate?
     
     public var typingUserTimer = [String:Timer]()
     
@@ -96,9 +100,7 @@ public class QConversationCollectionView: UICollectionView {
         let layout = self.collectionViewLayout as? UICollectionViewFlowLayout
         layout?.sectionHeadersPinToVisibleBounds = true
         layout?.sectionFootersPinToVisibleBounds = true
-        self.decelerationRate = UIScrollViewDecelerationRateNormal
-        
-        
+        self.decelerationRate = UIScrollViewDecelerationRateNormal        
     }
     
     open func registerCell(){
@@ -126,19 +128,22 @@ public class QConversationCollectionView: UICollectionView {
         self.register(UINib(nibName: "QCellContactLeft",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellContactLeft")
         self.register(UINib(nibName: "QCellLocationRight",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellLocationRight")
         self.register(UINib(nibName: "QCellLocationLeft",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellLocationLeft")
+        self.register(UINib(nibName: "QCellCarousel",bundle: Qiscus.bundle), forCellWithReuseIdentifier: "cellCarousel")
         self.registerCustomCell?()
     }
     public func subscribeEvent(){
         let center: NotificationCenter = NotificationCenter.default
 
-        center.addObserver(self, selector: #selector(QConversationCollectionView.commentDeleted(_:)), name: QiscusNotification.COMMENT_DELETE, object: nil)
+//        center.addObserver(self, selector: #selector(QConversationCollectionView.commentDeleted(_:)), name: QiscusNotification.COMMENT_DELETE, object: nil)
         center.addObserver(self, selector: #selector(QConversationCollectionView.userTyping(_:)), name: QiscusNotification.USER_TYPING, object: nil)
         center.addObserver(self, selector: #selector(QConversationCollectionView.newCommentNotif(_:)), name: QiscusNotification.GOT_NEW_COMMENT, object: nil)
+        center.addObserver(self, selector: #selector(QConversationCollectionView.messageCleared(_:)), name: QiscusNotification.ROOM_CLEARMESSAGES, object: nil)
     }
     public func unsubscribeEvent(){
         let center: NotificationCenter = NotificationCenter.default
-        center.removeObserver(self, name: QiscusNotification.COMMENT_DELETE, object: nil)
+//        center.removeObserver(self, name: QiscusNotification.COMMENT_DELETE, object: nil)
         center.removeObserver(self, name: QiscusNotification.USER_TYPING, object: nil)
+        center.removeObserver(self, name: QiscusNotification.GOT_NEW_COMMENT, object: nil)
         center.removeObserver(self, name: QiscusNotification.GOT_NEW_COMMENT, object: nil)
     }
     // MARK: - Event handler
@@ -155,7 +160,7 @@ public class QConversationCollectionView: UICollectionView {
                 DispatchQueue.main.async {
                     self.messagesId = messages
                     self.reloadData()
-                    if comment.senderEmail == QiscusMe.shared.email || self.isLastRowVisible {
+                    if comment.senderEmail == Qiscus.client.email || self.isLastRowVisible {
                         self.layoutIfNeeded()
                         self.scrollToBottom(true)
                     }
@@ -232,7 +237,20 @@ public class QConversationCollectionView: UICollectionView {
             }
         }
     }
-    
+    @objc private func messageCleared(_ notification: Notification){
+        if let userInfo = notification.userInfo {
+            let room = userInfo["room"] as! QRoom
+            if room.isInvalidated { return }
+            if let currentRoom = self.room {
+                if !currentRoom.isInvalidated {
+                    if currentRoom.id == currentRoom.id {
+                        self.messagesId = [[String]]()
+                        self.reloadData()
+                    }
+                }
+            }
+        }
+    }
     @objc private func commentDeleted(_ notification: Notification) {
         if let userInfo = notification.userInfo {
             let room = userInfo["room"] as! QRoom
@@ -277,6 +295,9 @@ public class QConversationCollectionView: UICollectionView {
         
         switch comment.type {
         case .card, .contact    : break
+        case .carousel :
+            retHeight += 4
+            break
         case .video, .image     :
             if retHeight > 0 {
                 retHeight += 151 ;
@@ -287,19 +308,28 @@ public class QConversationCollectionView: UICollectionView {
         case .audio             : retHeight = 83 ; break
         case .file              : retHeight = 67  ; break
         case .reply             : retHeight += 88 ; break
-        case .system            : retHeight += 46 ; break
+        case .system            : retHeight += 5 ; break
         case .text              : retHeight += 15 ; break
         case .document          : retHeight += 7; break
         default                 : retHeight += 20 ; break
         }
         
         if (comment.type != .system && first) {
-            retHeight += 20
+            var showUserName = true
+            if let user = comment.sender {
+                if let hidden = self.configDelegate?.configDelegate?(hideUserNameLabel: self, forUser: user){
+                    showUserName = !hidden
+                }
+            }
+            
+            if showUserName {
+                retHeight += 20
+            }
         }
         return retHeight
     }
     
-    func loadMore(){
+    @objc func loadMore(){
         if let room = self.room {
             let id = room.id
             self.loadMoreComment(roomId: id)

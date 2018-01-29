@@ -44,8 +44,8 @@ class QRoomListDefaultCell: QRoomListCell {
         setupLastComment()
     }
     override func searchTextChanged() {
-        let boldAttr = [NSForegroundColorAttributeName: UIColor.red,
-                        NSFontAttributeName: UIFont.boldSystemFont(ofSize: self.titleLabel.font.pointSize)]
+        let boldAttr = [NSAttributedStringKey.foregroundColor: UIColor.red,
+                        NSAttributedStringKey.font: UIFont.boldSystemFont(ofSize: self.titleLabel.font.pointSize)]
         let roomName = self.room!.name
         // check if label text contains search text
         if let matchRange: Range = roomName.lowercased().range(of: searchText.lowercased()) {

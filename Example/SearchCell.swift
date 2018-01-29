@@ -18,8 +18,8 @@ class SearchCell: UITableViewCell {
         didSet{
             if comment != nil {
                 self.roomLabel.text = comment!.roomName
-                let attributedString = NSMutableAttributedString(string: comment!.text, attributes: [NSFontAttributeName:UIFont.systemFont(ofSize: 14.0)])
-                let boldFontAttribute = [NSFontAttributeName: UIFont.boldSystemFont(ofSize: 14.0), NSForegroundColorAttributeName: UIColor.red]
+                let attributedString = NSMutableAttributedString(string: comment!.text, attributes: [NSAttributedStringKey.font:UIFont.systemFont(ofSize: 14.0)])
+                let boldFontAttribute = [NSAttributedStringKey.font: UIFont.boldSystemFont(ofSize: 14.0), NSAttributedStringKey.foregroundColor: UIColor.red]
                 attributedString.addAttributes(boldFontAttribute, range: (comment!.text as NSString).range(of: searchString))
                 attributedString.addAttributes(boldFontAttribute, range: (comment!.text as NSString).range(of: searchString.capitalized))
                 attributedString.addAttributes(boldFontAttribute, range: (comment!.text as NSString).range(of: searchString.uppercased()))

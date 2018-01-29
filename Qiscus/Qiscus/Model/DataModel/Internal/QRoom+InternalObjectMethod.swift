@@ -45,7 +45,7 @@ internal extension QRoom {
         let roomId = self.id
         QiscusBackgroundThread.async { autoreleasepool{
             let message: String = "0";
-            let channel = "r/\(roomId)/\(roomId)/\(QiscusMe.shared.email)/t"
+            let channel = "r/\(roomId)/\(roomId)/\(Qiscus.client.email)/t"
             
             Qiscus.shared.mqtt?.publish(channel, withString: message, qos: .qos1, retained: false)
             }}
@@ -60,7 +60,7 @@ internal extension QRoom {
         let roomId = self.id
         QiscusBackgroundThread.async { autoreleasepool{
             let message: String = "1";
-            let channel = "r/\(roomId)/\(roomId)/\(QiscusMe.shared.email)/t"
+            let channel = "r/\(roomId)/\(roomId)/\(Qiscus.client.email)/t"
             Qiscus.shared.mqtt?.publish(channel, withString: message, qos: .qos1, retained: false)
             }}
         if self.typingTimer != nil {
@@ -166,7 +166,7 @@ internal extension QRoom {
                 channels.append("r/\(room.id)/\(room.id)/+/t")
                 
                 for participant in room.participants{
-                    if participant.email != QiscusMe.shared.email {
+                    if participant.email != Qiscus.client.email {
                         channels.append("u/\(participant.email)/s")
                     }
                 }
@@ -246,6 +246,7 @@ internal extension QRoom {
                         realm.add(newComment, update: true)
                         room.comments.append(newComment)
                     }
+                    room.updateLastComentInfo(comment: newComment)
                 }
                 let textMessage = newComment.text
                 DispatchQueue.main.async{
@@ -278,7 +279,44 @@ internal extension QRoom {
             }
         }
     }
-    
+    internal func clearLastComment(){
+        let id = self.id
+        QiscusDBThread.async {
+            if let room = QRoom.threadSaveRoom(withId: id){
+                if !room.isInvalidated {
+                    
+                    let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+                    realm.refresh()
+                    try! realm.write {
+                        room.lastCommentId = 0
+                        room.lastCommentText = ""
+                        room.lastCommentUniqueId = ""
+                        room.lastCommentBeforeId = 0
+                        room.lastCommentCreatedAt = 0
+                        room.lastCommentSenderEmail = ""
+                        room.lastCommentSenderName = ""
+                        room.lastCommentStatusRaw = QCommentStatus.sending.rawValue
+                        room.lastCommentTypeRaw = QCommentType.text.name()
+                        room.lastCommentData = ""
+                        room.lastCommentRawExtras = ""
+                    }
+                    let rts = ThreadSafeReference(to:room)
+                    DispatchQueue.main.async {
+                        let mainRealm = try! Realm(configuration: Qiscus.dbConfiguration)
+                        mainRealm.refresh()
+                        if Qiscus.chatRooms[id] == nil {
+                            if let r = mainRealm.resolve(rts) {
+                                Qiscus.chatRooms[id] = r
+                            }
+                        }
+                        if let cache = QRoom.room(withId: id){
+                            QiscusNotification.publish(roomChange: cache, onProperty: .lastComment)
+                        }
+                    }
+                }
+            }
+        }
+    }
     internal func updateLastComentInfo(comment:QComment, triggerNotification:Bool = true){
         let id = self.id
         let cId = comment.id
@@ -574,6 +612,10 @@ internal extension QRoom {
             newComment.data = "\(json["payload"])"
             newComment.typeRaw = QCommentType.system.name()
             break
+        case "carousel":
+            newComment.data = "\(json["payload"])"
+            newComment.typeRaw = QCommentType.carousel.name()
+            break
         case "card":
             newComment.data = "\(json["payload"])"
             newComment.typeRaw = QCommentType.card.name()
@@ -862,14 +904,9 @@ internal extension QRoom {
                 }
             }
         }
-        var deletedIndex = [Int]()
         for comment in self.comments {
             if !comment.isInvalidated {
-                if uidList.contains(comment.uniqueId) {
-                    if !deletedIndex.contains(count) {
-                        deletedIndex.append(count)
-                    }
-                }else{
+                if !uidList.contains(comment.uniqueId) {
                     if let prev = prevComment{
                         if prev.date == comment.date && prev.senderEmail == comment.senderEmail && comment.type != .system  {
                             uidList.append(comment.uniqueId)

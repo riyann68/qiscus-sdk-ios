@@ -204,7 +204,7 @@ open class ChatPreviewDocVC: UIViewController, UIWebViewDelegate, WKNavigationDe
         return UIBarButtonItem(customView: backButton)
     }
     
-    func share(){
+    @objc func share(){
         if let file = self.file {
             if QFileManager.isFileExist(inLocalPath: file.localPath){
                 let url = URL(fileURLWithPath: file.localPath)

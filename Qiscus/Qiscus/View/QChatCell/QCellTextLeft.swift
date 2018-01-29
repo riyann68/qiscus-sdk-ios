@@ -38,6 +38,7 @@ class QCellTextLeft: QChatCell, UITextViewDelegate {
     @IBOutlet weak var textTopMargin: NSLayoutConstraint!
     @IBOutlet weak var ballonHeight: NSLayoutConstraint!
     @IBOutlet weak var cellWidth: NSLayoutConstraint!
+    @IBOutlet weak var balloonLeftMargin: NSLayoutConstraint!
     
     
     override func awakeFromNib() {
@@ -61,7 +62,7 @@ class QCellTextLeft: QChatCell, UITextViewDelegate {
         textView.layoutIfNeeded()
         LinkContainer.isHidden = true
     }
-    func openLink(){
+    @objc func openLink(){
         self.delegate?.didTouchLink(onComment: self.comment!)
     }
     
@@ -70,6 +71,14 @@ class QCellTextLeft: QChatCell, UITextViewDelegate {
     }
 
     public override func commentChanged() {
+        if hideAvatar {
+            self.balloonLeftMargin.constant = 0
+        }else{
+            self.balloonLeftMargin.constant = 27
+        }
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         self.textView.comment = self.comment
         
         self.balloonView.image = self.getBallon()
@@ -102,7 +111,7 @@ class QCellTextLeft: QChatCell, UITextViewDelegate {
             }
             var username = replyData["replied_comment_sender_username"].stringValue
             let repliedEmail = replyData["replied_comment_sender_email"].stringValue
-            if repliedEmail == QiscusMe.shared.email {
+            if repliedEmail == Qiscus.client.email {
                 username = "You"
             }else{
                 if let user = QUser.user(withEmail: repliedEmail){
@@ -260,7 +269,7 @@ class QCellTextLeft: QChatCell, UITextViewDelegate {
         self.dateLabel.textColor = QiscusColorConfiguration.sharedInstance.leftBaloonTextColor
         
         
-        if self.comment?.cellPos == .first || self.comment?.cellPos == .single{
+        if self.showUserName{
             if let sender = self.comment?.sender {
                 self.userNameLabel.text = sender.fullname
             }else{

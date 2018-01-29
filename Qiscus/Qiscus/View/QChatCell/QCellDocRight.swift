@@ -51,6 +51,9 @@ class QCellDocRight: QChatCell {
         docPreview.addGestureRecognizer(tapRecognizer)
     }
     public override func commentChanged() {
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         balloonView.tintColor = QiscusColorConfiguration.sharedInstance.rightBaloonColor
         self.balloonView.image = self.getBallon()
         progressContainer.isHidden = true
@@ -89,7 +92,7 @@ class QCellDocRight: QChatCell {
                     file.saveMiniThumbImage(withImage: image)
                 })
             }
-            if self.comment!.cellPos == .first || self.comment!.cellPos == .single{
+            if self.showUserName{
                 self.userNameLabel.text = "You"
                 self.userNameLabel.isHidden = false
                 self.topMargin.constant = 20
@@ -210,7 +213,7 @@ class QCellDocRight: QChatCell {
             self.progressContainer.isHidden = true
         }
     }
-    func didTapImage(){
+    @objc func didTapImage(){
         if let file = self.comment!.file{
             if QFileManager.isFileExist(inLocalPath: file.localPath){
                 self.delegate?.didTapFile(comment: self.comment!)

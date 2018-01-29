@@ -84,7 +84,7 @@ extension QiscusChatVC {
         }
         )
     }
-    func confirmUnlockChat(){
+    @objc func confirmUnlockChat(){
         self.unlockAction()
     }
     func showAlert(alert:UIAlertController){
@@ -278,7 +278,7 @@ extension QiscusChatVC {
                     if room.type == .group{
                         subtitleString = "You"
                         for participant in room.participants{
-                            if participant.email != QiscusMe.shared.email {
+                            if participant.email != Qiscus.client.email {
                                 if let user = participant.user {
                                     subtitleString += ", \(user.fullname)"
                                 }
@@ -287,7 +287,7 @@ extension QiscusChatVC {
                     }else{
                         if room.participants.count > 0 {
                             for participant in room.participants {
-                                if participant.email != QiscusMe.shared.email{
+                                if participant.email != Qiscus.client.email{
                                     if let user = participant.user{
                                         if user.presence == .offline{
                                             let lastSeenString = user.lastSeenString
@@ -411,7 +411,7 @@ extension QiscusChatVC {
             self.present(picker, animated: true, completion: nil)
         })
     }
-    func goToTitleAction(){
+    @objc func goToTitleAction(){
         self.inputBarBottomMargin.constant = 0
         self.view.layoutIfNeeded()
         if let delegate = self.delegate {
@@ -453,7 +453,7 @@ extension QiscusChatVC {
         self.emptyChatImage.tintColor = self.bottomColor
     }
     
-    func sendMessage(){
+    @objc func sendMessage(){
         //if Qiscus.shared.connected{
             if !self.isRecording {
                 let value = self.inputText.value.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -538,7 +538,7 @@ extension QiscusChatVC {
     func uploadFromCamera(){
         view.endEditing(true)
         if Qiscus.sharedInstance.connected{
-            if AVCaptureDevice.authorizationStatus(forMediaType: AVMediaTypeVideo) ==  AVAuthorizationStatus.authorized
+            if AVCaptureDevice.authorizationStatus(for: AVMediaType.video) ==  AVAuthorizationStatus.authorized
             {
                 DispatchQueue.main.async(execute: {
                     let picker = UIImagePickerController()
@@ -550,7 +550,7 @@ extension QiscusChatVC {
                     self.present(picker, animated: true, completion: nil)
                 })
             }else{
-                AVCaptureDevice.requestAccess(forMediaType: AVMediaTypeVideo, completionHandler: { (granted :Bool) -> Void in
+                AVCaptureDevice.requestAccess(for: AVMediaType.video, completionHandler: { (granted :Bool) -> Void in
                     if granted {
                         let picker = UIImagePickerController()
                         picker.delegate = self
@@ -570,7 +570,7 @@ extension QiscusChatVC {
             self.showNoConnectionToast()
         }
     }
-    func recordVoice(){
+    @objc func recordVoice(){
         self.prepareRecording()
     }
     func startRecording(){
@@ -670,7 +670,7 @@ extension QiscusChatVC {
             }}
         }
     }
-    func updateTimer(){
+    @objc func updateTimer(){
         if let timerLabel = self.recordBackground.viewWithTag(543) as? UILabel {
             self.recordDuration += 1
             let minutes = Int(self.recordDuration / 60)
@@ -686,7 +686,7 @@ extension QiscusChatVC {
             timerLabel.text = "\(minutesString):\(secondsString)"
         }
     }
-    func updateAudioMeter(){
+    @objc func updateAudioMeter(){
         if let audioRecorder = self.recorder{
             audioRecorder.updateMeters()
             let normalizedValue:CGFloat = pow(10.0, CGFloat(audioRecorder.averagePower(forChannel: 0)) / 20)
@@ -737,7 +737,7 @@ extension QiscusChatVC {
             })
         }
     }
-    func cancelRecordVoice(){
+    @objc func cancelRecordVoice(){
         self.recordViewLeading.constant = 8
         Qiscus.uiThread.async { autoreleasepool{
             UIView.animate(withDuration: 0.5, animations: {

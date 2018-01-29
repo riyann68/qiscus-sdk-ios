@@ -31,6 +31,7 @@ class QCellMediaLeft: QChatCell {
     @IBOutlet weak var progressHeight: NSLayoutConstraint!
     @IBOutlet weak var topMargin: NSLayoutConstraint!
     @IBOutlet weak var cellHeight: NSLayoutConstraint!
+    @IBOutlet weak var balloonLeftMargin: NSLayoutConstraint!
     
     let defaultDateLeftMargin:CGFloat = -10
     var tapRecognizer: UITapGestureRecognizer?
@@ -62,6 +63,14 @@ class QCellMediaLeft: QChatCell {
     }
     
     public override func commentChanged() {
+        if hideAvatar {
+            self.balloonLeftMargin.constant = 0
+        }else{
+            self.balloonLeftMargin.constant = 27
+        }
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         captionWidth.constant = QiscusUIConfiguration.chatTextMaxWidth
         balloonView.tintColor = QiscusColorConfiguration.sharedInstance.leftBaloonColor
         self.balloonView.image = self.getBallon()
@@ -75,7 +84,7 @@ class QCellMediaLeft: QChatCell {
         dateLabel.text = self.comment!.time.lowercased()
         progressLabel.isHidden = true
         dateLabel.textColor = QiscusColorConfiguration.sharedInstance.leftBaloonTextColor
-        if self.comment!.cellPos == .first || self.comment!.cellPos == .single{
+        if self.showUserName{
             if let sender = self.comment?.sender {
                 self.userNameLabel.text = sender.fullname.capitalized
             }else{
@@ -249,7 +258,7 @@ class QCellMediaLeft: QChatCell {
             self.progressLabel.isHidden = true
         }
     }
-    func didTapImage(){
+    @objc func didTapImage(){
         if !self.comment!.isUploading && !self.comment!.isDownloading{
             if let file = self.comment!.file{
                 if QFileManager.isFileExist(inLocalPath: file.localPath){

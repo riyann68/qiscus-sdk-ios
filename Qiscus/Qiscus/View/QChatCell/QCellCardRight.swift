@@ -33,6 +33,9 @@ class QCellCardRight: QChatCell {
         self.displayView.clipsToBounds = true
     }
     override func commentChanged() {
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         let data = self.comment!.data
         let payload = JSON(parseJSON: data)
         
@@ -46,7 +49,7 @@ class QCellCardRight: QChatCell {
         })
         self.cardDescription.text = description
         
-        if self.comment!.cellPos == .first || self.comment!.cellPos == .single{
+        if self.showUserName{
             userNameLabel.isHidden = false
             topMargin.constant = 20
         }else{
@@ -87,7 +90,7 @@ class QCellCardRight: QChatCell {
         self.cardHeight.constant = 90 + yPos
         self.containerView.layoutIfNeeded()
     }
-    func cardButtonTapped(_ sender: UIButton) {
+    @objc func cardButtonTapped(_ sender: UIButton) {
         let data = self.comment!.data
         let payload = JSON(parseJSON: data)
         let buttonsData = payload["buttons"].arrayValue

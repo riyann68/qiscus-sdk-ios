@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -21,12 +22,12 @@
                         <rect key="frame" x="0.0" y="0.0" width="355" height="63"/>
                         <subviews>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Ir0-Fi-naf">
-                                <rect key="frame" x="60" y="0.0" width="200" height="20"/>
+                                <rect key="frame" x="46" y="0.0" width="200" height="20"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="200" id="TQg-qb-Dcd"/>
                                     <constraint firstAttribute="height" constant="20" id="ggT-JS-AFR"/>
                                 </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="11"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="12"/>
                                 <color key="textColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
@@ -91,9 +92,9 @@
                         </subviews>
                         <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="Ir0-Fi-naf" firstAttribute="leading" secondItem="vz5-aS-SGD" secondAttribute="leading" constant="60" id="30z-ZP-day"/>
                             <constraint firstAttribute="height" secondItem="2SQ-Oz-3ET" secondAttribute="height" id="9FT-8o-OeH"/>
                             <constraint firstItem="ol0-Nk-Dfg" firstAttribute="bottom" secondItem="2SQ-Oz-3ET" secondAttribute="bottom" constant="-23" id="9UC-6V-Rs7"/>
+                            <constraint firstItem="Ir0-Fi-naf" firstAttribute="leading" secondItem="ol0-Nk-Dfg" secondAttribute="leading" id="Cl6-Q8-J8U"/>
                             <constraint firstItem="V6o-yi-Nha" firstAttribute="leading" secondItem="ol0-Nk-Dfg" secondAttribute="leading" constant="4" id="X5b-BP-Cjo"/>
                             <constraint firstItem="Bqw-TZ-8x1" firstAttribute="bottom" secondItem="2SQ-Oz-3ET" secondAttribute="bottom" constant="-2" id="Zwa-vQ-3mG"/>
                             <constraint firstItem="Bqw-TZ-8x1" firstAttribute="trailing" secondItem="ol0-Nk-Dfg" secondAttribute="trailing" constant="-4" id="d3Z-wP-cjK"/>
@@ -115,6 +116,7 @@
             </constraints>
             <size key="customSize" width="355" height="96"/>
             <connections>
+                <outlet property="balloonLeftMargin" destination="i45-7X-DiY" id="XWw-VS-YN2"/>
                 <outlet property="balloonView" destination="2SQ-Oz-3ET" id="L54-BP-rI9"/>
                 <outlet property="balloonWidth" destination="k3z-97-DPb" id="5Zb-rV-ocJ"/>
                 <outlet property="cellHeight" destination="9FT-8o-OeH" id="Ome-Tt-yga"/>
@@ -123,7 +125,6 @@
                 <outlet property="fileIcon" destination="DaJ-8u-p7t" id="wnO-AB-ZHG"/>
                 <outlet property="fileNameLabel" destination="RhE-pp-aTu" id="lFT-j2-Uod"/>
                 <outlet property="fileTypeLabel" destination="V6o-yi-Nha" id="CfL-Cs-BfF"/>
-                <outlet property="leftMargin" destination="i45-7X-DiY" id="Y3n-4x-gsr"/>
                 <outlet property="topMargin" destination="eBd-xF-8XP" id="K7g-6c-QhO"/>
                 <outlet property="userNameLabel" destination="Ir0-Fi-naf" id="e8n-yg-7Tg"/>
             </connections>

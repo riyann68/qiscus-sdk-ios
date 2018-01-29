@@ -13,11 +13,11 @@ import RealmSwift
 }
 public class QParticipant:Object {
     static var cache = [String : QParticipant]()
-    public dynamic var localId:String = ""
-    public dynamic var roomId:String = ""
-    public dynamic var email:String = ""
-    public dynamic var lastReadCommentId:Int = 0
-    public dynamic var lastDeliveredCommentId:Int = 0
+    @objc public dynamic var localId:String = ""
+    @objc public dynamic var roomId:String = ""
+    @objc public dynamic var email:String = ""
+    @objc public dynamic var lastReadCommentId:Int = 0
+    @objc public dynamic var lastDeliveredCommentId:Int = 0
     
     public var delegate:QParticipantDelegate? = nil
     
@@ -51,7 +51,7 @@ public class QParticipant:Object {
                         }
                         var lastDeliveredId = 0
                         for p in room.participants {
-                            if p.email != QiscusMe.shared.email {
+                            if p.email != Qiscus.client.email {
                                 if lastDeliveredId == 0 {
                                     lastDeliveredId = p.lastDeliveredCommentId
                                 }
@@ -103,7 +103,7 @@ public class QParticipant:Object {
                         var lastDelivered = 0
                         var lastRead = 0
                         for p in room.participants {
-                            if p.email != QiscusMe.shared.email {
+                            if p.email != Qiscus.client.email {
                                 if lastDelivered == 0 {
                                     lastDelivered = p.lastDeliveredCommentId
                                 }else if p.lastDeliveredCommentId < lastDelivered {

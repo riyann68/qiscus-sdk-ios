@@ -9,7 +9,32 @@
 import UIKit
 
 // MARK: - CollectionView dataSource, delegate, and delegateFlowLayout
-
+extension QiscusChatVC: QConversationViewConfigurationDelegate {
+    public func configDelegate(userNameLabelColor collectionView:QConversationCollectionView, forUser user:QUser)->UIColor?{
+        if let config = self.configDelegate{
+            if let color = config.chatVCConfigDelegate?(userNameLabelColor: self, forUser: user){
+                return color
+            }
+        }
+        return nil
+    }
+    public func configDelegate(hideLeftAvatarOn collectionView:QConversationCollectionView)->Bool{
+        if let config = self.configDelegate{
+            if let hidden = config.chatVCConfigDelegate?(hideLeftAvatarOn: self){
+                return hidden
+            }
+        }
+        return false
+    }
+    public func configDelegate(hideUserNameLabel collectionView:QConversationCollectionView, forUser user:QUser)->Bool{
+        if let config = self.configDelegate{
+            if let hideLabel = config.chatVCConfigDelegate?(hideUserNameLabel: self, forUser: user){
+                return hideLabel
+            }
+        }
+        return false
+    }
+}
 extension QiscusChatVC: QConversationViewDelegate {
     public func viewDelegate(enableInfoAction view: QConversationCollectionView) -> Bool {
         if let delegate = self.delegate {
@@ -98,7 +123,7 @@ extension QiscusChatVC: QConversationViewDelegate {
                     self.collectionView.scrollToBottom()
                     self.firstLoad = false
                 }
-                if !self.prefetch {
+                if !self.prefetch && self.isPresence{
                     if let room = self.chatRoom {
                         let rid = room.id
                         QiscusBackgroundThread.async {

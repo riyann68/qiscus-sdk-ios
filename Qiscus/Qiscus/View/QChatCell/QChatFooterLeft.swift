@@ -63,6 +63,7 @@ class QChatFooterLeft: UICollectionReusableView {
         avatarImage.contentMode = .scaleAspectFill
         self.isUserInteractionEnabled = false
         NotificationCenter.default.addObserver(self, selector: #selector(QChatFooterLeft.userAvatarChanged(_:)), name: QiscusNotification.USER_AVATAR_CHANGE, object: nil)
+        self.layer.zPosition = 0
     }
     // MARK: - userAvatarChange Handler
     @objc private func userAvatarChanged(_ notification: Notification) {

@@ -54,6 +54,13 @@ import UIKit
     @objc optional func cellDelegate(didTapDocumentFile comment:QComment, room:QRoom)
     @objc optional func cellDelegate(didTapKnownFile comment:QComment, room:QRoom)
     @objc optional func cellDelegate(didTapUnknownFile comment:QComment, room:QRoom)
+    
+    @objc optional func cellDelegate(didTapCardAction action:QCardAction)
+    @objc optional func cellDelegate(didTapCard card:QCard)
 }
 
-
+@objc public protocol QConversationViewConfigurationDelegate{
+    @objc optional func configDelegate(userNameLabelColor collectionView:QConversationCollectionView, forUser user:QUser)->UIColor?
+    @objc optional func configDelegate(hideLeftAvatarOn collectionView:QConversationCollectionView)->Bool
+    @objc optional func configDelegate(hideUserNameLabel collectionView:QConversationCollectionView, forUser user:QUser)->Bool
+}

@@ -9,7 +9,7 @@
 import UIKit
 import SwiftyJSON
 
-open class QiscusMe: NSObject {
+open class QiscusClient: NSObject {
     
     public static var inBackgroundSync:Bool{
         set{
@@ -38,18 +38,18 @@ open class QiscusMe: NSObject {
         }
     }
     
-    open static let shared = QiscusMe()
+    open static let shared = QiscusClient()
     
     let userData = UserDefaults.standard
     
     open class var isLoggedIn:Bool {
         get{
-            return (QiscusMe.shared.token != "")
+            return (Qiscus.client.token != "")
         }
     }
     open class var canReconnect:Bool{
         get{
-            return (QiscusMe.shared.userKey != "" && QiscusMe.shared.email != "")
+            return (Qiscus.client.userKey != "" && Qiscus.client.email != "")
         }
     }
     public var id = 0
@@ -142,84 +142,84 @@ open class QiscusMe: NSObject {
         }
     }
     
-    open class func saveData(fromJson json:JSON, reconnect:Bool = false)->QiscusMe{
+    open class func saveData(fromJson json:JSON, reconnect:Bool = false)->QiscusClient{
         Qiscus.printLog(text: "jsonFron saveData: \(json)")
-        QiscusMe.shared.id = json["id"].intValue
-        QiscusMe.shared.email = json["email"].stringValue
-        QiscusMe.shared.userName = json["username"].stringValue
-        QiscusMe.shared.avatarUrl = json["avatar"].stringValue
-        QiscusMe.shared.rtKey = json["rtKey"].stringValue
-        QiscusMe.shared.token = json["token"].stringValue
+        Qiscus.client.id = json["id"].intValue
+        Qiscus.client.email = json["email"].stringValue
+        Qiscus.client.userName = json["username"].stringValue
+        Qiscus.client.avatarUrl = json["avatar"].stringValue
+        Qiscus.client.rtKey = json["rtKey"].stringValue
+        Qiscus.client.token = json["token"].stringValue
         
-        QiscusMe.shared.userData.set(json["id"].intValue, forKey: "qiscus_id")
-        QiscusMe.shared.userData.set(json["email"].stringValue, forKey: "qiscus_email")
-        QiscusMe.shared.userData.set(json["username"].stringValue, forKey: "qiscus_username")
-        QiscusMe.shared.userData.set(json["avatar"].stringValue, forKey: "qiscus_avatar_url")
-        QiscusMe.shared.userData.set(json["rtKey"].stringValue, forKey: "qiscus_rt_key")
-        QiscusMe.shared.userData.set(json["token"].stringValue, forKey: "qiscus_token")
+        Qiscus.client.userData.set(json["id"].intValue, forKey: "qiscus_id")
+        Qiscus.client.userData.set(json["email"].stringValue, forKey: "qiscus_email")
+        Qiscus.client.userData.set(json["username"].stringValue, forKey: "qiscus_username")
+        Qiscus.client.userData.set(json["avatar"].stringValue, forKey: "qiscus_avatar_url")
+        Qiscus.client.userData.set(json["rtKey"].stringValue, forKey: "qiscus_rt_key")
+        Qiscus.client.userData.set(json["token"].stringValue, forKey: "qiscus_token")
         
         QiscusMe.shared.userData.set(json["username"].stringValue, forKey: "qiscus_param_username")
         QiscusMe.shared.userData.set(json["avatar"].stringValue, forKey: "qiscus_param_avatar")
         
         if !reconnect {
-            QiscusMe.shared.userData.set(json["last_comment_id"].intValue, forKey: "qiscus_lastComment_id")
-            QiscusMe.shared.userData.set(json["last_comment_id"].intValue, forKey: "qiscus_lastKnownComment_id")
+            Qiscus.client.userData.set(json["last_comment_id"].intValue, forKey: "qiscus_lastComment_id")
+            Qiscus.client.userData.set(json["last_comment_id"].intValue, forKey: "qiscus_lastKnownComment_id")
         }else{
-            if json["last_comment_id"].intValue > QiscusMe.shared.lastCommentId {
+            if json["last_comment_id"].intValue > Qiscus.client.lastCommentId {
                 Qiscus.sync()
             }
         }
-        if let lastComment = QiscusMe.shared.userData.value(forKey: "qiscus_lastComment_id") as? Int{
-            QiscusMe.shared.lastCommentId = lastComment
+        if let lastComment = Qiscus.client.userData.value(forKey: "qiscus_lastComment_id") as? Int{
+            Qiscus.client.lastCommentId = lastComment
             if lastComment == 0 {
-                QiscusMe.shared.lastCommentId = json["last_comment_id"].intValue
-                QiscusMe.shared.userData.set(json["last_comment_id"].intValue, forKey: "qiscus_lastComment_id")
-                QiscusMe.shared.userData.set(json["last_comment_id"].intValue, forKey: "qiscus_lastKnownComment_id")
+                Qiscus.client.lastCommentId = json["last_comment_id"].intValue
+                Qiscus.client.userData.set(json["last_comment_id"].intValue, forKey: "qiscus_lastComment_id")
+                Qiscus.client.userData.set(json["last_comment_id"].intValue, forKey: "qiscus_lastKnownComment_id")
             }
         }else{
-            QiscusMe.shared.lastCommentId = json["last_comment_id"].intValue
-            QiscusMe.shared.userData.set(json["last_comment_id"].intValue, forKey: "qiscus_lastComment_id")
-            QiscusMe.shared.userData.set(json["last_comment_id"].intValue, forKey: "qiscus_lastKnownComment_id")
+            Qiscus.client.lastCommentId = json["last_comment_id"].intValue
+            Qiscus.client.userData.set(json["last_comment_id"].intValue, forKey: "qiscus_lastComment_id")
+            Qiscus.client.userData.set(json["last_comment_id"].intValue, forKey: "qiscus_lastKnownComment_id")
         }
-        if let lastComment = QiscusMe.shared.userData.value(forKey: "qiscus_lastKnownComment_id") as? Int{
-            QiscusMe.shared.lastKnownCommentId = lastComment
+        if let lastComment = Qiscus.client.userData.value(forKey: "qiscus_lastKnownComment_id") as? Int{
+            Qiscus.client.lastKnownCommentId = lastComment
         }
-        return QiscusMe.shared
+        return Qiscus.client
     }
     public class func updateLastCommentId(commentId:Int){
-        if QiscusMe.shared.lastCommentId < commentId {
-            QiscusMe.shared.lastCommentId = commentId
-            QiscusMe.shared.userData.set(commentId, forKey: "qiscus_lastComment_id")
+        if Qiscus.client.lastCommentId < commentId {
+            Qiscus.client.lastCommentId = commentId
+            Qiscus.client.userData.set(commentId, forKey: "qiscus_lastComment_id")
         }
-        if QiscusMe.shared.lastKnownCommentId < commentId {
-            QiscusMe.shared.lastKnownCommentId = commentId
-            QiscusMe.shared.userData.set(commentId, forKey: "qiscus_lastKnownComment_id")
+        if Qiscus.client.lastKnownCommentId < commentId {
+            Qiscus.client.lastKnownCommentId = commentId
+            Qiscus.client.userData.set(commentId, forKey: "qiscus_lastKnownComment_id")
         }
         
     }
     public class func updateLastKnownCommentId(commentId:Int){
-        if QiscusMe.shared.lastKnownCommentId < commentId {
-            QiscusMe.shared.lastKnownCommentId = commentId
-            QiscusMe.shared.userData.set(commentId, forKey: "qiscus_lastKnownComment_id")
+        if Qiscus.client.lastKnownCommentId < commentId {
+            Qiscus.client.lastKnownCommentId = commentId
+            Qiscus.client.userData.set(commentId, forKey: "qiscus_lastKnownComment_id")
         }
     }
     open class func clear(){
-        QiscusMe.shared.id = 0
-        QiscusMe.shared.email = ""
-        QiscusMe.shared.userName = ""
-        QiscusMe.shared.avatarUrl = ""
-        QiscusMe.shared.rtKey = ""
-        QiscusMe.shared.token = ""
-        QiscusMe.shared.lastCommentId = 0
+        Qiscus.client.id = 0
+        Qiscus.client.email = ""
+        Qiscus.client.userName = ""
+        Qiscus.client.avatarUrl = ""
+        Qiscus.client.rtKey = ""
+        Qiscus.client.token = ""
+        Qiscus.client.lastCommentId = 0
         
-        QiscusMe.shared.userData.removeObject(forKey: "qiscus_id")
-        QiscusMe.shared.userData.removeObject(forKey: "qiscus_email")
-        QiscusMe.shared.userData.removeObject(forKey: "qiscus_username")
-        QiscusMe.shared.userData.removeObject(forKey: "qiscus_avatar_url")
-        QiscusMe.shared.userData.removeObject(forKey: "qiscus_rt_key")
-        QiscusMe.shared.userData.removeObject(forKey: "qiscus_token")
-        QiscusMe.shared.userData.removeObject(forKey: "qiscus_lastComment_id")
-        QiscusMe.shared.userData.removeObject(forKey: "qiscus_lastKnownComment_id")
+        Qiscus.client.userData.removeObject(forKey: "qiscus_id")
+        Qiscus.client.userData.removeObject(forKey: "qiscus_email")
+        Qiscus.client.userData.removeObject(forKey: "qiscus_username")
+        Qiscus.client.userData.removeObject(forKey: "qiscus_avatar_url")
+        Qiscus.client.userData.removeObject(forKey: "qiscus_rt_key")
+        Qiscus.client.userData.removeObject(forKey: "qiscus_token")
+        Qiscus.client.userData.removeObject(forKey: "qiscus_lastComment_id")
+        Qiscus.client.userData.removeObject(forKey: "qiscus_lastKnownComment_id")
     }
 }
 

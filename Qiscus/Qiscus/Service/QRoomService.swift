@@ -15,6 +15,7 @@ import RealmSwift
 
 public class QRoomService:NSObject{    
     public func sync(onRoom room:QRoom){
+        
         if room.isInvalidated {
             return
         }
@@ -40,18 +41,21 @@ public class QRoomService:NSObject{
                         r.syncRoomData(withJSON: roomData)
                         
                         let commentPayload = results["comments"].arrayValue
-                        for json in commentPayload {
+                        var needSync = false
+                        for json in commentPayload.reversed() {
                             let commentId = json["id"].intValue
-                            
-                            if commentId <= QiscusMe.shared.lastCommentId {
-                                r.saveOldComment(fromJSON: json)
+                            if commentId <= Qiscus.client.lastCommentId {
+                                r.saveNewComment(fromJSON: json)
                             }else{
-                                QChatService.syncProcess()
+                                needSync = true
                             }
+                        }
+                        if needSync {
+                            QChatService.syncProcess()
                         }
                         DispatchQueue.main.async {
                             if let mainRoom = QRoom.room(withId: roomId){
-                                mainRoom.delegate?.room?(didFinishSync: room)
+                                mainRoom.delegate?.room?(didFinishSync: mainRoom)
                             }
                         }
                     }
@@ -181,8 +185,13 @@ public class QRoomService:NSObject{
                                 onError("No change on room data")
                             }
                         }else if error != JSON.null{
-                            onError("\(error)")
-                            Qiscus.printLog(text: "error update chat room: \(error)")
+                            var message = "Error update chat room"
+                            let errorMessages = error["detailed_messages"].arrayValue
+                            if let e = errorMessages.first?.string {
+                                message = e
+                            }
+                            onError("\(message)")
+                            Qiscus.printLog(text: "error update chat room: \(message)")
                         }
                     }else{
                         Qiscus.printLog(text: "fail to update chat room")
@@ -222,7 +231,7 @@ public class QRoomService:NSObject{
     }
     public func postComment(onRoom roomId:String, comment:QComment, type:String? = nil, payload:JSON? = nil){
         var parameters:[String: AnyObject] = [String: AnyObject]()
-        
+        let commentUniqueId = comment.uniqueId
         parameters = [
             "comment"  : comment.text as AnyObject,
             "room_id"   : roomId as AnyObject,
@@ -271,25 +280,29 @@ public class QRoomService:NSObject{
                         let commentJSON = json["results"]["comment"]
                         let commentId = commentJSON["id"].intValue
                         let commentBeforeId = commentJSON["comment_before_id"].intValue
-                        
-                        comment.update(commentId: commentId, beforeId: commentBeforeId)
-                        
-                        if let room = QRoom.room(withId: roomId){
-                            if comment.status == QCommentStatus.sending || comment.status == QCommentStatus.failed {
-                                    room.updateCommentStatus(inComment: comment, status: .sent)
+                        if let c = QComment.threadSaveComment(withUniqueId: commentUniqueId){
+                            c.update(commentId: commentId, beforeId: commentBeforeId)
+                            if let room = QRoom.threadSaveRoom(withId: roomId){
+                                if c.status == QCommentStatus.sending || c.status == QCommentStatus.failed {
+                                    room.updateCommentStatus(inComment: c, status: .sent)
+                                }
+                                self.sync(onRoom: room)
                             }
-                            self.sync(onRoom: room)
                         }
                     }else{
                         let status = QCommentStatus.failed
-                        if let room = QRoom.room(withId: roomId){
-                            room.updateCommentStatus(inComment: comment, status: status)
+                        if let room = QRoom.threadSaveRoom(withId: roomId){
+                            if let c = QComment.threadSaveComment(withUniqueId: commentUniqueId){
+                                room.updateCommentStatus(inComment: c, status: status)
+                            }
                         }
                     }
                 }else{
                     let status = QCommentStatus.failed
-                    if let room = QRoom.room(withId: roomId){
-                        room.updateCommentStatus(inComment: comment, status: status)
+                    if let room = QRoom.threadSaveRoom(withId: roomId){
+                        if let c = QComment.threadSaveComment(withUniqueId: commentUniqueId){
+                            room.updateCommentStatus(inComment: c, status: status)
+                        }
                     }
                 }
                 break
@@ -298,8 +311,10 @@ public class QRoomService:NSObject{
                 if comment.type == .text || comment.type == .reply || comment.type == .custom {
                     status = .pending
                 }
-                if let room = QRoom.room(withId: roomId){
-                    room.updateCommentStatus(inComment: comment, status: status)
+                if let room = QRoom.threadSaveRoom(withId: roomId){
+                    if let c = QComment.threadSaveComment(withUniqueId: commentUniqueId){
+                        room.updateCommentStatus(inComment: c, status: status)
+                    }
                 }
                 Qiscus.printLog(text: "fail to post comment with error: \(error)")
                 let delay = 2.0 * Double(NSEC_PER_SEC)
@@ -499,6 +514,8 @@ public class QRoomService:NSObject{
             let localPath = file.localPath
             let filename = file.filename
             let mimeType = file.mimeType
+            let cUid = comment.uniqueId
+            let rid = room.id
             
             QiscusFileThread.async {autoreleasepool{
             do {
@@ -516,7 +533,7 @@ public class QRoomService:NSObject{
                     
                     QiscusService.session.upload(multipartFormData: {formData in
                         formData.append(data, withName: "file", fileName: filename, mimeType: mimeType)
-                        formData.append(QiscusMe.shared.token.data(using: .utf8)! , withName: "token")
+                        formData.append(Qiscus.client.token.data(using: .utf8)! , withName: "token")
                     }, with: urlUpload, encodingCompletion: {
                         encodingResult in
                         switch encodingResult{
@@ -534,88 +551,113 @@ public class QRoomService:NSObject{
                                                     if file.isInvalidated || comment.isInvalidated || room.isInvalidated {
                                                         return
                                                     }
-                                                    let size = fileData["size"].intValue
-                                                    file.update(fileURL: url)
-                                                    file.update(fileSize: Double(size))
-                                                    comment.update(text: "[file]\(url) [/file]")
-                                                    comment.updateUploading(uploading: false)
-                                                    comment.updateProgress(progress: 1)
-                                                    comment.updateStatus(status: .sent)
-                                                    let fileInfo = JSON(parseJSON: comment.data)
-                                                    let caption = fileInfo["caption"].stringValue
-                                                    let newData:[AnyHashable:Any] = [
-                                                        "url" : url,
-                                                        "caption": caption,
-                                                        "size": size,
-                                                        "pages": fileData["pages"].intValue,
-                                                        "file_name": fileData["name"].stringValue
-                                                    ]
-                                                    let newDataJSON = JSON(newData)
-                                                    comment.update(data: "\(newDataJSON)")
-                                                    onSuccess(room,comment)
+                                                    
+                                                    if let c = QComment.comment(withUniqueId: cUid){
+                                                        let size = fileData["size"].intValue
+                                                        if let f = c.file {
+                                                            f.update(fileURL: url)
+                                                            f.update(fileSize: Double(size))
+                                                        }
+                                                        c.update(text: "[file]\(url) [/file]")
+                                                        c.updateUploading(uploading: false)
+                                                        c.updateProgress(progress: 1)
+                                                        c.updateStatus(status: .sent)
+                                                        let fileInfo = JSON(parseJSON: c.data)
+                                                        let caption = fileInfo["caption"].stringValue
+                                                        let newData:[AnyHashable:Any] = [
+                                                            "url" : url,
+                                                            "caption": caption,
+                                                            "size": size,
+                                                            "pages": fileData["pages"].intValue,
+                                                            "file_name": fileData["name"].stringValue
+                                                        ]
+                                                        let newDataJSON = JSON(newData)
+                                                        c.update(data: "\(newDataJSON)")
+                                                        if let r = QRoom.room(withId: rid){
+                                                            onSuccess(r,c)
+                                                        }
+                                                    }
                                                 }}
                                             }
                                         }
                                     }else{
                                         DispatchQueue.main.async { autoreleasepool{
-                                            if comment.isInvalidated || room.isInvalidated {
-                                                return
+                                            if let c = QComment.comment(withUniqueId: cUid){
+                                                if c.isInvalidated || room.isInvalidated {
+                                                    return
+                                                }
+                                                c.updateUploading(uploading: false)
+                                                c.updateProgress(progress: 0)
+                                                c.updateStatus(status: .failed)
+                                                if let r = QRoom.room(withId: rid) {
+                                                    onError(r,c,"Fail to upload file, no readable response")
+                                                }
                                             }
-                                            comment.updateUploading(uploading: false)
-                                            comment.updateProgress(progress: 0)
-                                            comment.updateStatus(status: .failed)
                                         }}
-                                        onError(room,comment,"Fail to upload file, no readable response")
                                     }
                                 }else{
                                     DispatchQueue.main.async { autoreleasepool{
-                                        if comment.isInvalidated || room.isInvalidated {
-                                            return
+                                        if let c = QComment.comment(withUniqueId: cUid){
+                                            if c.isInvalidated || room.isInvalidated {
+                                                return
+                                            }
+                                            c.updateUploading(uploading: false)
+                                            c.updateProgress(progress: 0)
+                                            c.updateStatus(status: .failed)
+                                            if let r = QRoom.room(withId: rid){
+                                                onError(r,c,"Fail to upload file, no readable response")
+                                            }
                                         }
-                                        comment.updateUploading(uploading: false)
-                                        comment.updateProgress(progress: 0)
-                                        comment.updateStatus(status: .failed)
                                     }}
-                                    onError(room,comment,"Fail to upload file, no readable response")
                                 }
                             })
                             upload.uploadProgress(closure: {uploadProgress in
                                 let progress = CGFloat(uploadProgress.fractionCompleted)
                                 DispatchQueue.main.async { autoreleasepool{
-                                    if comment.isInvalidated {
-                                        return
+                                    if let c = QComment.comment(withUniqueId: cUid){
+                                        if c.isInvalidated {
+                                            return
+                                        }
+                                        c.updateUploading(uploading: true)
+                                        c.updateProgress(progress: progress)
+                                        onProgress?(uploadProgress.fractionCompleted)
                                     }
-                                    comment.updateUploading(uploading: true)
-                                    comment.updateProgress(progress: progress)
-                                    onProgress?(uploadProgress.fractionCompleted)
                                 }}
                             })
                             break
                         case .failure(let error):
                             DispatchQueue.main.async { autoreleasepool{
-                                if comment.isInvalidated || room.isInvalidated {
-                                    return
+                                if let c = QComment.comment(withUniqueId: cUid){
+                                    if c.isInvalidated || room.isInvalidated {
+                                        return
+                                    }
+                                    c.updateUploading(uploading: false)
+                                    c.updateProgress(progress: 0)
+                                    c.updateStatus(status: .failed)
+                                    if let r = QRoom.room(withId: rid){
+                                        onError(r,c,"Fail to upload file, \(error)")
+                                    }
                                 }
-                                comment.updateUploading(uploading: false)
-                                comment.updateProgress(progress: 0)
-                                comment.updateStatus(status: .failed)
                             }}
-                            onError(room,comment,"Fail to upload file, \(error)")
+                            
                             break
                         }
                     })
                 }}
             } catch {
                 DispatchQueue.main.async {
-                    if comment.isInvalidated {
-                        return
+                    if let c = QComment.comment(withUniqueId: cUid) {
+                        if c.isInvalidated {
+                            return
+                        }
+                        c.updateUploading(uploading: false)
+                        c.updateProgress(progress: 0)
+                        c.updateStatus(status: .failed)
+                        if let r = QRoom.room(withId: rid){
+                            onError(r, c, "Local file not found")
+                        }
                     }
-                    comment.updateUploading(uploading: false)
-                    comment.updateProgress(progress: 0)
-                    comment.updateStatus(status: .failed)
                 }
-                
-                onError(room, comment, "Local file not found")
             }
             }}
         }
@@ -651,7 +693,7 @@ public class QRoomService:NSObject{
                             var needSync = false
                             for newComment in comments {
                                 let comment = QComment.tempComment(fromJSON: newComment)
-                                if comment.id <= QiscusMe.shared.lastCommentId {
+                                if comment.id <= Qiscus.client.lastCommentId {
                                     if let rd = QRoom.threadSaveRoom(withId: comment.roomId){
                                         rd.saveOldComment(fromJSON: newComment)
                                     }
@@ -799,6 +841,59 @@ public class QRoomService:NSObject{
                 }
             }else{
                 onError("fail to load comments")
+            }
+        })
+    }
+    
+    internal class func clearMessages(inRoomsChannel rooms:[String], onSuccess:@escaping ([QRoom],[String])->Void, onError:@escaping (Int)->Void){
+        let url = QiscusConfig.CLEAR_MESSAGES
+        let parameters =  [
+            "room_channel_ids" : rooms as AnyObject,
+            "token" : Qiscus.shared.config.USER_TOKEN as AnyObject
+        ]
+        QiscusService.session.request(url, method: .delete, parameters: parameters, encoding: URLEncoding.default, headers: QiscusConfig.sharedInstance.requestHeader).responseJSON(completionHandler: {responseData in
+            
+            if let response = responseData.result.value{
+                let json = JSON(response)
+                let results = json["results"]
+                print("results: \(results)")
+                let status = json["status"].intValue
+                if results != JSON.null && status == 200{
+                    QiscusBackgroundThread.async{
+                        let rooms = results["rooms"].arrayValue
+                        var rIds = [String]()
+                        for room in rooms {
+                            let roomId = "\(room["id"])"
+                            if let r = QRoom.threadSaveRoom(withId: roomId){
+                                r.syncRoomData(withJSON: room)
+                                r.clearMessage()
+                                r.clearLastComment()
+                            }else{
+                                let _ = QRoom.addNewRoom(json: room)
+                            }
+                            rIds.append(roomId)
+                        }
+                        DispatchQueue.main.async {
+                            var roomsResult = [QRoom]()
+                            var rUids = [String]()
+                            for roomId in rIds {
+                                if let room = QRoom.room(withId: roomId) {
+                                    roomsResult.append(room)
+                                    rUids.append(room.uniqueId)
+                                }
+                            }
+                            onSuccess(roomsResult,rUids)
+                        }
+                    }
+                }else{
+                    onError(status)
+                }
+            }else{
+                if let statusCode = responseData.response?.statusCode {
+                    onError(statusCode)
+                }else{
+                    onError(400)
+                }
             }
         })
     }

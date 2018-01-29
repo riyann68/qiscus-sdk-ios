@@ -29,7 +29,6 @@ internal extension QRoom {
     }
     internal class func getRoom(withId id:String) -> QRoom?{
         if Thread.isMainThread {
-            
             if let cache = Qiscus.chatRooms[id] {
                 if !cache.isInvalidated {
                     cache.subscribeRoomChannel()
@@ -45,11 +44,7 @@ internal extension QRoom {
                 if !room.isInvalidated {
                     let room = rooms.first!
                     Qiscus.chatRooms[room.id] = room
-                    if Qiscus.shared.chatViews[room.id] ==  nil{
-                        let chatView = QiscusChatVC()
-                        chatView.chatRoom = Qiscus.chatRooms[room.id]
-                        Qiscus.shared.chatViews[room.id] = chatView
-                    }
+                    
                     room.subscribeRoomChannel()
                     return room
                 }
@@ -68,11 +63,6 @@ internal extension QRoom {
                 return cachedRoom
             }else{
                 Qiscus.chatRooms[room.id] = room
-                if Qiscus.shared.chatViews[room.id] ==  nil{
-                    let chatView = QiscusChatVC()
-                    chatView.chatRoom = Qiscus.chatRooms[room.id]
-                    Qiscus.shared.chatViews[room.id] = chatView
-                }
                 Qiscus.sharedInstance.RealtimeConnect()
                 return room
             }
@@ -91,11 +81,6 @@ internal extension QRoom {
                     return cachedRoom
                 }else{
                     Qiscus.chatRooms[room.id] = room
-                    if Qiscus.shared.chatViews[room.id] ==  nil{
-                        let chatView = QiscusChatVC()
-                        chatView.chatRoom = Qiscus.chatRooms[room.id]
-                        Qiscus.shared.chatViews[room.id] = chatView
-                    }
                     Qiscus.sharedInstance.RealtimeConnect()
                     return room
                 }
@@ -156,7 +141,7 @@ internal extension QRoom {
                         let savedUser = QUser.saveUser(withEmail: participantEmail, fullname: fullname, avatarURL: avatarURL)
                         
                         if room.type == .single {
-                            if savedUser.email != QiscusMe.shared.email {
+                            if savedUser.email != Qiscus.client.email {
                                 try! realm.write {
                                     room.singleUser = participantEmail
                                 }

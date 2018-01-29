@@ -51,13 +51,15 @@ class QCellLocationRight: QChatCell {
         self.mapView.addAnnotation(newPin)
     }
     override func commentChanged() {
-        
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         let payload = JSON(parseJSON: self.comment!.data)
         self.addressHeight.constant = self.comment!.textSize.height - 168.0
         self.addressView.attributedText = self.comment?.attributedText
         self.locationLabel.text = payload["name"].stringValue
         
-        if self.comment?.cellPos == .first || self.comment?.cellPos == .single{
+        if self.showUserName{
             self.userNameLabel.text = "You"
             self.userNameLabel.isHidden = false
             self.topMargin.constant = 20
@@ -104,7 +106,7 @@ class QCellLocationRight: QChatCell {
             break
         }
     }
-    func openMap(){
+    @objc func openMap(){
         let payload = JSON(parseJSON: self.comment!.data)
         
         let latitude: CLLocationDegrees = payload["latitude"].doubleValue

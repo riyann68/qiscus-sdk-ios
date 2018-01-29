@@ -36,45 +36,46 @@ import AVFoundation
     
     @objc optional func room(didFinishLoadMore inRoom:QRoom, success:Bool, gotNewComment:Bool)
     @objc optional func room(didChangeUnread inRoom:QRoom)
+    @objc optional func room(didClearMessages cleared:Bool)
 }
 public class QRoom:Object {
-    public dynamic var id:String = ""
-    public dynamic var uniqueId:String = ""
-    internal dynamic var storedName:String = ""
-    internal dynamic var definedname:String = ""
-    public dynamic var storedAvatarURL:String = ""
-    public dynamic var definedAvatarURL:String = ""
-    internal dynamic var avatarData:Data?
-    public dynamic var data:String = ""
-    public dynamic var distinctId:String = ""
-    public dynamic var typeRaw:Int = QRoomType.single.rawValue
-    public dynamic var singleUser:String = ""
-    public dynamic var typingUser:String = ""
-    public dynamic var lastReadCommentId: Int = 0
-    public dynamic var lastDeliveredCommentId: Int = 0
-    public dynamic var isLocked:Bool = false
+    @objc public dynamic var id:String = ""
+    @objc public dynamic var uniqueId:String = ""
+    @objc internal dynamic var storedName:String = ""
+    @objc internal dynamic var definedname:String = ""
+    @objc public dynamic var storedAvatarURL:String = ""
+    @objc public dynamic var definedAvatarURL:String = ""
+    @objc internal dynamic var avatarData:Data?
+    @objc public dynamic var data:String = ""
+    @objc public dynamic var distinctId:String = ""
+    @objc public dynamic var typeRaw:Int = QRoomType.single.rawValue
+    @objc public dynamic var singleUser:String = ""
+    @objc public dynamic var typingUser:String = ""
+    @objc public dynamic var lastReadCommentId: Int = 0
+    @objc public dynamic var lastDeliveredCommentId: Int = 0
+    @objc public dynamic var isLocked:Bool = false
     
-    internal dynamic var unreadCommentCount:Int = 0
-    public dynamic var unreadCount:Int = 0
-    internal dynamic var pinned:Double = 0
+    @objc internal dynamic var unreadCommentCount:Int = 0
+    @objc public dynamic var unreadCount:Int = 0
+    @objc internal dynamic var pinned:Double = 0
     
     // MARK: - lastComment variable
-    internal dynamic var lastCommentId:Int = 0
-    internal dynamic var lastCommentText:String = ""
-    internal dynamic var lastCommentUniqueId: String = ""
-    internal dynamic var lastCommentBeforeId:Int = 0
-    internal dynamic var lastCommentCreatedAt: Double = 0
-    internal dynamic var lastCommentSenderEmail:String = ""
-    internal dynamic var lastCommentSenderName:String = ""
-    internal dynamic var lastCommentStatusRaw:Int = QCommentStatus.sending.rawValue
-    internal dynamic var lastCommentTypeRaw:String = QCommentType.text.name()
-    internal dynamic var lastCommentData:String = ""
-    internal dynamic var lastCommentRawExtras:String = ""
+    @objc internal dynamic var lastCommentId:Int = 0
+    @objc internal dynamic var lastCommentText:String = ""
+    @objc internal dynamic var lastCommentUniqueId: String = ""
+    @objc internal dynamic var lastCommentBeforeId:Int = 0
+    @objc internal dynamic var lastCommentCreatedAt: Double = 0
+    @objc internal dynamic var lastCommentSenderEmail:String = ""
+    @objc internal dynamic var lastCommentSenderName:String = ""
+    @objc internal dynamic var lastCommentStatusRaw:Int = QCommentStatus.sending.rawValue
+    @objc internal dynamic var lastCommentTypeRaw:String = QCommentType.text.name()
+    @objc internal dynamic var lastCommentData:String = ""
+    @objc internal dynamic var lastCommentRawExtras:String = ""
         
     // MARK: private method
-    internal dynamic var lastParticipantsReadId:Int = 0
-    internal dynamic var lastParticipantsDeliveredId:Int = 0
-    internal dynamic var roomVersion011:Bool = true
+    @objc internal dynamic var lastParticipantsReadId:Int = 0
+    @objc internal dynamic var lastParticipantsDeliveredId:Int = 0
+    @objc internal dynamic var roomVersion014:Bool = true
     
     public let comments = List<QComment>()
     public let participants = List<QParticipant>()
@@ -104,8 +105,8 @@ public class QRoom:Object {
         comment.roomId = self.id
         comment.text = "\(name) - \(value)"
         comment.createdAt = Double(Date().timeIntervalSince1970)
-        comment.senderEmail = QiscusMe.shared.email
-        comment.senderName = QiscusMe.shared.userName
+        comment.senderEmail = Qiscus.client.email
+        comment.senderName = Qiscus.client.userName
         comment.statusRaw = QCommentStatus.sending.rawValue
         comment.typeRaw = "contact_person"
         comment.data = payload
@@ -161,8 +162,8 @@ public class QRoom:Object {
         comment.roomId = self.id
         comment.text = ""
         comment.createdAt = Double(Date().timeIntervalSince1970)
-        comment.senderEmail = QiscusMe.shared.email
-        comment.senderName = QiscusMe.shared.userName
+        comment.senderEmail = Qiscus.client.email
+        comment.senderName = Qiscus.client.userName
         comment.statusRaw = QCommentStatus.sending.rawValue
         comment.typeRaw = "location"
         comment.data = payload
@@ -197,8 +198,8 @@ public class QRoom:Object {
         comment.roomId = self.id
         
         comment.createdAt = Double(Date().timeIntervalSince1970)
-        comment.senderEmail = QiscusMe.shared.email
-        comment.senderName = QiscusMe.shared.userName
+        comment.senderEmail = Qiscus.client.email
+        comment.senderName = Qiscus.client.userName
         comment.statusRaw = QCommentStatus.sending.rawValue
         comment.typeRaw = type
         comment.data = payload
@@ -234,8 +235,8 @@ public class QRoom:Object {
         
         comment.text = "[file]\(fileName) [/file]"
         comment.createdAt = Double(Date().timeIntervalSince1970)
-        comment.senderEmail = QiscusMe.shared.email
-        comment.senderName = QiscusMe.shared.userName
+        comment.senderEmail = Qiscus.client.email
+        comment.senderName = Qiscus.client.userName
         comment.statusRaw = QCommentStatus.sending.rawValue
         comment.isUploading = true
         comment.progress = 0
@@ -248,7 +249,7 @@ public class QRoom:Object {
         file.id = uniqueID
         file.roomId = self.id
         file.url = fileName
-        file.senderEmail = QiscusMe.shared.email
+        file.senderEmail = Qiscus.client.email
         file.filename = filename
         
         if let fileData = data {
@@ -360,8 +361,8 @@ public class QRoom:Object {
         comment.roomId = self.id
         comment.text = text
         comment.createdAt = Double(Date().timeIntervalSince1970)
-        comment.senderEmail = QiscusMe.shared.email
-        comment.senderName = QiscusMe.shared.userName
+        comment.senderEmail = Qiscus.client.email
+        comment.senderName = Qiscus.client.userName
         comment.statusRaw = QCommentStatus.sending.rawValue
         comment.typeRaw = type.name()
         comment.roomName = self.name
@@ -387,17 +388,29 @@ public class QRoom:Object {
         comment.roomId = self.id
         comment.text = text
         comment.createdAt = Double(Date().timeIntervalSince1970)
-        comment.senderEmail = QiscusMe.shared.email
-        comment.senderName = QiscusMe.shared.userName
+        comment.senderEmail = Qiscus.client.email
+        comment.senderName = Qiscus.client.userName
         comment.statusRaw = QCommentStatus.sending.rawValue
         comment.typeRaw = QCommentType.text.name()
         
         self.addComment(newComment: comment)
         self.post(comment: comment)
     }
+    internal func resendPendingMessage(){
+        let id = self.id
+        let pendingMessages = self.comments.filter("statusRaw == %d", QCommentStatus.pending.rawValue)
+        let service = QRoomService()
+        if pendingMessages.count > 0 {
+            for pendingMessage in pendingMessages {
+                service.postComment(onRoom: id, comment: pendingMessage)
+            }
+        }
+    }
     public func post(comment:QComment, type:String? = nil, payload:JSON? = nil){
         let service = QRoomService()
-        service.postComment(onRoom: self.id, comment: comment, type: type, payload:payload)
+        let id = self.id
+        self.resendPendingMessage()
+        service.postComment(onRoom: id, comment: comment, type: type, payload:payload)
     }
     
     public func upload(comment:QComment, onSuccess:  @escaping (QRoom, QComment)->Void, onError:  @escaping (QRoom,QComment,String)->Void, onProgress:((Double)->Void)? = nil){
@@ -451,7 +464,7 @@ public class QRoom:Object {
             }
         }
     }
-    public func clearUserTyping(){
+    @objc public func clearUserTyping(){
         if !self.isInvalidated {
             self.updateUserTyping(userEmail: "")
         }
@@ -568,11 +581,11 @@ public class QRoom:Object {
             var minReadId = 0
             var first = true
             for participant in self.participants {
-                if first && participant.email != QiscusMe.shared.email{
+                if first && participant.email != Qiscus.client.email{
                     minDeliveredId = participant.lastDeliveredCommentId
                     minReadId = participant.lastReadCommentId
                     first = false
-                }else if participant.email != QiscusMe.shared.email{
+                }else if participant.email != Qiscus.client.email{
                     if participant.lastDeliveredCommentId < minDeliveredId {
                         minDeliveredId = participant.lastDeliveredCommentId
                     }
@@ -727,7 +740,7 @@ public class QRoom:Object {
                     }
                     if room.type == .single {
                         for participant in room.participants {
-                            if participant.email != QiscusMe.shared.email {
+                            if participant.email != Qiscus.client.email {
                                 if let user = QUser.getUser(email: participant.email) {
                                     user.setName(name: name)
                                 }
@@ -751,11 +764,6 @@ public class QRoom:Object {
             if Qiscus.chatRooms[self.id] == nil {
                 Qiscus.chatRooms[self.id] = self
             }
-            if Qiscus.shared.chatViews[self.id] ==  nil{
-                let chatView = QiscusChatVC()
-                chatView.chatRoom = Qiscus.chatRooms[self.id]
-                Qiscus.shared.chatViews[self.id] = chatView
-            }
         }else{
             DispatchQueue.main.sync {
                 let realm = try! Realm(configuration: Qiscus.dbConfiguration)
@@ -763,11 +771,6 @@ public class QRoom:Object {
                 guard let room = realm.resolve(roomTS) else { return }
                 if Qiscus.chatRooms[room.id] == nil {
                     Qiscus.chatRooms[room.id] = room
-                }
-                if Qiscus.shared.chatViews[room.id] ==  nil{
-                    let chatView = QiscusChatVC()
-                    chatView.chatRoom = Qiscus.chatRooms[room.id]
-                    Qiscus.shared.chatViews[room.id] = chatView
                 }
             }
         }
@@ -889,12 +892,27 @@ public class QRoom:Object {
             }
         }
     }
+    public func clearMessages(onSuccess:@escaping ()->Void, onError:@escaping (Int)->Void){
+        let uid = self.uniqueId
+        QRoomService.clearMessages(inRoomsChannel: [uid], onSuccess: { (_, _) in
+            onSuccess()
+        }) { (statusCode) in
+            onError(statusCode)
+        }
+    }
     internal func clearMessage(){
+        let id = self.id
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
         realm.refresh()
         
         try! realm.write {
             self.comments.removeAll()
+        }
+        DispatchQueue.main.async {
+            if let room = QRoom.room(withId: id){
+                room.delegate?.room?(didClearMessages: true)
+                QiscusNotification.publish(roomCleared: room)
+            }
         }
     }
     internal class func removeAllMessage(){

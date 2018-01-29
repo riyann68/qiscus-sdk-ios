@@ -21,14 +21,14 @@ import RealmSwift
 public class QUser:Object {
     static var cache = [String: QUser]()
     
-    public dynamic var email:String = ""
-    public dynamic var id:Int = 0
-    public dynamic var avatarURL:String = ""
-    public dynamic var storedName:String = ""
-    public dynamic var definedName:String = ""
-    public dynamic var lastSeen:Double = 0
-    internal dynamic var rawPresence:Int = 0
-    internal dynamic var avatarData:Data?
+    @objc public dynamic var email:String = ""
+    @objc public dynamic var id:Int = 0
+    @objc public dynamic var avatarURL:String = ""
+    @objc public dynamic var storedName:String = ""
+    @objc public dynamic var definedName:String = ""
+    @objc public dynamic var lastSeen:Double = 0
+    @objc internal dynamic var rawPresence:Int = 0
+    @objc internal dynamic var avatarData:Data?
     
     public var cachedAvatar:UIImage?
     
@@ -39,9 +39,9 @@ public class QUser:Object {
     
     public var fullname:String{
         if self.definedName != "" {
-            return self.definedName
+            return self.definedName.capitalized
         }else{
-            return self.storedName
+            return self.storedName.capitalized
         }
     }
     public var presence:QUserPresence {

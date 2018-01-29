@@ -20,9 +20,9 @@ class QCellFileLeft: QChatCell {
     
     @IBOutlet weak var balloonWidth: NSLayoutConstraint!
     @IBOutlet weak var topMargin: NSLayoutConstraint!
-    @IBOutlet weak var leftMargin: NSLayoutConstraint!
     @IBOutlet weak var cellHeight: NSLayoutConstraint!
-        
+    @IBOutlet weak var balloonLeftMargin: NSLayoutConstraint!
+    
     override func awakeFromNib() {
         super.awakeFromNib()
         fileContainer.layer.cornerRadius = 10
@@ -30,6 +30,14 @@ class QCellFileLeft: QChatCell {
         fileIcon.contentMode = .scaleAspectFit
     }
     public override func commentChanged() {
+        if hideAvatar {
+            self.balloonLeftMargin.constant = 0
+        }else{
+            self.balloonLeftMargin.constant = 27
+        }
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         userNameLabel.isHidden = true
         topMargin.constant = 0
         cellHeight.constant = 0
@@ -38,7 +46,7 @@ class QCellFileLeft: QChatCell {
         let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(QChatCell.showFile))
         fileContainer.addGestureRecognizer(tapRecognizer)
         
-        if self.comment!.cellPos == .first || self.comment!.cellPos == .single{
+        if self.showUserName{
             if let sender = self.comment?.sender {
                 self.userNameLabel.text = sender.fullname
             }else{

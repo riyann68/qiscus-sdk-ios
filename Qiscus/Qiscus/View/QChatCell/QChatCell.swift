@@ -25,6 +25,9 @@ protocol ChatCellDelegate {
 public class QChatCell: UICollectionViewCell, QCommentDelegate {
     
     var delegate: ChatCellDelegate?
+    var showUserName:Bool = false
+    var userNameColor:UIColor?
+    var hideAvatar:Bool = false
     
     private var commentRaw:QComment?
         
@@ -37,15 +40,15 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
         get{
             var foregroundColorAttributeName = QiscusColorConfiguration.sharedInstance.leftBaloonLinkColor
             var underlineColorAttributeName = QiscusColorConfiguration.sharedInstance.leftBaloonLinkColor
-            if self.comment?.senderEmail == QiscusMe.shared.email{
+            if self.comment?.senderEmail == Qiscus.client.email{
                 foregroundColorAttributeName = QiscusColorConfiguration.sharedInstance.rightBaloonLinkColor
                 underlineColorAttributeName = QiscusColorConfiguration.sharedInstance.rightBaloonLinkColor
             }
             return [
-                NSForegroundColorAttributeName: foregroundColorAttributeName,
-                NSUnderlineColorAttributeName: underlineColorAttributeName,
-                NSUnderlineStyleAttributeName: NSUnderlineStyle.styleSingle.rawValue,
-                NSFontAttributeName: Qiscus.style.chatFont
+                NSAttributedStringKey.foregroundColor.rawValue: foregroundColorAttributeName,
+                NSAttributedStringKey.underlineColor.rawValue: underlineColorAttributeName,
+                NSAttributedStringKey.underlineStyle.rawValue: NSUnderlineStyle.styleSingle.rawValue,
+                NSAttributedStringKey.font.rawValue: Qiscus.style.chatFont
             ]
         }
     }
@@ -73,6 +76,9 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
     @objc private func userNameChanged(_ notification: Notification) {
         if let userInfo = notification.userInfo {
             if let c = self.comment {
+                if c.isInvalidated {
+                    return
+                }
                 let userData = userInfo["user"] as! QUser
                 if c.senderEmail == userData.email {
                     self.updateUserName()
@@ -84,7 +90,7 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
     open func updateStatus(toStatus status:QCommentStatus){
         // implementation will be overrided on child class
     }
-    open func resend(){
+    @objc open func resend(){
         let roomId = self.comment!.roomId
         let cUid = self.comment!.uniqueId
         QiscusBackgroundThread.async {
@@ -118,26 +124,26 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
             }
         }
     }
-    open func reply(){
+    @objc open func reply(){
         self.delegate?.didReply(comment: self.comment!)
     }
-    public func forward(){
+    @objc public func forward(){
         self.delegate?.didForward(comment: self.comment!)
     }
-    open func deleteComment(){
+    @objc open func deleteComment(){
         if let room = QRoom.room(withId: self.comment!.roomId){
             room.deleteComment(comment: self.comment!)
         }
     }
-    open func info(){
+    @objc open func info(){
         self.delegate?.getInfo(comment: self.comment!)
     }
-    open func share(){
+    @objc open func share(){
         if let comment = self.comment {
             self.delegate?.didShare(comment: comment)
         }
     }
-    open func showFile(){
+    @objc open func showFile(){
         if let c = self.comment {
             self.delegate?.didTapFile(comment: c)
         }
@@ -157,7 +163,7 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
         
         switch self.comment!.cellPos {
         case .single, .last:
-            if self.comment?.senderEmail == QiscusMe.shared.email {
+            if self.comment?.senderEmail == Qiscus.client.email {
                 balloonImage = Qiscus.style.assets.rightBallonLast
             }else{
                 edgeInset = UIEdgeInsetsMake(13, 28, 13, 13)
@@ -165,7 +171,7 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
             }
             break
         default:
-            if self.comment?.senderEmail == QiscusMe.shared.email {
+            if self.comment?.senderEmail == Qiscus.client.email {
                 balloonImage = Qiscus.style.assets.rightBallonNormal
             }else{
                 edgeInset = UIEdgeInsetsMake(13, 28, 13, 13)
@@ -208,12 +214,21 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
             data.delegate = nil
         }
     }
-    public func setData(comment:QComment){
+    public func setData(comment:QComment, showUserName:Bool, userNameColor:UIColor?, hideAvatar:Bool){
         var oldUniqueId:String?
+        self.showUserName = showUserName
+        self.hideAvatar = hideAvatar
+        if let color = userNameColor {
+            self.userNameColor = color
+        }else{
+            self.userNameColor = UIColor(red: 85/255, green: 85/255, blue: 85/255, alpha: 1)
+        }
         self.clipsToBounds = true
         if let oldComment = self.comment {
-            oldComment.delegate = nil
-            oldUniqueId = oldComment.uniqueId
+            if !oldComment.isInvalidated {
+                oldComment.delegate = nil
+                oldUniqueId = oldComment.uniqueId
+            }
         }
         if let cache = QComment.cache[comment.uniqueId]{
             self.commentRaw = cache

@@ -35,7 +35,7 @@ class MainView: UIViewController {
         self.showQiscusLoading()
         appDelegate.qiscusLogin(withAppId: appIdField.text!, userEmail: emailField.text!, userKey: userKeyField.text!, username: userNameField.text!)
     }
-    func hideKeyboard(){
+    @objc func hideKeyboard(){
         self.view.endEditing(true)
     }
     

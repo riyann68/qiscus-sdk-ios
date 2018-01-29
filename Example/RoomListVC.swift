@@ -92,11 +92,11 @@ class RoomListVC: UITableViewController {
         }
     }
     
-    func logOut(){
+    @objc func logOut(){
         Qiscus.clear()
         self.appDelegate.goToLoginView()
     }
-    func addChat(){
+    @objc func addChat(){
         let actionSheetController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
         let cancelActionButton = UIAlertAction(title: "Cancel", style: .cancel) { action -> Void in

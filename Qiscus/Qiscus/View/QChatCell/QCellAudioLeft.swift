@@ -26,6 +26,7 @@ class QCellAudioLeft: QCellAudio {
     @IBOutlet weak var cellHeight: NSLayoutConstraint!
     @IBOutlet weak var balloonTopMargin: NSLayoutConstraint!
     @IBOutlet weak var progressHeight: NSLayoutConstraint!
+    @IBOutlet weak var balloonLeftMargin: NSLayoutConstraint!
     
     let defaultDateLeftMargin:CGFloat = -10
     var tapRecognizer: ChatTapRecognizer?
@@ -73,12 +74,20 @@ class QCellAudioLeft: QCellAudio {
         fileContainer.layer.cornerRadius = 10
     }
     public override func commentChanged() {
+        if self.hideAvatar {
+            self.balloonLeftMargin.constant = 0
+        }else{
+            self.balloonLeftMargin.constant = 27
+        }
+        if let color = self.userNameColor {
+            self.userNameLabel.textColor = color
+        }
         self.progressHeight.constant = 0
         self.progressContainer.isHidden = true
         self.currentTimeSlider.setValue(self.comment!.currentTimeSlider, animated: true)
         self.durationLabel.text = self.comment!.durationLabel
         
-        if self.comment!.cellPos == .first || self.comment!.cellPos == .single{
+        if self.showUserName{
             if let sender = self.comment?.sender {
                 self.userNameLabel.text = sender.fullname
             }else{
