@@ -1,0 +1,719 @@
+{
+  "warnings": [
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusAssetsConfiguration.swift",
+      "line": 12,
+      "symbol": "QiscusAssetsConfiguration",
+      "symbol_kind": "source.lang.swift.decl.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusAssetsConfiguration.swift",
+      "line": 15,
+      "symbol": "QiscusAssetsConfiguration.emptyChat",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusAssetsConfiguration.swift",
+      "line": 18,
+      "symbol": "QiscusAssetsConfiguration.leftBallonLast",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusAssetsConfiguration.swift",
+      "line": 19,
+      "symbol": "QiscusAssetsConfiguration.leftBallonNormal",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusAssetsConfiguration.swift",
+      "line": 20,
+      "symbol": "QiscusAssetsConfiguration.rightBallonLast",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusAssetsConfiguration.swift",
+      "line": 21,
+      "symbol": "QiscusAssetsConfiguration.rightBallonNormal",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusColorConfiguration.swift",
+      "line": 11,
+      "symbol": "QiscusColorConfiguration",
+      "symbol_kind": "source.lang.swift.decl.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusColorConfiguration.swift",
+      "line": 43,
+      "symbol": "QiscusColorConfiguration.readMessageColor",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusColorConfiguration.swift",
+      "line": 60,
+      "symbol": "QiscusColorConfiguration.topColor",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusColorConfiguration.swift",
+      "line": 61,
+      "symbol": "QiscusColorConfiguration.bottomColor",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusColorConfiguration.swift",
+      "line": 62,
+      "symbol": "QiscusColorConfiguration.tintColor",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusColorConfiguration.swift",
+      "line": 64,
+      "symbol": "QiscusColorConfiguration.avatarBackgroundColor",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusColorConfiguration.swift",
+      "line": 85,
+      "symbol": "QiscusColorConfiguration.baseColor",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 11,
+      "symbol": "QiscusConfig",
+      "symbol_kind": "source.lang.swift.decl.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 15,
+      "symbol": "QiscusConfig.commentPerLoad",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 16,
+      "symbol": "QiscusConfig.dbSchemaVersion",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 18,
+      "symbol": "QiscusConfig.UPLOAD_URL",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 20,
+      "symbol": "QiscusConfig.showToasterMessage",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 21,
+      "symbol": "QiscusConfig.showToasterMessageInsideChat",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 24,
+      "symbol": "QiscusConfig.BASE_URL",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 29,
+      "symbol": "QiscusConfig.USER_EMAIL",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 34,
+      "symbol": "QiscusConfig.USER_TOKEN",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 39,
+      "symbol": "QiscusConfig.PUSHER_KEY",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 159,
+      "symbol": "QiscusConfig.LINK_METADATA_URL",
+      "symbol_kind": "source.lang.swift.decl.var.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 171,
+      "symbol": "QiscusConfig.LOAD_URL_(withTopicId:commentId:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 175,
+      "symbol": "QiscusConfig.ROOM_REQUEST_ID_URL",
+      "symbol_kind": "source.lang.swift.decl.var.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 179,
+      "symbol": "QiscusConfig.setUserConfig(withEmail:userKey:rtKey:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 190,
+      "symbol": "QiscusConfig.BLOCK_USER",
+      "symbol_kind": "source.lang.swift.decl.var.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 195,
+      "symbol": "QiscusConfig.UNBLOCK_USER",
+      "symbol_kind": "source.lang.swift.decl.var.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusConfig.swift",
+      "line": 200,
+      "symbol": "QiscusConfig.LIST_BLOCK_USER",
+      "symbol_kind": "source.lang.swift.decl.var.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusTextConfiguration.swift",
+      "line": 11,
+      "symbol": "QiscusTextConfiguration",
+      "symbol_kind": "source.lang.swift.decl.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusTextConfiguration.swift",
+      "line": 32,
+      "symbol": "QiscusTextConfiguration.captionPlaceholder",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusTextConfiguration.swift",
+      "line": 38,
+      "symbol": "QiscusTextConfiguration.locationAccessAlertText",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusTextConfiguration.swift",
+      "line": 39,
+      "symbol": "QiscusTextConfiguration.cameraAccessAlertText",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusTextConfiguration.swift",
+      "line": 40,
+      "symbol": "QiscusTextConfiguration.microphoneAccessAlertText",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusTextConfiguration.swift",
+      "line": 80,
+      "symbol": "QiscusTextConfiguration.deletingText",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusTextConfiguration.swift",
+      "line": 85,
+      "symbol": "QiscusTextConfiguration.defaultRoomSubtitle",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusUIConfiguration.swift",
+      "line": 16,
+      "symbol": "QiscusUIConfiguration.color",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusUIConfiguration.swift",
+      "line": 17,
+      "symbol": "QiscusUIConfiguration.copyright",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusUIConfiguration.swift",
+      "line": 18,
+      "symbol": "QiscusUIConfiguration.assets",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusUIConfiguration.swift",
+      "line": 20,
+      "symbol": "QiscusUIConfiguration.chatFont",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusUIConfiguration.swift",
+      "line": 30,
+      "symbol": "QiscusUIConfiguration.rewriteChatFont",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusUIConfiguration.swift",
+      "line": 37,
+      "symbol": "QiscusUIConfiguration.topicId",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusUIConfiguration.swift",
+      "line": 38,
+      "symbol": "QiscusUIConfiguration.chatUsers",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Configuration/QiscusUIConfiguration.swift",
+      "line": 39,
+      "symbol": "QiscusUIConfiguration.baseColor",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": null,
+      "symbol": "Qiscus",
+      "symbol_kind": "source.lang.swift.decl.extension",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": null,
+      "symbol": "Qiscus",
+      "symbol_kind": "source.lang.swift.decl.extension",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 23,
+      "symbol": "Qiscus",
+      "symbol_kind": "source.lang.swift.decl.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 29,
+      "symbol": "Qiscus.client",
+      "symbol_kind": "source.lang.swift.decl.var.static",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 177,
+      "symbol": "Qiscus.toastMessageAct",
+      "symbol_kind": "source.lang.swift.decl.var.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 327,
+      "symbol": "Qiscus.connect(delegate:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 360,
+      "symbol": "Qiscus.setRealtimeServer(withServer:port:enableSSL:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 369,
+      "symbol": "Qiscus.updateProfile(username:avatarURL:onSuccess:onFailed:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 372,
+      "symbol": "Qiscus.setup(withAppId:userEmail:userKey:username:avatarURL:delegate:secureURl:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 499,
+      "symbol": "Qiscus.chatView(withRoomId:readOnly:title:subtitle:withMessage:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 518,
+      "symbol": "Qiscus.image(named:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 648,
+      "symbol": "Qiscus.printLog(text:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 682,
+      "symbol": "Qiscus.createChatView(withUsers:readOnly:title:subtitle:distinctId:optionalData:withMessage:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 746,
+      "symbol": "Qiscus.registerNotification()",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 753,
+      "symbol": "Qiscus.didRegisterUserNotification(withToken:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 767,
+      "symbol": "Qiscus.didReceive(RemoteNotification:completionHandler:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 786,
+      "symbol": "Qiscus.notificationAction(roomId:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 842,
+      "symbol": "Qiscus.createLocalNotification(forComment:alertTitle:alertBody:userInfo:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 876,
+      "symbol": "Qiscus.didReceiveNotification(notification:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 895,
+      "symbol": "Qiscus.didReceiveUNUserNotification(withUserInfo:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 974,
+      "symbol": "Qiscus.setNotificationAction(onClick:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 979,
+      "symbol": "Qiscus.registerDevice(withToken:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 986,
+      "symbol": "Qiscus.unRegisterDevice()",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 993,
+      "symbol": "Qiscus.sync(cloud:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 1010,
+      "symbol": "Qiscus.getNonce(withAppId:baseURL:onSuccess:onFailed:secureURL:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/Qiscus.swift",
+      "line": 1031,
+      "symbol": "Qiscus.subscribeAllRoomNotification()",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 14,
+      "symbol": "Qiscus.clearMessages(inChannels:onSuccess:onError:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 21,
+      "symbol": "Qiscus.prepareView(witCompletion:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 49,
+      "symbol": "Qiscus.prepareView()",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 73,
+      "symbol": "Qiscus.room(withId:onSuccess:onError:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 99,
+      "symbol": "Qiscus.room(withChannel:title:avatarURL:onSuccess:onError:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 120,
+      "symbol": "Qiscus.newRoom(withUsers:roomName:avatarURL:onSuccess:onError:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 128,
+      "symbol": "Qiscus.room(withUserId:onSuccess:onError:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 151,
+      "symbol": "Qiscus.roomList(withLimit:page:onSuccess:onError:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 159,
+      "symbol": "Qiscus.fetchAllRoom(loadLimit:onSuccess:onError:onProgress:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 182,
+      "symbol": "Qiscus.roomInfo(withId:lastCommentUpdate:onSuccess:onError:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 190,
+      "symbol": "Qiscus.roomsInfo(withIds:onSuccess:onError:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 197,
+      "symbol": "Qiscus.channelInfo(withName:onSuccess:onError:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 209,
+      "symbol": "Qiscus.channelsInfo(withNames:onSuccess:onError:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 217,
+      "symbol": "Qiscus.removeAllFile()",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 229,
+      "symbol": "Qiscus.cancellAllRequest()",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 237,
+      "symbol": "Qiscus.removeDB()",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 257,
+      "symbol": "Qiscus.removeLogFile()",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 267,
+      "symbol": "Qiscus.backgroundSync()",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusCore.swift",
+      "line": 270,
+      "symbol": "Qiscus.syncEvent()",
+      "symbol_kind": "source.lang.swift.decl.function.method.class",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusRealtime.swift",
+      "line": 13,
+      "symbol": "Qiscus.mqtt(_:didConnectAck:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusRealtime.swift",
+      "line": 40,
+      "symbol": "Qiscus.mqtt(_:didPublishMessage:id:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusRealtime.swift",
+      "line": 42,
+      "symbol": "Qiscus.mqtt(_:didPublishAck:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusRealtime.swift",
+      "line": 44,
+      "symbol": "Qiscus.mqtt(_:didReceiveMessage:id:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusRealtime.swift",
+      "line": 257,
+      "symbol": "Qiscus.mqtt(_:didSubscribeTopic:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusRealtime.swift",
+      "line": 263,
+      "symbol": "Qiscus.mqtt(_:didUnsubscribeTopic:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusRealtime.swift",
+      "line": 275,
+      "symbol": "Qiscus.mqttDidPing(_:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusRealtime.swift",
+      "line": 277,
+      "symbol": "Qiscus.mqttDidReceivePong(_:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusRealtime.swift",
+      "line": 280,
+      "symbol": "Qiscus.mqttDidDisconnect(_:withError:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusRealtime.swift",
+      "line": 289,
+      "symbol": "Qiscus.mqtt(_:didStateChangeTo:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusRealtime.swift",
+      "line": 292,
+      "symbol": "Qiscus.mqtt(_:didPublishComplete:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/rahardyan/iOS/qiscus-sdk-ios/Qiscus/Qiscus/QiscusRealtime.swift",
+      "line": 295,
+      "symbol": "Qiscus.mqtt(_:didReceive:completionHandler:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    }
+  ],
+  "source_directory": "/Users/rahardyan/iOS/qiscus-sdk-ios"
+}

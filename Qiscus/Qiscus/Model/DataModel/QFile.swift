@@ -102,7 +102,7 @@ public class QFile:Object{
         get{
             let ext = self.ext
             switch ext {
-            case "jpg","jpg_","png","png_","gif","gif_":
+            case "jpg","jpg_","png","png_","gif","gif_", "heic":
                 return .image
             case "mov","mov_","mp4","mp4_":
                 return .video

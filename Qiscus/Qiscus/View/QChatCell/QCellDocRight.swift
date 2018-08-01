@@ -93,7 +93,7 @@ class QCellDocRight: QChatCell {
                 })
             }
             if self.showUserName{
-                self.userNameLabel.text = "You"
+                self.userNameLabel.text = "YOU".getLocalize()
                 self.userNameLabel.isHidden = false
                 self.topMargin.constant = 20
                 self.cellHeight.constant = 20
@@ -136,12 +136,24 @@ class QCellDocRight: QChatCell {
     }
     
     public override func updateStatus(toStatus status:QCommentStatus){
+        super.updateStatus(toStatus: status)
         dateLabel.text = self.comment!.time.lowercased()
         dateLabel.textColor = QiscusColorConfiguration.sharedInstance.rightBaloonTextColor
         statusImage.isHidden = false
         statusImage.tintColor = QiscusColorConfiguration.sharedInstance.rightBaloonTextColor
         
         switch status {
+        case .deleted:
+            dateLabel.text = self.comment!.time.lowercased()
+            statusImage.image = Qiscus.image(named: "ic_deleted")?.withRenderingMode(.alwaysTemplate)
+            break
+        case .deleting, .deletePending:
+            dateLabel.text = QiscusTextConfiguration.sharedInstance.deletingText
+            if status == .deletePending {
+                dateLabel.text = self.comment!.time.lowercased()
+            }
+            statusImage.image = Qiscus.image(named: "ic_deleting")?.withRenderingMode(.alwaysTemplate)
+            break;
         case .sending, .pending:
             if self.comment!.isUploading{
                 dateLabel.text = QiscusTextConfiguration.sharedInstance.uploadingText
@@ -171,6 +183,7 @@ class QCellDocRight: QChatCell {
             statusImage.image = Qiscus.image(named: "ic_warning")?.withRenderingMode(.alwaysTemplate)
             statusImage.tintColor = QiscusColorConfiguration.sharedInstance.failToSendColor
             break
+        default: break
         }
     }
     

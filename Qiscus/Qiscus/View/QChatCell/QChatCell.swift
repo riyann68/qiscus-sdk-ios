@@ -9,7 +9,7 @@
 import UIKit
 import SwiftyJSON
 
-protocol ChatCellDelegate {
+@objc public protocol ChatCellDelegate {
     func didTapCell(onComment comment: QComment)
     func didTouchLink(onComment comment: QComment)
     func didTapPostbackButton(onComment comment: QComment, index:Int)
@@ -21,13 +21,26 @@ protocol ChatCellDelegate {
     func didReply(comment:QComment)
     func getInfo(comment:QComment)
     func didTapFile(comment:QComment)
+    func useSoftDelete()->Bool
+    func willDeleteComment(onIndexPath indexPath:IndexPath)
+    func didDeleteComment(onIndexPath indexPath:IndexPath)
+    @objc optional func deletedMessageText(selfMessage isSelf:Bool)->String
+    @objc optional func enableReplyMenuItem(onCell cell:QChatCell)->Bool
+    @objc optional func enableForwardMenuItem(onCell cell:QChatCell)->Bool
+    @objc optional func enableResendMenuItem(onCell cell:QChatCell)->Bool
+    @objc optional func enableDeleteMenuItem(onCell cell:QChatCell)->Bool
+    @objc optional func enableDeleteForMeMenuItem(onCell cell:QChatCell)->Bool
+    @objc optional func enableShareMenuItem(onCell cell:QChatCell)->Bool
+    @objc optional func enableInfoMenuItem(onCell cell:QChatCell)->Bool
 }
-public class QChatCell: UICollectionViewCell, QCommentDelegate {
+
+open class QChatCell: UICollectionViewCell, QCommentDelegate {
     
     var delegate: ChatCellDelegate?
     var showUserName:Bool = false
     var userNameColor:UIColor?
     var hideAvatar:Bool = false
+    var indexPath:IndexPath?
     
     private var commentRaw:QComment?
         
@@ -52,26 +65,24 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
             ]
         }
     }
-    override public func awakeFromNib() {
+    
+    override open func awakeFromNib() {
         super.awakeFromNib()
-        let resendMenuItem: UIMenuItem = UIMenuItem(title: "Resend", action: #selector(QChatCell.resend))
-        let deleteMenuItem: UIMenuItem = UIMenuItem(title: "Delete", action: #selector(QChatCell.deleteComment))
-        let replyMenuItem: UIMenuItem = UIMenuItem(title: "Reply", action: #selector(QChatCell.reply))
-        let forwardMenuItem: UIMenuItem = UIMenuItem(title: "Forward", action: #selector(QChatCell.forward))
-        let shareMenuItem: UIMenuItem = UIMenuItem(title: "Share", action: #selector(QChatCell.share))
-        let infoMenuItem: UIMenuItem = UIMenuItem(title: "Info", action: #selector(QChatCell.info))
-        
-        let menuItems:[UIMenuItem] = [resendMenuItem,deleteMenuItem,replyMenuItem,forwardMenuItem,shareMenuItem,infoMenuItem]
-        
-        UIMenuController.shared.menuItems = menuItems
         
         NotificationCenter.default.addObserver(self, selector: #selector(QChatCell.userNameChanged(_:)), name: QiscusNotification.USER_NAME_CHANGE, object: nil)
     }
     
-    func setupCell(){
+    open func setupCell(){
         // implementation will be overrided on child class
     }
-
+    
+    public class func defaultDeletedText(selfMessage isSelf:Bool = false)->String{
+        if isSelf {
+            return "🚫 You deleted this message."
+        }else{
+            return "🚫 This message was deleted."
+        }
+    }
     // MARK: - userAvatarChange Handler
     @objc private func userNameChanged(_ notification: Notification) {
         if let userInfo = notification.userInfo {
@@ -88,7 +99,12 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
     }
     
     open func updateStatus(toStatus status:QCommentStatus){
-        // implementation will be overrided on child class
+        if status == .deleted {
+            if let index = self.indexPath {
+                self.delegate?.didDeleteComment(onIndexPath: index)
+            }
+        }
+        // other implementation will be overrided on child class
     }
     @objc open func resend(){
         let roomId = self.comment!.roomId
@@ -127,12 +143,93 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
     @objc open func reply(){
         self.delegate?.didReply(comment: self.comment!)
     }
-    @objc public func forward(){
+    @objc open func forward(){
         self.delegate?.didForward(comment: self.comment!)
     }
-    @objc open func deleteComment(){
-        if let room = QRoom.room(withId: self.comment!.roomId){
-            room.deleteComment(comment: self.comment!)
+    @objc open func deleteComment(){        
+        if let comment = self.comment {
+            let uid = comment.uniqueId
+            let roomId = comment.roomId
+            QiscusBackgroundThread.async {
+                if let c = QComment.threadSaveComment(withUniqueId: uid){
+                    guard let r = QRoom.threadSaveRoom(withId: roomId) else {return}
+                    if c.status == .failed || c.status == .pending || c.status == .sending {
+                        r.deleteComment(comment: c)
+                    }else{
+                        var hardDelete = false
+                        if let softDelete = self.delegate?.useSoftDelete(){
+                            hardDelete = !softDelete
+                        }
+                        c.updateStatus(status: .deleting)
+                        if let index = self.indexPath {
+                            DispatchQueue.main.async {
+                                self.delegate?.willDeleteComment(onIndexPath: index)
+                            }
+                        }
+                        c.delete(forMeOnly: false, hardDelete: hardDelete, onSuccess: {
+                            QiscusBackgroundThread.async {
+                                if hardDelete {
+                                    if let room = QRoom.threadSaveRoom(withId: roomId){
+                                        if let comment = QComment.threadSaveComment(withUniqueId: uid){
+                                            room.deleteComment(comment: comment)
+                                        }
+                                    }
+                                }
+                                if let index = self.indexPath {
+                                    DispatchQueue.main.async {
+                                        self.delegate?.didDeleteComment(onIndexPath: index)
+                                    }
+                                }
+                            }
+                        }, onError: { (statusCode) in
+                            Qiscus.printLog(text: "delete error: status code \(String(describing: statusCode))")
+                        })
+                    }
+                }
+            }
+        }
+    }
+    @objc open func deleteForMe(){
+        if let comment = self.comment {
+            let uid = comment.uniqueId
+            let roomId = comment.roomId
+            QiscusBackgroundThread.async {
+                if let c = QComment.threadSaveComment(withUniqueId: uid){
+                    guard let r = QRoom.threadSaveRoom(withId: roomId) else {return}
+                    if c.status == .failed || c.status == .pending || c.status == .sending {
+                        r.deleteComment(comment: c)
+                    }else{
+                        var hardDelete = false
+                        if let softDelete = self.delegate?.useSoftDelete(){
+                            hardDelete = !softDelete
+                        }
+                        c.updateStatus(status: .deleting)
+                        if let index = self.indexPath {
+                            DispatchQueue.main.async {
+                                self.delegate?.willDeleteComment(onIndexPath: index)
+                            }
+                        }
+                        c.delete(forMeOnly: true, hardDelete: hardDelete, onSuccess: {
+                            QiscusBackgroundThread.async {
+                                if hardDelete {
+                                    if let room = QRoom.threadSaveRoom(withId: roomId){
+                                        if let comment = QComment.threadSaveComment(withUniqueId: uid){
+                                            room.deleteComment(comment: comment)
+                                        }
+                                    }
+                                }
+                                if let index = self.indexPath {
+                                    DispatchQueue.main.async {
+                                        self.delegate?.didDeleteComment(onIndexPath: index)
+                                    }
+                                }
+                            }
+                        }, onError: { (statusCode) in
+                            Qiscus.printLog(text: "delete error: status code \(statusCode)")
+                        })
+                    }
+                }
+            }
         }
     }
     @objc open func info(){
@@ -153,60 +250,62 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
         
     }
     
-    public func commentChanged(){
+    open func commentChanged(){
         
     }
 
-    public func getBallon()->UIImage?{
+    open func getBallon()->UIImage?{
         var balloonImage:UIImage? = nil
         var edgeInset = UIEdgeInsetsMake(13, 13, 13, 28)
         
-        switch self.comment!.cellPos {
-        case .single, .last:
-            if self.comment?.senderEmail == Qiscus.client.email {
-                balloonImage = Qiscus.style.assets.rightBallonLast
-            }else{
-                edgeInset = UIEdgeInsetsMake(13, 28, 13, 13)
-                balloonImage = Qiscus.style.assets.leftBallonLast
+        if !(self.comment?.isInvalidated)! {
+            switch self.comment!.cellPos {
+            case .single, .last:
+                if self.comment?.senderEmail == Qiscus.client.email {
+                    balloonImage = Qiscus.style.assets.rightBallonLast
+                }else{
+                    edgeInset = UIEdgeInsetsMake(13, 28, 13, 13)
+                    balloonImage = Qiscus.style.assets.leftBallonLast
+                }
+                break
+            default:
+                if self.comment?.senderEmail == Qiscus.client.email {
+                    balloonImage = Qiscus.style.assets.rightBallonNormal
+                }else{
+                    edgeInset = UIEdgeInsetsMake(13, 28, 13, 13)
+                    balloonImage = Qiscus.style.assets.leftBallonNormal
+                }
+                break
             }
-            break
-        default:
-            if self.comment?.senderEmail == Qiscus.client.email {
-                balloonImage = Qiscus.style.assets.rightBallonNormal
-            }else{
-                edgeInset = UIEdgeInsetsMake(13, 28, 13, 13)
-                balloonImage = Qiscus.style.assets.leftBallonNormal
-            }
-            break
         }
         
         return balloonImage?.resizableImage(withCapInsets: edgeInset, resizingMode: .stretch).withRenderingMode(.alwaysTemplate)
     }
-    public func willDisplayCell(){
+    open func willDisplayCell(){
         
     }
-    public func endDisplayingCell(){
+    open func endDisplayingCell(){
     
     }
-    public func cellWidthChanged(){
+    open func cellWidthChanged(){
     
     }
-    public func downloadingMedia(){
+    open func downloadingMedia(){
         // implementation will be overrided on child class
     }
-    public func downloadFinished(){
+    open func downloadFinished(){
     
     }
-    public func uploadingMedia(){
+    open func uploadingMedia(){
     
     }
-    public func uploadFinished(){
+    open func uploadFinished(){
         
     }
-    public func positionChanged(){
+    open func positionChanged(){
     
     }
-    public func updateUserName(){
+    open func updateUserName(){
     
     }
     internal func unbindData(){
@@ -214,10 +313,15 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
             data.delegate = nil
         }
     }
-    public func setData(comment:QComment, showUserName:Bool, userNameColor:UIColor?, hideAvatar:Bool){
+    public func setData(onIndexPath indexPath:IndexPath, comment:QComment, showUserName:Bool, userNameColor:UIColor?, hideAvatar:Bool, delegate:ChatCellDelegate? = nil){
         var oldUniqueId:String?
+        if delegate != nil {
+            self.delegate = delegate!
+        }
         self.showUserName = showUserName
         self.hideAvatar = hideAvatar
+        self.indexPath = indexPath
+        
         if let color = userNameColor {
             self.userNameColor = color
         }else{
@@ -230,13 +334,20 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
                 oldUniqueId = oldComment.uniqueId
             }
         }
-        if let cache = QComment.cache[comment.uniqueId]{
-            self.commentRaw = cache
-        }else{
-            QComment.cache[comment.uniqueId] = comment
-            self.commentRaw = comment
+        
+        if !comment.isInvalidated {
+            if let cache = QComment.cache[comment.uniqueId]{
+                self.commentRaw = cache
+            }else{
+                QComment.cache[comment.uniqueId] = comment
+                self.commentRaw = comment
+            }
         }
-        self.comment!.delegate = self
+        
+        if let selfComment = self.comment {
+            selfComment.delegate = self
+        }
+        
         if let uId = oldUniqueId {
             if uId != comment.uniqueId {
                 self.commentChanged()
@@ -244,28 +355,130 @@ public class QChatCell: UICollectionViewCell, QCommentDelegate {
         }else{
             self.commentChanged()
         }
+        var menuItems: [UIMenuItem] = [UIMenuItem]()
+        
+        let resendMenuItem: UIMenuItem = UIMenuItem(title: "RESEND".getLocalize(), action: #selector(QChatCell.resend))
+        let deleteMenuItem: UIMenuItem = UIMenuItem(title: "DELETE".getLocalize(), action: #selector(QChatCell.deleteComment))
+        let deleteForMeMenuItem: UIMenuItem = UIMenuItem(title: "DELETE_FOR_ME".getLocalize(), action: #selector(QChatCell.deleteForMe))
+        let replyMenuItem: UIMenuItem = UIMenuItem(title: "REPLY".getLocalize(), action: #selector(QChatCell.reply))
+        let forwardMenuItem: UIMenuItem = UIMenuItem(title: "FORWARD".getLocalize(), action: #selector(QChatCell.forward))
+        let shareMenuItem: UIMenuItem = UIMenuItem(title: "SHARE".getLocalize(), action: #selector(QChatCell.share))
+        let infoMenuItem: UIMenuItem = UIMenuItem(title: "INFO".getLocalize(), action: #selector(QChatCell.info))
+        
+        if let isEnable = delegate?.enableReplyMenuItem?(onCell: self) {
+            if isEnable {
+                menuItems.append(replyMenuItem)
+            }
+        } else {
+            menuItems.append(replyMenuItem)
+        }
+        
+        if let isEnable = delegate?.enableForwardMenuItem?(onCell: self) {
+            if isEnable {
+                menuItems.append(forwardMenuItem)
+            }
+        } else {
+            menuItems.append(forwardMenuItem)
+        }
+
+        if let isEnable = delegate?.enableResendMenuItem?(onCell: self) {
+            if isEnable {
+                menuItems.append(resendMenuItem)
+            }
+        } else {
+            menuItems.append(resendMenuItem)
+        }
+        
+        if let isEnable = delegate?.enableDeleteMenuItem?(onCell: self) {
+            if isEnable {
+                menuItems.append(deleteMenuItem)
+            }
+        } else {
+            menuItems.append(deleteMenuItem)
+        }
+        
+        if let isEnable = delegate?.enableDeleteForMeMenuItem?(onCell: self) {
+            if isEnable {
+                if let room = comment.room {
+                    if !room.isPublicChannel {
+                        menuItems.append(deleteForMeMenuItem)
+                    }
+                } else {
+                    menuItems.append(deleteForMeMenuItem)
+                }
+            }
+        } else {
+            if let room = comment.room {
+                if !room.isPublicChannel {
+                    menuItems.append(deleteForMeMenuItem)
+                }
+            } else {
+                menuItems.append(deleteForMeMenuItem)
+            }
+        }
+        
+        
+        if let isEnable = delegate?.enableShareMenuItem?(onCell: self) {
+            if isEnable {
+                menuItems.append(shareMenuItem)
+            }
+        } else {
+            menuItems.append(shareMenuItem)
+        }
+        
+        if let isEnable = delegate?.enableInfoMenuItem?(onCell: self) {
+            if isEnable {
+                if let room = comment.room {
+                    if !room.isPublicChannel {
+                        menuItems.append(infoMenuItem)
+                    }
+                } else {
+                    menuItems.append(infoMenuItem)
+                }
+            }
+        } else {
+            if let room = comment.room {
+                if !room.isPublicChannel {
+                    menuItems.append(infoMenuItem)
+                }
+            } else {
+                menuItems.append(infoMenuItem)
+            }
+        }
+        
+        UIMenuController.shared.menuItems = menuItems
     }
     
     // MARK: - commentDelegate
-    public func comment(didChangeStatus comment:QComment, status:QCommentStatus){
-        if comment.uniqueId == self.comment?.uniqueId{
-            self.updateStatus(toStatus: status)
+    open func comment(didChangeStatus comment:QComment, status:QCommentStatus){
+        if let c = self.comment {
+            if comment.isInvalidated || c.isInvalidated {
+                if let delegate = self.delegate {
+                    if let index = self.indexPath {
+                        delegate.didDeleteComment(onIndexPath: index)
+                    }
+                }
+            }else{
+                if comment.uniqueId == c.uniqueId{
+                    self.updateStatus(toStatus: status)
+                }
+            }
         }
     }
-    public func comment(didChangePosition comment:QComment, position:QCellPosition){}
+    open func comment(didChangePosition comment:QComment, position:QCellPosition){}
     
     // Audio comment delegate
-    public func comment(didChangeDurationLabel comment:QComment, label:String){}
-    public func comment(didChangeCurrentTimeSlider comment:QComment, value:Float){}
-    public func comment(didChangeSeekTimeLabel comment:QComment, label:String){}
-    public func comment(didChangeAudioPlaying comment:QComment, playing:Bool){}
+    open func comment(didChangeDurationLabel comment:QComment, label:String){}
+    open func comment(didChangeCurrentTimeSlider comment:QComment, value:Float){}
+    open func comment(didChangeSeekTimeLabel comment:QComment, label:String){}
+    open func comment(didChangeAudioPlaying comment:QComment, playing:Bool){}
     
     // File comment delegate
-    public func comment(didDownload comment:QComment, downloading:Bool){
+    open func comment(didDownload comment:QComment, downloading:Bool){
         
     }
-    public func comment(didUpload comment:QComment, uploading:Bool){}
-    public func comment(didChangeProgress comment:QComment, progress:CGFloat){}
+    open func comment(didUpload comment:QComment, uploading:Bool){}
+    open func comment(didChangeProgress comment:QComment, progress:CGFloat){}
     
     
 }

@@ -48,10 +48,14 @@ public extension QRoom {
         self.updateRoom(roomName: roomName, roomAvatarURL: roomAvatarURL, roomOptions: roomOptions, onSuccess: onSuccess, onError: onError)
     }
     @objc public func publishStopTyping(){
-        self.publishStopTypingRoom()
+        if !self.isPublicChannel {
+            self.publishStopTypingRoom()
+        }
     }
     public func publishStartTyping(){
-        self.publishStartTypingRoom()
+        if !self.isPublicChannel {
+            self.publishStartTypingRoom()
+        }
     }
     public func subscribeRealtimeStatus(){
         self.subscribeRoomChannel()

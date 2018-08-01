@@ -22,9 +22,17 @@ extension QConversationCollectionView: QRoomDelegate {
         if let r = self.room {
             if r.id == room.id {
                 let rid = r.id
+                var hardDelete = false
+                if let softDelete = self.viewDelegate?.viewDelegate?(usingSoftDeleteOnView: self){
+                    hardDelete = !softDelete
+                }
+                var predicate:NSPredicate?
+                if hardDelete {
+                    predicate = NSPredicate(format: "statusRaw != %d AND statusRaw != %d", QCommentStatus.deleted.rawValue, QCommentStatus.deleting.rawValue)
+                }
                 QiscusBackgroundThread.async {
                     if let rts = QRoom.threadSaveRoom(withId: rid){
-                        var messages = rts.grouppedCommentsUID
+                        var messages = rts.grouppedCommentsUID(filter: predicate)                        
                         messages = self.checkHiddenMessage(messages: messages)
                         DispatchQueue.main.async {
                             self.messagesId = messages
@@ -71,15 +79,25 @@ extension QConversationCollectionView: QRoomDelegate {
         }
     }
     
-    public func room(gotNewComment comment: QComment) {}
+    public func room(gotNewComment comment: QComment) {
+        Qiscus.printLog(text: "gotNewComment::")
+    }
     
     public func room(didDeleteComment room:QRoom) {
         if let r = self.room {
             if r.id == room.id {
                 let rid = r.id
+                var hardDelete = false
+                if let softDelete = self.viewDelegate?.viewDelegate?(usingSoftDeleteOnView: self){
+                    hardDelete = !softDelete
+                }
+                var predicate:NSPredicate?
+                if hardDelete {
+                    predicate = NSPredicate(format: "statusRaw != %d AND statusRaw != %d", QCommentStatus.deleted.rawValue, QCommentStatus.deleting.rawValue)
+                }
                 QiscusBackgroundThread.async {
                     if let rts = QRoom.threadSaveRoom(withId: rid){
-                        var messages = rts.grouppedCommentsUID
+                        var messages = rts.grouppedCommentsUID(filter: predicate)                        
                         messages = self.checkHiddenMessage(messages: messages)
                         DispatchQueue.main.async {
                             self.messagesId = messages
@@ -100,27 +118,22 @@ extension QConversationCollectionView: QRoomDelegate {
                     let contentHeight = self.contentSize.height
                     let offsetY = self.contentOffset.y
                     let bottomOffset = contentHeight - offsetY
-                    QiscusBackgroundThread.async {
-                        if let rts = QRoom.threadSaveRoom(withId: rid){
-                            var messages = rts.grouppedCommentsUID
-                            messages = self.checkHiddenMessage(messages: messages)
-                            DispatchQueue.main.async {
-                                CATransaction.begin()
-                                CATransaction.setDisableActions(true)
-                                self.messagesId = messages
-                                self.reloadData()
-                                self.layoutIfNeeded()
-                                self.contentOffset = CGPoint(x: 0, y: self.contentSize.height - bottomOffset)
-                                CATransaction.commit()
-                                self.loadMoreControl.endRefreshing()
-                                
-                                if !r.canLoadMore {
-                                    self.loadMoreControl.removeFromSuperview()
-                                }
+                    self.refreshData(withCompletion: {
+                        DispatchQueue.main.async {
+                            CATransaction.begin()
+                            CATransaction.setDisableActions(true)
+                            self.reloadData()
+                            self.layoutIfNeeded()
+                            self.contentOffset = CGPoint(x: 0, y: self.contentSize.height - bottomOffset)
+                            CATransaction.commit()
+                            self.loadMoreControl.endRefreshing()
+                            
+                            if !r.canLoadMore {
+                                self.loadMoreControl.removeFromSuperview()
                             }
                         }
                         self.loadingMore = false
-                    }
+                    })
                 }else{
                     self.loadMoreControl.endRefreshing()
                      self.loadingMore = false

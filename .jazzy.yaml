@@ -1,0 +1,9 @@
+author: Qiscus Pte ltd
+author_url: http://qiscus.com
+github_url: https://github.com/qiscus/qiscus-sdk-ios
+root_url: https://github.com/qiscus/qiscus-sdk-ios/Documentations
+module: Qiscus
+output: Documentations
+theme: fullwidth
+xcodebuild_arguments: [-workspace, 'Example.xcworkspace', -scheme, 'Example']
+exclude: ["Qiscus/Qiscus/Helper/**.swift", "Qiscus/Qiscus/View/**.swift", "Qiscus/Qiscus/Service/**.swift", "Qiscus/Qiscus/Library/**.swift", "Qiscus/Qiscus/Extension/**.swift", "Qiscus/Qiscus/Model/**.swift", "Qiscus/Qiscus/View Collection/*/**.swift"]

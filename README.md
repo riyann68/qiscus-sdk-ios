@@ -465,6 +465,21 @@ Messages are stored locally so you can still access the messages when you dont h
 
 Don't forget to add usage description for camera, photo library and microphone to your **info.plist **to use our attachment functionality in chat SDK
 
-
+```
+<key>NSCameraUsageDescription</key>
+<string>Need camera access for uploading Images</string>
+<key>NSContactsUsageDescription</key>
+<string>Need access for sync contact</string>
+<key>NSLocationAlwaysUsageDescription</key>
+<string>$(PRODUCT_NAME) location use</string>
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>$(PRODUCT_NAME) location use</string>
+<key>NSMicrophoneUsageDescription</key>
+<string>$(PRODUCT_NAME) microphone use</string>
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>NeedLibrary access for uploading and Images</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>NeedLibrary access for uploading and Images</string>
+```
 
 

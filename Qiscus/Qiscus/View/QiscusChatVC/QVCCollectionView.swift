@@ -10,6 +10,12 @@ import UIKit
 
 // MARK: - CollectionView dataSource, delegate, and delegateFlowLayout
 extension QiscusChatVC: QConversationViewConfigurationDelegate {
+    public func configDelegate(usingTpingCellIndicator collectionView: QConversationCollectionView) -> Bool {
+        if let config = self.configDelegate?.chatVCConfigDelegate?(usingTypingCell: self){
+            return config
+        }
+        return false
+    }
     public func configDelegate(userNameLabelColor collectionView:QConversationCollectionView, forUser user:QUser)->UIColor?{
         if let config = self.configDelegate{
             if let color = config.chatVCConfigDelegate?(userNameLabelColor: self, forUser: user){
@@ -34,8 +40,79 @@ extension QiscusChatVC: QConversationViewConfigurationDelegate {
         }
         return false
     }
+    public func configDelegate(deletedMessageText collectionView: QConversationCollectionView, selfMessage isSelf: Bool) -> String {
+        if let config = self.configDelegate?.chatVCConfigDelegate?(deletedMessageTextFor: self, selfMessage: isSelf){
+            return config
+        }else if isSelf {
+            return "🚫 You deleted this message."
+        }else{
+            return "🚫 This message was deleted."
+        }
+    }
+    
+    public func configDelegate(enableInfoMenuItem collectionView: QConversationCollectionView, forComment comment: QComment) -> Bool {
+        if let config = self.configDelegate?.chatVCConfigDelegate?(enableInfoMenuItem: self, forComment: comment) {
+            return config
+        }
+        
+        return true
+    }
+    
+    public func configDelegate(enableReplyMenuItem collectionView: QConversationCollectionView, forComment comment: QComment) -> Bool {
+        if let config = self.configDelegate?.chatVCConfigDelegate?(enableReplyMenuItem: self, forComment: comment) {
+            return config
+        }
+        
+        return true
+    }
+    
+    public func configDelegate(enableShareMenuItem collectionView: QConversationCollectionView, forComment comment: QComment) -> Bool {
+        if let config = self.configDelegate?.chatVCConfigDelegate?(enableShareMenuItem: self, forComment: comment) {
+            return config
+        }
+        
+        return true
+    }
+    
+    public func configDelegate(enableDeleteMenuItem collectionView: QConversationCollectionView, forComment comment: QComment) -> Bool {
+        if let config = self.configDelegate?.chatVCConfigDelegate?(enableDeleteMenuItem: self, forComment: comment) {
+            return config
+        }
+        
+        return true
+    }
+    
+    public func configDelegate(enableResendMenuItem collectionView: QConversationCollectionView, forComment comment: QComment) -> Bool {
+        if let config = self.configDelegate?.chatVCConfigDelegate?(enableResendMenuItem: self, forComment: comment) {
+            return config
+        }
+        
+        return true
+    }
+    
+    public func configDelegate(enableDeleteForMeMenuItem collectionView: QConversationCollectionView, forComment comment: QComment) -> Bool {
+        if let config = self.configDelegate?.chatVCConfigDelegate?(enableDeleteForMeMenuItem: self, forComment: comment) {
+            return config
+        }
+        
+        return true
+    }
+    
+    public func configDelegate(enableForwardMenuItem collectionView: QConversationCollectionView, forComment comment: QComment) -> Bool {
+        if let config = self.configDelegate?.chatVCConfigDelegate?(enableForwardMenuItem: self, forComment: comment) {
+            return config
+        }
+        
+        return true
+    }
 }
 extension QiscusChatVC: QConversationViewDelegate {
+    public func viewDelegate(usingSoftDeleteOnView view: QConversationCollectionView) -> Bool {
+        if let softDelete = self.configDelegate?.chatVCConfigDelegate?(usingSoftDeleteOn: self){
+            return softDelete
+        }
+        return false
+    }
     public func viewDelegate(enableInfoAction view: QConversationCollectionView) -> Bool {
         if let delegate = self.delegate {
             return delegate.chatVC(enableInfoAction: self)
@@ -49,16 +126,16 @@ extension QiscusChatVC: QConversationViewDelegate {
         }
         return false
     }
-    public func viewDelegate(view:QConversationCollectionView, cellForComment comment:QComment)->QChatCell?{
-        if let delegate = self.delegate {
-            if let cell = delegate.chatVC?(viewController: self, cellForComment: comment){
+    public func viewDelegate(view:QConversationCollectionView, cellForComment comment:QComment, indexPath:IndexPath)->QChatCell?{
+        if let delegate = self.cellDelegate {
+            if let cell = delegate.chatVC?(viewController:self, cellForComment:comment, indexPath:indexPath){
                 return cell
             }
         }
         return nil
     }
     public func viewDelegate(view:QConversationCollectionView, heightForComment comment:QComment)->QChatCellHeight?{
-        if let delegate = self.delegate {
+        if let delegate = self.cellDelegate {
             if let height = delegate.chatVC?(viewController: self, heightForComment: comment){
                 return height
             }
@@ -104,7 +181,7 @@ extension QiscusChatVC: QConversationViewDelegate {
         }
     }
     public func viewDelegate(view:QConversationCollectionView, hideCellWith comment:QComment)->Bool{
-        if let delegate = self.delegate {
+        if let delegate = self.cellDelegate {
             if let hide = delegate.chatVC?(viewController: self, hideCellWith: comment) {
                 return hide
             }
@@ -128,14 +205,14 @@ extension QiscusChatVC: QConversationViewDelegate {
                         let rid = room.id
                         QiscusBackgroundThread.async {
                             if let rts = QRoom.threadSaveRoom(withId: rid){
-                                rts.readAll()
+//                                rts.readAll()
                             }
                         }
                     }
                 }
             })
         }else{
-            self.welcomeView.isHidden = false
+            self.welcomeView.isHidden = true
             self.collectionView.isHidden = true
             self.dismissLoading()
         }

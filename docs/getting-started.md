@@ -16,7 +16,7 @@ To install Qiscus Chat SDK, you need to initiate pod to generate Podfile. You ca
  pod init
 ```
 
-After Podfile is initialized, open it and type 'Qiscus' in the pod section
+After Podfile is initialized, open it and type 'Qiscus' in the pod section, pod 'Qiscus' is supporting Swift 4
 
 ```swift
   target 'Sample' do
@@ -36,6 +36,13 @@ Install Qiscus through CocoaPods
 ```cmd
  pod install
 ```
+
+Install Qiscus SDK for Swift 3 simply replace pod 'Qiscus' section with this following code in Podfile : 
+
+```swift
+pod 'Qiscus', '~> 2.7.5'
+```
+
 ### Setting Permission
 
 Before to start, you need to enable some permission by implementing few line of codes inside Info.plist file, to allow your app accessing phone camera for sending images, enable sharing location on your device, and many other functionalities. You can do that by right clicking on your Info.plist file → Open As → Source Code, then add the following codes:
@@ -137,7 +144,8 @@ You can learn from the figure below to understand what really happened when call
 
 ### Updating a User Profile and Avatar
 
-After your user account is created, sometimes you may need to update a user information, such as changing user avatar. You can use method `Qiscus.updateProfile()` to make changes to your account.
+After your user account is created, sometimes you may need to update a user information, such as 
+ging user avatar. You can use method `Qiscus.updateProfile()` to make changes to your account.
 
 ```swift
 Qiscus.updateProfile(username: "Your Name", avatarURL: "https://myimage.com/myNewIma...", onSuccess: {
@@ -191,6 +199,20 @@ class ViewController: UIViewController {
 }
 
 ```
+
+## Channels 
+
+Channel is a room that behave similar like a group chat, in channel anyone can join using the room uniqueId, there are several limitation on channel like : no typing indicator, no read/deliver status, no comment info, and “delete for me” is not available. Here how you can create or join a Channel Room:
+
+**How to create channel :**
+```
+import Qiscus
+
+let viewController = Qiscus.chatView(withRoomUniqueId: "thisIsChannel", readOnly: false, title: "This is channel", avatarUrl: "http://your.avatar.url", subtitle: "channel subtitle", withMessage: "this is initial message (optional)" )
+navigationController.pushViewController(chatView, animated: true)
+
+```
+
 
 ## More About Room
 

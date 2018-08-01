@@ -29,7 +29,8 @@ extension QiscusChatVC:GalleryItemsDataSource{
         
         return [
             GalleryConfigurationItem.closeButtonMode(.custom(closeButton)),
-            GalleryConfigurationItem.thumbnailsButtonMode(.custom(seeAllButton))
+            GalleryConfigurationItem.thumbnailsButtonMode(.custom(seeAllButton)),
+            GalleryConfigurationItem.deleteButtonMode(.none)
         ]
     }
     
@@ -65,11 +66,12 @@ extension QiscusChatVC:UIImagePickerControllerDelegate, UINavigationControllerDe
                 var imageName:String = ""
                 let image = info[UIImagePickerControllerOriginalImage] as! UIImage
                 var data = UIImagePNGRepresentation(image)
+                
                 if let imageURL = info[UIImagePickerControllerReferenceURL] as? URL{
                     imageName = imageURL.lastPathComponent
                     
                     let imageNameArr = imageName.split(separator: ".")
-                    let imageExt:String = String(imageNameArr.last!).lowercased()
+                        let imageExt:String = String(imageNameArr.last!).lowercased()
                     
                     let gif:Bool = (imageExt == "gif" || imageExt == "gif_")
                     let png:Bool = (imageExt == "png" || imageExt == "png_")
@@ -88,7 +90,10 @@ extension QiscusChatVC:UIImagePickerControllerDelegate, UINavigationControllerDe
                             }
                         }
                     }else{
-                        imageName = "\(timeToken).jpg"
+                        let result = PHAsset.fetchAssets(withALAssetURLs: [imageURL], options: nil)
+                        let asset = result.firstObject
+                        imageName = "\((asset?.value(forKey: "filename"))!)"
+                        imageName = imageName.replacingOccurrences(of: "HEIC", with: "jpg")
                         let imageSize = image.size
                         var bigPart = CGFloat(0)
                         if(imageSize.width > imageSize.height){
@@ -105,21 +110,24 @@ extension QiscusChatVC:UIImagePickerControllerDelegate, UINavigationControllerDe
                         data = UIImageJPEGRepresentation(image, compressVal)!
                     }
                 }else{
-                    imageName = "\(timeToken).jpg"
-                    let imageSize = image.size
-                    var bigPart = CGFloat(0)
-                    if(imageSize.width > imageSize.height){
-                        bigPart = imageSize.width
-                    }else{
-                        bigPart = imageSize.height
+                    let mediaSize = Double(data!.count) / 1024.0
+                    if mediaSize > Qiscus.maxUploadSizeInKB {
+                        picker.dismiss(animated: true, completion: {
+                            self.processingFile = false
+                            self.showFileTooBigAlert()
+                        })
+                        return
                     }
                     
-                    var compressVal = CGFloat(1)
-                    if(bigPart > 2000){
-                        compressVal = 2000 / bigPart
-                    }
+                    UIImageWriteToSavedPhotosAlbum(image, self, #selector(QiscusChatVC.image(_:didFinishSavingWithError:contextInfo:)), nil)
                     
-                    data = UIImageJPEGRepresentation(image, compressVal)!
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
+                        picker.dismiss(animated: true, completion: {
+                            self.processingFile = false
+                        })
+                    })
+                    
+                    return
                 }
                 
                 if data != nil {
@@ -185,6 +193,55 @@ extension QiscusChatVC:UIImagePickerControllerDelegate, UINavigationControllerDe
             }
         }
     }
+    
+    @objc func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
+        let requestOptions = PHImageRequestOptions()
+        requestOptions.isSynchronous = true
+        
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.sortDescriptors = [NSSortDescriptor(key:"creationDate", ascending: false)]
+        fetchOptions.fetchLimit = 1
+        
+        let fetchResult: PHFetchResult = PHAsset.fetchAssets(with: PHAssetMediaType.image, options: fetchOptions)
+        // Perform the image request
+        
+        var imageName = ""
+        PHImageManager.default().requestImage(for: fetchResult.object(at: 0) as PHAsset, targetSize: view.frame.size, contentMode: PHImageContentMode.aspectFill, options: requestOptions, resultHandler: { (image, info) in
+            if let info = info {
+                if info.keys.contains(NSString(string: "PHImageFileURLKey")) {
+                    if let path = info[NSString(string: "PHImageFileURLKey")] as? NSURL {
+                        imageName = path.lastPathComponent!
+                    }
+                }
+            }
+        })
+        
+        let imageSize = image.size
+        var bigPart = CGFloat(0)
+        if(imageSize.width > imageSize.height){
+            bigPart = imageSize.width
+        }else{
+            bigPart = imageSize.height
+        }
+        
+        var compressVal = CGFloat(1)
+        if(bigPart > 2000){
+            compressVal = 2000 / bigPart
+        }
+        
+        let data = UIImageJPEGRepresentation(image, compressVal)!
+        
+        
+        if data != nil {
+            let uploader = QiscusUploaderVC(nibName: "QiscusUploaderVC", bundle: Qiscus.bundle)
+            uploader.chatView = self
+            uploader.data = data
+            uploader.fileName = imageName
+            uploader.room = self.chatRoom
+            self.navigationController?.pushViewController(uploader, animated: true)
+        }
+    }
+    
     public func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         picker.dismiss(animated: true, completion: nil)
     }
@@ -193,154 +250,7 @@ extension QiscusChatVC:UIImagePickerControllerDelegate, UINavigationControllerDe
 // MARK: - UIDocumentPickerDelegate
 extension QiscusChatVC: UIDocumentPickerDelegate{
     public func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentAt url: URL) {
-        self.showLoading("Processing File")
-        let coordinator = NSFileCoordinator()
-        coordinator.coordinate(readingItemAt: url, options: NSFileCoordinator.ReadingOptions.forUploading, error: nil) { (dataURL) in
-            do{
-                var data:Data = try Data(contentsOf: dataURL, options: NSData.ReadingOptions.mappedIfSafe)
-                let mediaSize = Double(data.count) / 1024.0
-                
-                if mediaSize > Qiscus.maxUploadSizeInKB {
-                    self.processingFile = false
-                    self.dismissLoading()
-                    self.showFileTooBigAlert()
-                    return
-                }
-                
-                var fileName = dataURL.lastPathComponent.replacingOccurrences(of: "%20", with: "_")
-                fileName = fileName.replacingOccurrences(of: " ", with: "_")
-                
-                var popupText = QiscusTextConfiguration.sharedInstance.confirmationImageUploadText
-                var fileType = QiscusFileType.image
-                var thumb:UIImage? = nil
-                let fileNameArr = (fileName as String).split(separator: ".")
-                let ext = String(fileNameArr.last!).lowercased()
-                
-                let gif = (ext == "gif" || ext == "gif_")
-                let video = (ext == "mp4" || ext == "mp4_" || ext == "mov" || ext == "mov_")
-                let isImage = (ext == "jpg" || ext == "jpg_" || ext == "tif" || ext == "heic" || ext == "png" || ext == "png_")
-                let isPDF = (ext == "pdf" || ext == "pdf_")
-                var usePopup = false
-                
-                if isImage{
-                    var i = 0
-                    for n in fileNameArr{
-                        if i == 0 {
-                            fileName = String(n)
-                        }else if i == fileNameArr.count - 1 {
-                            fileName = "\(fileName).jpg"
-                        }else{
-                            fileName = "\(fileName).\(String(n))"
-                        }
-                        i += 1
-                    }
-                    let image = UIImage(data: data)!
-                    let imageSize = image.size
-                    var bigPart = CGFloat(0)
-                    if(imageSize.width > imageSize.height){
-                        bigPart = imageSize.width
-                    }else{
-                        bigPart = imageSize.height
-                    }
-                    
-                    var compressVal = CGFloat(1)
-                    if(bigPart > 2000){
-                        compressVal = 2000 / bigPart
-                    }
-                    data = UIImageJPEGRepresentation(image, compressVal)!
-                    thumb = UIImage(data: data)
-                }else if isPDF{
-                    usePopup = true
-                    popupText = "Are you sure to send this document?"
-                    fileType = QiscusFileType.document
-                    if let provider = CGDataProvider(data: data as NSData) {
-                        if let pdfDoc = CGPDFDocument(provider) {
-                            if let pdfPage:CGPDFPage = pdfDoc.page(at: 1) {
-                                var pageRect:CGRect = pdfPage.getBoxRect(.mediaBox)
-                                pageRect.size = CGSize(width:pageRect.size.width, height:pageRect.size.height)
-                                UIGraphicsBeginImageContext(pageRect.size)
-                                if let context:CGContext = UIGraphicsGetCurrentContext(){
-                                    context.saveGState()
-                                    context.translateBy(x: 0.0, y: pageRect.size.height)
-                                    context.scaleBy(x: 1.0, y: -1.0)
-                                    context.concatenate(pdfPage.getDrawingTransform(.mediaBox, rect: pageRect, rotate: 0, preserveAspectRatio: true))
-                                    context.drawPDFPage(pdfPage)
-                                    context.restoreGState()
-                                    if let pdfImage:UIImage = UIGraphicsGetImageFromCurrentImageContext() {
-                                        thumb = pdfImage
-                                    }
-                                }
-                                UIGraphicsEndImageContext()
-                            }
-                        }
-                    }
-                }
-                else if gif{
-                    let image = UIImage(data: data)!
-                    thumb = image
-                    let asset = PHAsset.fetchAssets(withALAssetURLs: [dataURL], options: nil)
-                    if let phAsset = asset.firstObject {
-                        let option = PHImageRequestOptions()
-                        option.isSynchronous = true
-                        option.isNetworkAccessAllowed = true
-                        PHImageManager.default().requestImageData(for: phAsset, options: option) {
-                            (gifData, dataURI, orientation, info) -> Void in
-                            data = gifData!
-                        }
-                    }
-                    popupText = "Are you sure to send this image?"
-                    usePopup = true
-                }else if video {
-                    fileType = .video
-                    
-                    let assetMedia = AVURLAsset(url: dataURL)
-                    let thumbGenerator = AVAssetImageGenerator(asset: assetMedia)
-                    thumbGenerator.appliesPreferredTrackTransform = true
-                    
-                    let thumbTime = CMTimeMakeWithSeconds(0, 30)
-                    let maxSize = CGSize(width: QiscusHelper.screenWidth(), height: QiscusHelper.screenWidth())
-                    thumbGenerator.maximumSize = maxSize
-                    
-                    do{
-                        let thumbRef = try thumbGenerator.copyCGImage(at: thumbTime, actualTime: nil)
-                        thumb = UIImage(cgImage: thumbRef)
-                        popupText = "Are you sure to send this video?"
-                    }catch{
-                        Qiscus.printLog(text: "error creating thumb image")
-                    }
-                    usePopup = true
-                }else{
-                    usePopup = true
-                    let textFirst = QiscusTextConfiguration.sharedInstance.confirmationFileUploadText
-                    let textMiddle = "\(fileName as String)"
-                    let textLast = QiscusTextConfiguration.sharedInstance.questionMark
-                    popupText = "\(textFirst) \(textMiddle) \(textLast)"
-                    fileType = QiscusFileType.file
-                }
-                self.dismissLoading()
-//                UINavigationBar.appearance().tintColor = self.currentNavbarTint
-                if usePopup {
-                    QPopUpView.showAlert(withTarget: self, image: thumb, message:popupText, isVideoImage: video,
-                                         doneAction: {
-                                            self.postFile(filename: fileName, data: data, type: fileType, thumbImage: thumb)
-                    },
-                                         cancelAction: {
-                                            Qiscus.printLog(text: "cancel upload")
-                                            QFileManager.clearTempDirectory()
-                    }
-                    )
-                }else{
-                    let uploader = QiscusUploaderVC(nibName: "QiscusUploaderVC", bundle: Qiscus.bundle)
-                    uploader.chatView = self
-                    uploader.data = data
-                    uploader.fileName = fileName
-                    uploader.room = self.chatRoom
-                    self.navigationController?.pushViewController(uploader, animated: true)
-                }
-            }catch _{
-                self.dismissLoading()
-            }
-        }
+        self.postReceivedFile(fileUrl: url)
     }
 }
 // MARK: - AudioPlayer

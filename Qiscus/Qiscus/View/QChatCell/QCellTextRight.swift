@@ -69,183 +69,195 @@ class QCellTextRight: QChatCell {
             textWidth = self.minWidth
         }
         
-        if self.comment?.type == .reply{
-            let replyData = JSON(parseJSON: self.comment!.data)
-            var text = replyData["replied_comment_message"].stringValue
-            var replyType = self.comment!.replyType(message: text)
-            if replyType == .text  {
-                switch replyData["replied_comment_type"].stringValue {
-                case "location":
-                    replyType = .location
+        if !self.comment!.isInvalidated {
+            if self.comment?.type == .reply{
+                let replyData = JSON(parseJSON: self.comment!.data)
+                var text = replyData["replied_comment_message"].stringValue
+                var replyType = self.comment!.replyType(message: text)
+                if replyType == .text  {
+                    switch replyData["replied_comment_type"].stringValue {
+                    case "location":
+                        replyType = .location
+                        break
+                    case "contact_person":
+                        replyType = .contact
+                        break
+                    default:
+                        break
+                    }
+                }
+                var username = replyData["replied_comment_sender_username"].stringValue
+                let repliedEmail = replyData["replied_comment_sender_email"].stringValue
+                if repliedEmail == Qiscus.client.email {
+                    username = "YOU".getLocalize()
+                }else{
+                    if let user = QUser.user(withEmail: repliedEmail){
+                        username = user.fullname
+                    }
+                }
+                switch replyType {
+                case .text:
+                    self.linkImageWidth.constant = 0
+                    self.linkImage.isHidden = true
                     break
-                case "contact_person":
-                    replyType = .contact
+                case .image, .video:
+                    self.linkImage.contentMode = .scaleAspectFill
+                    self.linkImage.image = Qiscus.image(named: "link")
+                    let filename = self.comment!.fileName(text: text)
+                    let url = self.comment!.getAttachmentURL(message: text)
+                    
+                    self.linkImageWidth.constant = 55
+                    self.linkImage.isHidden = false
+                    
+                    if let file = QFile.file(withURL: url){
+                        if QFileManager.isFileExist(inLocalPath: file.localThumbPath){
+                            self.linkImage.loadAsync(fromLocalPath: file.localThumbPath, onLoaded: { (image, _) in
+                                self.linkImage.image = image
+                            })
+                        }else if QFileManager.isFileExist(inLocalPath: file.localMiniThumbPath){
+                            self.linkImage.loadAsync(fromLocalPath: file.localMiniThumbPath, onLoaded: { (image, _) in
+                                self.linkImage.image = image
+                            })
+                        }else{
+                            self.linkImage.loadAsync(file.thumbURL, onLoaded: { (image, _) in
+                                self.linkImage.image = image
+                            })
+                        }
+                    }else{
+                        var thumbURL = url.replacingOccurrences(of: "/upload/", with: "/upload/w_30,c_scale/")
+                        let thumbUrlArr = thumbURL.split(separator: ".")
+                        
+                        var newThumbURL = ""
+                        var i = 0
+                        for thumbComponent in thumbUrlArr{
+                            if i == 0{
+                                newThumbURL += String(thumbComponent)
+                            }else if i < (thumbUrlArr.count - 1){
+                                newThumbURL += ".\(String(thumbComponent))"
+                            }else{
+                                newThumbURL += ".png"
+                            }
+                            i += 1
+                        }
+                        thumbURL = newThumbURL
+                        self.linkImage.loadAsync(thumbURL, onLoaded: { (image, _) in
+                            self.linkImage.image = image
+                        })
+                    }
+                    text = filename
+                    
+                    break
+                case .document :
+                    self.linkImage.contentMode = .scaleAspectFill
+                    self.linkImage.image = nil
+                    let filename = self.comment!.fileName(text: text)
+                    let url = self.comment!.getAttachmentURL(message: text)
+                    
+                    self.linkImageWidth.constant = 55
+                    self.linkImage.isHidden = false
+                    text = filename
+                    if let file = QFile.file(withURL: url){
+                        if QFileManager.isFileExist(inLocalPath: file.localThumbPath){
+                            self.linkImage.loadAsync(fromLocalPath: file.localThumbPath, onLoaded: { (image, _) in
+                                self.linkImage.image = image
+                            })
+                        }else if QFileManager.isFileExist(inLocalPath: file.localMiniThumbPath){
+                            self.linkImage.loadAsync(fromLocalPath: file.localMiniThumbPath, onLoaded: { (image, _) in
+                                self.linkImage.image = image
+                            })
+                        }else{
+                            self.linkImage.loadAsync(file.thumbURL, onLoaded: { (image, _) in
+                                self.linkImage.image = image
+                            })
+                        }
+                        var description = "\(file.filename)\nPDF File"
+                        if file.pages > 0 {
+                            description = "\(description), \(file.pages) page"
+                        }
+                        if file.sizeString != "" {
+                            description = "\(description), \(file.sizeString)"
+                        }
+                        text = description
+                    }
+                    break
+                case .location :
+                    self.linkImage.contentMode = .scaleAspectFill
+                    self.linkImage.image = Qiscus.image(named: "map_ico")
+                    self.linkImageWidth.constant = 55
+                    self.linkImage.isHidden = false
+                    
+                    let payload = JSON(parseJSON: "\(replyData["replied_comment_payload"])")
+                    text = "\(payload["name"].stringValue) - \(payload["address"].stringValue)"
+                    break
+                case .contact:
+                    self.linkImage.contentMode = .top
+                    self.linkImage.image = Qiscus.image(named: "contact")
+                    self.linkImageWidth.constant = 55
+                    self.linkImage.isHidden = false
+                    
+                    let payload = JSON(parseJSON: "\(replyData["replied_comment_payload"])")
+                    text = "\(payload["name"].stringValue) - \(payload["value"].stringValue)"
                     break
                 default:
+                    let filename = self.comment!.fileName(text: text)
+                    text = filename
+                    self.linkImageWidth.constant = 0
+                    self.linkImage.isHidden = true
                     break
                 }
-            }
-            var username = replyData["replied_comment_sender_username"].stringValue
-            let repliedEmail = replyData["replied_comment_sender_email"].stringValue
-            if repliedEmail == Qiscus.client.email {
-                username = "You"
+                
+                
+                self.linkTitle.text = username
+                self.linkDescription.text = text
+                
+                //self.linkImage.image = self.data.linkImage
+                self.LinkContainer.isHidden = false
+                self.balloonHeight.constant = 83
+                self.textTopMargin.constant = 73
+                self.linkHeight.constant = 65
+                textWidth = self.maxWidth
             }else{
-                if let user = QUser.user(withEmail: repliedEmail){
-                    username = user.fullname
-                }
-            }
-            switch replyType {
-            case .text:
-                self.linkImageWidth.constant = 0
-                self.linkImage.isHidden = true
-                break
-            case .image, .video:
-                self.linkImage.contentMode = .scaleAspectFill
+                self.linkTitle.text = ""
+                self.linkDescription.text = ""
                 self.linkImage.image = Qiscus.image(named: "link")
-                let filename = self.comment!.fileName(text: text)
-                let url = self.comment!.getAttachmentURL(message: text)
-                
-                self.linkImageWidth.constant = 55
-                self.linkImage.isHidden = false
-                
-                if let file = QFile.file(withURL: url){
-                    if QFileManager.isFileExist(inLocalPath: file.localThumbPath){
-                        self.linkImage.loadAsync(fromLocalPath: file.localThumbPath, onLoaded: { (image, _) in
-                            self.linkImage.image = image
-                        })
-                    }else if QFileManager.isFileExist(inLocalPath: file.localMiniThumbPath){
-                        self.linkImage.loadAsync(fromLocalPath: file.localMiniThumbPath, onLoaded: { (image, _) in
-                            self.linkImage.image = image
-                        })
-                    }else{
-                        self.linkImage.loadAsync(file.thumbURL, onLoaded: { (image, _) in
-                            self.linkImage.image = image
-                        })
-                    }
-                }else{
-                    var thumbURL = url.replacingOccurrences(of: "/upload/", with: "/upload/w_30,c_scale/")
-                    let thumbUrlArr = thumbURL.split(separator: ".")
-                    
-                    var newThumbURL = ""
-                    var i = 0
-                    for thumbComponent in thumbUrlArr{
-                        if i == 0{
-                            newThumbURL += String(thumbComponent)
-                        }else if i < (thumbUrlArr.count - 1){
-                            newThumbURL += ".\(String(thumbComponent))"
-                        }else{
-                            newThumbURL += ".png"
-                        }
-                        i += 1
-                    }
-                    thumbURL = newThumbURL
-                    self.linkImage.loadAsync(thumbURL, onLoaded: { (image, _) in
-                        self.linkImage.image = image
-                    })
-                }
-                text = filename
-                
-                break
-            case .document :
-                self.linkImage.contentMode = .scaleAspectFill
-                self.linkImage.image = nil
-                let filename = self.comment!.fileName(text: text)
-                let url = self.comment!.getAttachmentURL(message: text)
-                
-                self.linkImageWidth.constant = 55
-                self.linkImage.isHidden = false
-                text = filename
-                if let file = QFile.file(withURL: url){
-                    if QFileManager.isFileExist(inLocalPath: file.localThumbPath){
-                        self.linkImage.loadAsync(fromLocalPath: file.localThumbPath, onLoaded: { (image, _) in
-                            self.linkImage.image = image
-                        })
-                    }else if QFileManager.isFileExist(inLocalPath: file.localMiniThumbPath){
-                        self.linkImage.loadAsync(fromLocalPath: file.localMiniThumbPath, onLoaded: { (image, _) in
-                            self.linkImage.image = image
-                        })
-                    }else{
-                        self.linkImage.loadAsync(file.thumbURL, onLoaded: { (image, _) in
-                            self.linkImage.image = image
-                        })
-                    }
-                    var description = "\(file.filename)\nPDF File"
-                    if file.pages > 0 {
-                        description = "\(description), \(file.pages) page"
-                    }
-                    if file.sizeString != "" {
-                        description = "\(description), \(file.sizeString)"
-                    }
-                    text = description
-                }
-                break
-            case .location :
-                self.linkImage.contentMode = .scaleAspectFill
-                self.linkImage.image = Qiscus.image(named: "map_ico")
-                self.linkImageWidth.constant = 55
-                self.linkImage.isHidden = false
-                
-                let payload = JSON(parseJSON: "\(replyData["replied_comment_payload"])")
-                text = "\(payload["name"].stringValue) - \(payload["address"].stringValue)"
-                break
-            case .contact:
-                self.linkImage.contentMode = .top
-                self.linkImage.image = Qiscus.image(named: "contact")
-                self.linkImageWidth.constant = 55
-                self.linkImage.isHidden = false
-                
-                let payload = JSON(parseJSON: "\(replyData["replied_comment_payload"])")
-                text = "\(payload["name"].stringValue) - \(payload["value"].stringValue)"
-                break
-            default:
-                let filename = self.comment!.fileName(text: text)
-                text = filename
-                self.linkImageWidth.constant = 0
-                self.linkImage.isHidden = true
-                break
+                self.LinkContainer.isHidden = true
+                self.balloonHeight.constant = 10
+                self.textTopMargin.constant = 0
             }
-            
-            
-            self.linkTitle.text = username
-            self.linkDescription.text = text
-            
-            //self.linkImage.image = self.data.linkImage
-            self.LinkContainer.isHidden = false
-            self.balloonHeight.constant = 83
-            self.textTopMargin.constant = 73
-            self.linkHeight.constant = 65
-            textWidth = self.maxWidth
-        }else{
-            self.linkTitle.text = ""
-            self.linkDescription.text = ""
-            self.linkImage.image = Qiscus.image(named: "link")
-            self.LinkContainer.isHidden = true
-            self.balloonHeight.constant = 10
-            self.textTopMargin.constant = 0
         }
+        
+        
         var size = self.textView.sizeThatFits(CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude))
-        if self.comment?.type == .postback && self.comment?.data != ""{
-            let payload = JSON(parseJSON: self.comment!.data)
-            
-            if let buttonsPayload = payload.array {
-                let heightAdd = CGFloat(35 * buttonsPayload.count)
-                size.height += heightAdd
-            }else{
-                size.height += 35
+        
+        if !self.comment!.isInvalidated {
+            if self.comment?.type == .postback && self.comment?.data != ""{
+                let payload = JSON(parseJSON: self.comment!.data)
+                
+                if let buttonsPayload = payload.array {
+                    let heightAdd = CGFloat(35 * buttonsPayload.count)
+                    size.height += heightAdd
+                }else{
+                    size.height += 35
+                }
             }
         }
+        
         self.textViewHeight.constant = size.height
         self.textViewWidth.constant = textWidth
         self.userNameLabel.textAlignment = .right
         
         self.balloonView.tintColor = QiscusColorConfiguration.sharedInstance.rightBaloonColor
-        self.dateLabel.text = self.comment!.time.lowercased()
+        
+        if !self.comment!.isInvalidated {
+            self.dateLabel.text = self.comment!.time.lowercased()
+        }
+        
         self.dateLabel.textColor = QiscusColorConfiguration.sharedInstance.rightBaloonTextColor
         
         
         // first cell
         if self.showUserName{
-            self.userNameLabel.text = "You"
+            self.userNameLabel.text = "YOU".getLocalize()
             self.userNameLabel.isHidden = false
             self.balloonTopMargin.constant = 20
             self.cellHeight.constant = 20
@@ -257,12 +269,27 @@ class QCellTextRight: QChatCell {
         }
         
         // comment status render
-        self.updateStatus(toStatus: self.comment!.status)
+        if !self.comment!.isInvalidated {
+            self.updateStatus(toStatus: self.comment!.status)
+        }
+        
         self.textView.layoutIfNeeded()
     }
     
     public override func updateStatus(toStatus status:QCommentStatus){
+        super.updateStatus(toStatus: status)
         switch status {
+        case .deleted:
+            dateLabel.text = self.comment!.time.lowercased()
+            statusImage.image = Qiscus.image(named: "ic_deleted")?.withRenderingMode(.alwaysTemplate)
+            break
+        case .deleting, .deletePending:
+            dateLabel.text = QiscusTextConfiguration.sharedInstance.deletingText
+            if status == .deletePending {
+                dateLabel.text = self.comment!.time.lowercased()
+            }
+            statusImage.image = Qiscus.image(named: "ic_deleting")?.withRenderingMode(.alwaysTemplate)
+            break;
         case .sending, .pending:
             dateLabel.textColor = QiscusColorConfiguration.sharedInstance.rightBaloonTextColor
             statusImage.tintColor = QiscusColorConfiguration.sharedInstance.rightBaloonTextColor

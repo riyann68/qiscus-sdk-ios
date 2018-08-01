@@ -8,10 +8,18 @@
 
 import UIKit
 @objc public protocol QRoomListDelegate {
+    /**
+     Click Cell and redirect to chat view
+     */
     @objc optional func didSelect(room: QRoom)
     @objc optional func didDeselect(room:QRoom)
     @objc optional func didSelect(comment: QComment)
     @objc optional func didDeselect(comment:QComment)
+    @objc optional func willLoad(rooms: [QRoom]) -> [QRoom]?
+    /**
+     Return your custom table view cell as QRoomListCell
+    */
+    @objc optional func tableviewCell(for room: QRoom) -> QRoomListCell?
 }
 
 open class QRoomList: UITableView{
@@ -85,21 +93,33 @@ open class QRoomList: UITableView{
     }
     public func reload(){
         if !self.clearingData {
-            self.rooms = QRoom.all()
+            let roomsData = QRoom.all()
+            if let extRooms = self.listDelegate?.willLoad?(rooms: roomsData) {
+                self.rooms = extRooms
+            } else {
+                self.rooms = roomsData
+            }
+            
             let indexSet = IndexSet(integer: 0)
             self.reloadSections(indexSet, with: .none)
         }
     }
-    
-    public func search(text:String){
+
+    public func search(text:String, searchLocal: Bool = false){
         self.searchText = text
-        QChatService.searchComment(withQuery: text, onSuccess: { (comments) in
-            if text == self.searchText {
-                self.comments = comments
+        
+        if !searchLocal {
+            QChatService.searchComment(withQuery: text, onSuccess: { (comments) in
+                if text == self.searchText {
+                    self.comments = comments
+                }
+            }) { (error) in
+                Qiscus.printLog(text: "test")
             }
-        }) { (error) in
-            Qiscus.printLog(text: "test")
+        } else {
+            self.comments = Qiscus.searchComment(searchQuery: text)
         }
+        
     }
     @objc private func dataCleared(_ notification: Notification){
         dataCleared()
@@ -204,9 +224,18 @@ extension QRoomList: UITableViewDelegate,UITableViewDataSource {
     }
     
     open func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        // When filter or search active, top section is room result then comment result
         if indexPath.section == 0 {
+            let room = self.filteredRooms[indexPath.row]
+            // New approach Custom Cell
+            if var cell = self.listDelegate?.tableviewCell?(for: room) {
+                cell = self.dequeueReusableCell(withIdentifier: cell.reuseIdentifier!, for: indexPath) as! QRoomListCell
+                cell.room = room
+                cell.searchText = searchText
+                return cell
+            }
             let cell = self.roomCell(at: indexPath.row)
-            cell.room = self.filteredRooms[indexPath.row]
+            cell.room = room
             cell.searchText = searchText
             return cell
         }else{

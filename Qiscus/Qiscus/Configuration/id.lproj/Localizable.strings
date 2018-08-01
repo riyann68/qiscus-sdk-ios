@@ -1,0 +1,54 @@
+/*
+ Localizable.strings
+ Pods
+ 
+ Created by Rahardyan Bisma on 03/05/18.
+ 
+ */
+
+//Chat view:
+"YOU"               = "Anda";
+"LAST_SEEN"         = "terakhir dilihat: %@";
+"FEW_SECOND_AGO"    = "beberapa detik yang lalu";
+"A_MINUTE_AGO"      = "satu menit yang lalu";
+"MINUTES_AGO"       = "%d menit yang lalu";
+"AN_HOUR_AGO"       = "satu jam yang lalu";
+"HOURS_AGO"         = "%d jam yang lalu";
+"TODAY_AT"          = "hari ini pukul %@";
+"YESTERDAY_AT"      = "kemarin pukul %@";
+"LOADING_LOCATION"  = "Mencari lokasi saat ini";
+"WELCOME"           = "Selamat Datang";
+"EMPTY_MESSAGE"     = "Ayo tulis pesan untuk memulai percakapan";
+"AT"                = "pada";
+"FAILED"            = "gagal";
+"DELETING"          = "menghapus";
+"SENDING"           = "mengirim";
+"DOWNLOADING"       = "mengunduh";
+"UPLOADING"         = "mengunggah";
+"NO_CONNECTION"     = "tidak terhubung ke internet, cek koneksi internet anda";
+
+//cell option:
+"COPY"              = "Salin";
+"REPLY"             = "Balas";
+"FORWARD"           = "Teruskan";
+"DELETE"            = "Hapus";
+"DELETE_FOR_ME"     = "Hapus untuk saya";
+"RESEND"            = "Kirim ulang";
+"SHARE"             = "Bagikan";
+"INFO"              = "Info";
+
+//Attachment menu:
+"CAMERA"            = "Kamera";
+"GALLERY"           = "Galeri";
+"DOCUMENT"          = "Dokumen";
+"CONTACT"           = "Kontak";
+"CURRENT_LOCATION"  = "Lokasi Sekarang";
+"CANCEL"            = "Batal";
+
+//Alert Dialog:
+"CONFIRMATION"              = "KONFIRMASI";
+"UPLOAD_IMAGE_CONFIRMATION" = "Anda yakin ingin mengirim gambar ini?";
+"UPLOAD_FILE_CONFIRMATION"  = "Anda yakin akan mengirim";
+"SETTING"                   = "PENGATURAN";
+
+

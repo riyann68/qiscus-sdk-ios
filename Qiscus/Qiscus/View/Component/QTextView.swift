@@ -31,9 +31,13 @@ class QTextView: UITextView {
     }
     var comment:QComment?{
         didSet{
-            self.tintColor = .clear
-            self.attributedText = self.comment?.attributedText
-            self.linkTextAttributes = self.commentLinkTextAttributes
+            if let currentValue = comment {
+                if !currentValue.isInvalidated {
+                    self.tintColor = .clear
+                    self.attributedText = currentValue.attributedText
+                    self.linkTextAttributes = self.commentLinkTextAttributes
+                }
+            }
         }
     }
     

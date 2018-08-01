@@ -38,6 +38,9 @@ import AVFoundation
     @objc optional func room(didChangeUnread inRoom:QRoom)
     @objc optional func room(didClearMessages cleared:Bool)
 }
+
+
+/// Room of conversation (Realm object)
 public class QRoom:Object {
     @objc public dynamic var id:String = ""
     @objc public dynamic var uniqueId:String = ""
@@ -46,6 +49,8 @@ public class QRoom:Object {
     @objc public dynamic var storedAvatarURL:String = ""
     @objc public dynamic var definedAvatarURL:String = ""
     @objc internal dynamic var avatarData:Data?
+    @objc public dynamic var isPublicChannel: Bool = false
+    @objc public dynamic var roomTotalParticipant: Int = 0
     @objc public dynamic var data:String = ""
     @objc public dynamic var distinctId:String = ""
     @objc public dynamic var typeRaw:Int = QRoomType.single.rawValue
@@ -75,12 +80,43 @@ public class QRoom:Object {
     // MARK: private method
     @objc internal dynamic var lastParticipantsReadId:Int = 0
     @objc internal dynamic var lastParticipantsDeliveredId:Int = 0
-    @objc internal dynamic var roomVersion014:Bool = true
+    @objc internal dynamic var roomVersion017:Bool = true
     
-    public let comments = List<QComment>()
+    internal let rawComments = List<QComment>()
+    internal let service = QRoomService()
+    
+    public var comments:[QComment]{
+        get{
+            var comments = [QComment]()
+            if self.rawComments.count > 0 {
+                comments = Array(self.rawComments.sorted(byKeyPath: "createdAt", ascending: true))
+            }
+            return comments
+        }
+    }
+    public func comments(withFilter query:NSPredicate?)->[QComment]{
+        var comments = [QComment]()
+        var results = self.rawComments.sorted(byKeyPath: "createdAt", ascending: true)
+
+        if query != nil {
+            results = results.filter(query!)
+        }
+        
+        if results.count > 0 {
+            comments = Array(results)
+        }
+        return comments
+    }
+    
     public let participants = List<QParticipant>()
     
-    public var delegate:QRoomDelegate?
+    public var delegate:QRoomDelegate? {
+        didSet {
+            if Thread.isMainThread && !self.isInvalidated {
+                Qiscus.chatRooms[id] = self
+            }
+        }
+    }
     internal var typingTimer:Timer?
     internal var selfTypingTimer:Timer?
     
@@ -210,6 +246,100 @@ public class QRoom:Object {
         self.addComment(newComment: comment)
         return comment
     }
+    
+    public func prepareImageComment(filename: String = "", caption: String = "", data: Data? = nil, thumbImage: UIImage? = nil) -> QComment {
+
+            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
+            let comment = QComment()
+            let time = Double(Date().timeIntervalSince1970)
+            let timeToken = UInt64(time * 10000)
+            let uniqueID = "ios-\(timeToken)"
+            let fileNameArr = filename.split(separator: ".")
+            let fileExt = String(fileNameArr.last!).lowercased()
+            
+            var fileName = filename.lowercased()
+            if fileName == "asset.jpg" || fileName == "asset.png" {
+                fileName = "\(uniqueID).\(fileExt)"
+            }
+            fileName = fileName.replacingOccurrences(of: "%", with: "")
+            
+            var payloadData:[AnyHashable : Any] = [
+                "url" : fileName,
+                "caption" : caption
+            ]
+            
+            comment.uniqueId = uniqueID
+            comment.id = 0
+            comment.roomId = self.id
+            
+            comment.text = "[file]\(fileName) [/file]"
+            comment.createdAt = Double(Date().timeIntervalSince1970)
+            comment.senderEmail = Qiscus.client.email
+            comment.senderName = Qiscus.client.userName
+            comment.statusRaw = QCommentStatus.sending.rawValue
+            comment.isUploading = true
+            comment.progress = 0
+            comment.roomAvatar = self.avatarURL
+            comment.roomName = self.name
+            comment.roomTypeRaw = self.typeRaw
+            comment.isRead = true
+            
+            let file = QFile()
+            file.id = uniqueID
+            file.roomId = self.id
+            file.url = fileName
+            file.senderEmail = Qiscus.client.email
+            file.filename = fileName
+            
+            if let fileData = data {
+                let size = fileData.count
+                file.size = Double(size)
+                file.localPath = QFile.saveFile(data!, fileName: fileName)
+                
+                payloadData = [
+                    "url" : fileName,
+                    "caption" : caption,
+                    "size" : file.size,
+                    "pages" : 0,
+                    "file_name": fileName
+                ]
+            }
+            
+            if let mime = QiscusFileHelper.mimeTypes["\(fileExt)"] {
+                file.mimeType = mime
+            }
+            
+            let image = UIImage(data: data!)
+            let gif = (fileExt == "gif" || fileExt == "gif_")
+            let jpeg = (fileExt == "jpg" || fileExt == "jpg_" || fileExt == "heic")
+            let png = (fileExt == "png" || fileExt == "png_")
+            
+            var thumb = UIImage()
+            var thumbData:Data?
+            if !gif {
+                thumb = QFile.createThumbImage(image!)
+                if jpeg {
+                    thumbData = UIImageJPEGRepresentation(thumb, 1)
+                    file.localThumbPath = QFile.saveFile(thumbData!, fileName: "thumb-\(fileName)")
+                }else if png {
+                    thumbData = UIImagePNGRepresentation(thumb)
+                    file.localThumbPath = QFile.saveFile(thumbData!, fileName: "thumb-\(fileName)")
+                }
+            }else{
+                file.localThumbPath = QFile.saveFile(data!, fileName: "thumb-\(fileName)")
+            }
+            
+            comment.typeRaw = QCommentType.image.name()
+            let payloadJSON = JSON(payloadData)
+            comment.data = "\(payloadJSON)"
+            try! realm.write {
+                realm.add(file, update:true)
+            }
+            
+            return comment
+    }
+    
     public func newFileComment(type:QiscusFileType, filename:String = "", caption:String = "", data:Data? = nil, thumbImage:UIImage? = nil)->QComment{
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
         realm.refresh()
@@ -224,6 +354,8 @@ public class QRoom:Object {
         if fileName == "asset.jpg" || fileName == "asset.png" {
             fileName = "\(uniqueID).\(fileExt)"
         }
+        fileName = fileName.replacingOccurrences(of: "%", with: "")
+
         var payloadData:[AnyHashable : Any] = [
             "url" : fileName,
             "caption" : caption
@@ -250,7 +382,7 @@ public class QRoom:Object {
         file.roomId = self.id
         file.url = fileName
         file.senderEmail = Qiscus.client.email
-        file.filename = filename
+        file.filename = fileName
         
         if let fileData = data {
             let size = fileData.count
@@ -262,7 +394,7 @@ public class QRoom:Object {
                 "caption" : caption,
                 "size" : file.size,
                 "pages" : 0,
-                "file_name": filename
+                "file_name": fileName
             ]
         }
         
@@ -347,6 +479,7 @@ public class QRoom:Object {
             realm.add(file, update:true)
         }
         self.addComment(newComment: comment)
+        realm.refresh()
         return comment
     }
     
@@ -397,20 +530,58 @@ public class QRoom:Object {
         self.post(comment: comment)
     }
     internal func resendPendingMessage(){
-        let id = self.id
-        let pendingMessages = self.comments.filter("statusRaw == %d", QCommentStatus.pending.rawValue)
-        let service = QRoomService()
-        if pendingMessages.count > 0 {
-            for pendingMessage in pendingMessages {
-                service.postComment(onRoom: id, comment: pendingMessage)
+        QiscusDBThread.async {
+            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
+            var data = realm.objects(QComment.self).filter("statusRaw == 1")
+            
+            if let comment = data.first {
+                if Thread.isMainThread {
+                    if let room = QRoom.room(withId: comment.roomId){
+                        room.updateCommentStatus(inComment: comment, status: .sending)
+                        room.post(comment: comment) {
+                            self.resendPendingMessage()
+                        }
+                    }
+                }else{
+                    let commentTS = ThreadSafeReference(to: comment)
+                    DispatchQueue.main.sync {
+                        let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+                        realm.refresh()
+                        guard let c = realm.resolve(commentTS) else { return }
+                        if let room = QRoom.room(withId: c.roomId){
+                            room.updateCommentStatus(inComment: c, status: .sending)
+                            room.post(comment: c) {
+                                self.resendPendingMessage()
+                            }
+                        }
+                    }
+                }
             }
         }
     }
-    public func post(comment:QComment, type:String? = nil, payload:JSON? = nil){
+    
+    internal func redeletePendingDeletedMessage() {
+        let pendingDeletedMessages = self.rawComments.filter("statusRaw == %d", QCommentStatus.deletePending.rawValue)
+        if pendingDeletedMessages.count > 0 {
+            for pendingDeletedMessage in pendingDeletedMessages {
+                pendingDeletedMessage.delete(forMeOnly: false, hardDelete: true, onSuccess: {
+                    if !pendingDeletedMessage.isInvalidated {
+                        self.deleteComment(comment: pendingDeletedMessage)
+                    }
+                }, onError: { (code) in
+                    
+                })
+            }
+        }
+    }
+    
+    public func post(comment:QComment, type:String? = nil, payload:JSON? = nil, onSuccess: @escaping ()->Void = {}){
         let service = QRoomService()
         let id = self.id
-        self.resendPendingMessage()
-        service.postComment(onRoom: id, comment: comment, type: type, payload:payload)
+//        self.resendPendingMessage()
+        self.redeletePendingDeletedMessage()
+        service.postComment(onRoom: id, comment: comment, type: type, payload:payload, onSuccess: onSuccess)
     }
     
     public func upload(comment:QComment, onSuccess:  @escaping (QRoom, QComment)->Void, onError:  @escaping (QRoom,QComment,String)->Void, onProgress:((Double)->Void)? = nil){
@@ -476,19 +647,25 @@ public class QRoom:Object {
         let cUid = comment.uniqueId
         func publishNotification(roomId:String){
             if let mainRoom = QRoom.room(withId: id){
-                mainRoom.delegate?.room?(didDeleteComment: mainRoom)
+                if let roomDelegate = mainRoom.delegate {
+                    roomDelegate.room?(didDeleteComment: mainRoom)
+                }
                 QiscusNotification.publish(commentDeleteOnRoom: mainRoom)
             }
         }
-        QiscusDBThread.async {
+        QiscusDBThread.sync {
             let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            realm.refresh()
             if let r = QRoom.threadSaveRoom(withId: id){
-                var i = r.comments.count - 1
-                for c in r.comments.reversed() {
+                var i = r.rawComments.count - 1
+                for c in r.rawComments.reversed() {
                     if c.uniqueId == cUid {
                         try! realm.write {
-                            r.comments.remove(at: i)
+                            r.rawComments.remove(at: i)
                             realm.delete(c)
+                        }
+                        if cUid == r.lastCommentUniqueId {
+                            r.recalculateLastComment()
                         }
                         if Thread.isMainThread {
                             publishNotification(roomId: id)
@@ -548,6 +725,21 @@ public class QRoom:Object {
         }
     }
     
+    internal func updateTotalParticipant(count:Int){
+        let id = self.id
+        QiscusDBThread.async {
+            if let room = QRoom.threadSaveRoom(withId: id){
+                if room.roomTotalParticipant != count {
+                    let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+                    realm.refresh()
+                    try! realm.write {
+                        room.roomTotalParticipant = count
+                    }
+                }
+            }
+        }
+    }
+    
     public func readAll(){
         let id = self.id
         QiscusDBThread.async {
@@ -564,8 +756,8 @@ public class QRoom:Object {
         let id = self.id
         QiscusDBThread.async {
             if let room = QRoom.threadSaveRoom(withId: id){
-                if room.comments.count > 0 {
-                    let unreadComment = room.comments.filter("isRead == false")
+                if room.rawComments.count > 0 {
+                    let unreadComment = room.rawComments.filter("isRead == false")
                     let unread = unreadComment.count
                         
                     if room.unreadCount != unread {
@@ -607,7 +799,7 @@ public class QRoom:Object {
         QiscusBackgroundThread.async {
             if let room = QRoom.threadSaveRoom(withId: roomId){
                 if readId > room.lastParticipantsReadId {
-                    for comment in room.comments{
+                    for comment in room.rawComments{
                         if (comment.statusRaw < QCommentStatus.read.rawValue && comment.status != .failed && comment.status != .sending && comment.status != .pending && comment.id < readId) || comment.id == readId{
                             comment.updateStatus(status: .read)
                         }
@@ -627,7 +819,7 @@ public class QRoom:Object {
         QiscusDBThread.async {
             if let room = QRoom.threadSaveRoom(withId: roomId){
                 if deliveredId > room.lastParticipantsDeliveredId {                    
-                    for comment in room.comments{
+                    for comment in room.rawComments{
                         if (comment.statusRaw < QCommentStatus.delivered.rawValue && comment.status != .failed && comment.status != .sending && comment.id < deliveredId) || (comment.id == deliveredId && comment.status != .read){
                             if !comment.isInvalidated {
                                 comment.updateStatus(status: .delivered)
@@ -645,9 +837,18 @@ public class QRoom:Object {
         }
     }
     public class func publishStatus(roomId:String, commentId:Int, status:QCommentStatus){
-        QiscusBackgroundThread.async {
-            let service = QRoomService()
-            service.publishStatus(inRoom: roomId, commentId: commentId, commentStatus: status)
+        if let room = QRoom.room(withId: roomId) {
+            if !room.isPublicChannel {
+                QiscusBackgroundThread.async {
+                    let service = QRoomService()
+                    service.publishStatus(inRoom: roomId, commentId: commentId, commentStatus: status)
+                }
+            }
+        } else {
+            QiscusBackgroundThread.async {
+                let service = QRoomService()
+                service.publishStatus(inRoom: roomId, commentId: commentId, commentStatus: status)
+            }
         }
     }
     
@@ -900,13 +1101,47 @@ public class QRoom:Object {
             onError(statusCode)
         }
     }
+    
+    internal func clearRemain30() {
+        if self.rawComments.count > 30 {
+            let id = self.id
+            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+            
+            let tempRawComment = List<QComment>()
+            let commentToDelete = List<QComment>()
+            
+            var iteration = 0
+            
+            for rawComment in self.rawComments.sorted(by: { (q1, q2) -> Bool in
+                return q1.createdAt < q2.createdAt
+                }).reversed() {
+                if iteration < 30 {
+                    tempRawComment.insert(rawComment, at: 0)
+                } else {
+                    QComment.cache.removeValue(forKey: rawComment.uniqueId)
+                    commentToDelete.insert(rawComment, at: 0)
+                }
+                
+                iteration += 1
+            }
+            
+            try! realm.write {
+                realm.delete(commentToDelete)
+                self.rawComments.removeAll()
+                tempRawComment.last?.beforeId = 0
+                realm.add(tempRawComment, update: true)
+                self.rawComments.append(objectsIn: tempRawComment)
+            }
+        }
+    }
+    
     internal func clearMessage(){
         let id = self.id
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
         realm.refresh()
         
         try! realm.write {
-            self.comments.removeAll()
+            self.rawComments.removeAll()
         }
         DispatchQueue.main.async {
             if let room = QRoom.room(withId: id){

@@ -51,9 +51,17 @@ open class QiscusCommentClient: NSObject {
     open var roomDelegate: QiscusRoomDelegate?
     open var linkRequest: Alamofire.Request?
     
+    public static var isRegisteringDeviceToken: Bool = false
+    
     
     // MARK: - Login or register
-    open func loginOrRegister(_ email:String = "", password:String = "", username:String? = nil, avatarURL:String? = nil, reconnect:Bool = false, onSuccess:(()->Void)? = nil){
+    open func loginOrRegister(_ email:String, password:String, username:String? = nil, avatarURL:String? = nil, reconnect:Bool = false, onSuccess:(()->Void)? = nil){
+        if email.isEmpty || password.isEmpty {
+            #if DEBUG
+                fatalError("parameters cant be empty")
+            #endif
+            Qiscus.printLog(text: "parameters cant be empty")
+        }
         
         var parameters:[String: AnyObject] = [String: AnyObject]()
         
@@ -132,6 +140,7 @@ open class QiscusCommentClient: NSObject {
     // MARK: - Register deviceToken
     func registerDevice(withToken deviceToken: String){
         func register(){
+            QiscusCommentClient.isRegisteringDeviceToken = true
             let parameters:[String: AnyObject] = [
                 "token"  : qiscus.config.USER_TOKEN as AnyObject,
                 "device_token" : deviceToken as AnyObject,
@@ -146,6 +155,7 @@ open class QiscusCommentClient: NSObject {
                 Qiscus.printLog(text: "registerDevice url: \(QiscusConfig.LOGIN_REGISTER)")
                 Qiscus.printLog(text: "registerDevice parameters: \(parameters)")
                 Qiscus.printLog(text: "registerDevice headers: \(QiscusConfig.sharedInstance.requestHeader)")
+                QiscusCommentClient.isRegisteringDeviceToken = false
                 switch response.result {
                 case .success:
                     DispatchQueue.main.async(execute: {
@@ -154,6 +164,7 @@ open class QiscusCommentClient: NSObject {
                             let success:Bool = (json["status"].intValue == 200)
                             
                             if success {
+                                QiscusClient.hasRegisteredDeviceToken = true
                                 let pnData = json["results"]
                                 let configured = pnData["pn_ios_configured"].boolValue
                                 if configured {
@@ -178,6 +189,7 @@ open class QiscusCommentClient: NSObject {
                     })
                     break
                 case .failure(let error):
+                    QiscusClient.hasRegisteredDeviceToken = false
                     if let delegate = Qiscus.shared.delegate{
                         delegate.qiscus?(didRegisterPushNotification: false, deviceToken: deviceToken, error: "unsuccessful register deviceToken: \(error)")
                     }
@@ -185,11 +197,13 @@ open class QiscusCommentClient: NSObject {
                 }
             })
         }
-        if Qiscus.isLoggedIn {
+        if Qiscus.isLoggedIn && !QiscusClient.hasRegisteredDeviceToken && !QiscusCommentClient.isRegisteringDeviceToken {
             register()
         }else{
             reconnect {
-                register()
+                if !QiscusClient.hasRegisteredDeviceToken && !QiscusCommentClient.isRegisteringDeviceToken {
+                    register()
+                }
             }
         }
         

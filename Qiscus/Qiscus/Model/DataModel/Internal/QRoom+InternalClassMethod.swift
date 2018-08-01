@@ -13,7 +13,7 @@ internal extension QRoom {
     internal class func allRoom()->[QRoom]{
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
         realm.refresh()
-        let data = realm.objects(QRoom.self).sorted(byKeyPath: "pinned", ascending: false).sorted(byKeyPath: "lastCommentCreatedAt", ascending: false)
+        let data = realm.objects(QRoom.self).sorted(byKeyPath: "lastCommentCreatedAt", ascending: false)
         
         if data.count > 0 {
             return Array(data)
@@ -31,7 +31,6 @@ internal extension QRoom {
         if Thread.isMainThread {
             if let cache = Qiscus.chatRooms[id] {
                 if !cache.isInvalidated {
-                    cache.subscribeRoomChannel()
                     return cache
                 }else{
                     Qiscus.chatRooms[id] = nil
@@ -44,8 +43,6 @@ internal extension QRoom {
                 if !room.isInvalidated {
                     let room = rooms.first!
                     Qiscus.chatRooms[room.id] = room
-                    
-                    room.subscribeRoomChannel()
                     return room
                 }
             }
@@ -101,8 +98,10 @@ internal extension QRoom {
             let distinctId = json["distinct_id"].stringValue
             let chatTypeRaw = json["chat_type"].stringValue
             let roomName = json["room_name"].stringValue
+            let roomTotalParticipant = json["room_total_participants"].intValue
             let roomAvatar = json["avatar_url"].stringValue
             let unread = json["unread_count"].intValue
+            let isPublicChannel = json["is_public_channel"].boolValue
             
             var chatType = QRoomType.single
             if chatTypeRaw != "single" {
@@ -215,6 +214,7 @@ internal extension QRoom {
                 savedRoom.update(avatarURL: roomAvatar)
                 savedRoom.update(name: roomName)
                 savedRoom.updateUnreadCommentCount(count: unread)
+                savedRoom.updateTotalParticipant(count: roomTotalParticipant)
                 if option != "" && option != "<null>" && savedRoom.data != option{
                     try! realm.write {
                         savedRoom.data = option
@@ -236,6 +236,8 @@ internal extension QRoom {
                 }
                 room.uniqueId = roomUniqueId
                 room.typeRaw = chatType.rawValue
+                room.roomTotalParticipant = roomTotalParticipant
+                room.isPublicChannel = isPublicChannel
                 room.distinctId = distinctId
                 room.storedName = roomName
                 room.storedAvatarURL = roomAvatar
@@ -278,7 +280,7 @@ internal extension QRoom {
                     }
                 }
                 try! realm.write {
-                    r.comments.removeAll()
+                    r.rawComments.removeAll()
                 }
                 for participant in r.participants {
                     if !participant.isInvalidated {

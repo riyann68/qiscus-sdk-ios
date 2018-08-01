@@ -13,7 +13,7 @@ open class QiscusConfig: NSObject {
     static let sharedInstance = QiscusConfig()
     
     open var commentPerLoad:Int = 10
-    open var dbSchemaVersion:UInt64 = 71
+    open var dbSchemaVersion:UInt64 = 76
     
     open var UPLOAD_URL = ""
     
@@ -41,13 +41,13 @@ open class QiscusConfig: NSObject {
             return Qiscus.client.rtKey
         }
     }
-
+    
     internal var BASE_API_URL:String{
         get{
             if Qiscus.client.baseUrl != "" {
                 return "\(Qiscus.client.baseUrl)/api/v\(self.API_VERSION)/mobile"
             }else{
-                return "\(Qiscus.client.appId).qiscus.com/api/v\(self.API_VERSION)/mobile"
+                return "api.qiscus.com/api/v\(self.API_VERSION)/mobile"
             }
         }
     }
@@ -56,7 +56,14 @@ open class QiscusConfig: NSObject {
             var headers:[String:String] = [
                 "User-Agent" : "QiscusSDKIos/v\(Qiscus.versionNumber)",
                 "QISCUS_SDK_APP_ID" : Qiscus.client.appId,
-            ]
+                "QISCUS_SDK_VERSION" : "IOS_\(Qiscus.versionNumber)",
+                "QISCUS_SDK_PLATFORM": "iOS",
+                "QISCUS_SDK_DEVICE_BRAND": "Apple",
+                "QISCUS_SDK_DEVICE_MODEL": UIDevice.modelName,
+                "QISCUS_SDK_DEVICE_OS_VERSION": UIDevice.current.systemVersion
+                ]
+            
+            
             if Qiscus.client.token != "" {
                 headers["QISCUS_SDK_TOKEN"] = Qiscus.client.token
             }
@@ -80,7 +87,11 @@ open class QiscusConfig: NSObject {
     internal class var SYNC_URL:String{
         get{
             return "\(QiscusConfig.sharedInstance.BASE_API_URL)/sync"
-    
+        }
+    }
+    internal class var SYNC_EVENT_URL:String{
+        get{
+            return "\(QiscusConfig.sharedInstance.BASE_API_URL)/sync_event"
         }
     }
     internal class var SEARCH_URL:String{
@@ -112,8 +123,26 @@ open class QiscusConfig: NSObject {
     internal class var UPDATE_ROOM_URL:String{
         return "\(QiscusConfig.sharedInstance.BASE_API_URL)/update_room"
     }
+    internal class var DELETE_MESSAGES:String{
+        get{
+            return "\(QiscusConfig.sharedInstance.BASE_API_URL)/delete_messages"
+        }
+    }
+    internal class var REMOVE_ROOM_PARTICIPANT: String {
+        get {
+            return "\(QiscusConfig.sharedInstance.BASE_API_URL)/remove_room_participants"
+        }
+    }
+    internal class var ADD_ROOM_PARTICIPANT: String {
+        get {
+            return "\(QiscusConfig.sharedInstance.BASE_API_URL)/add_room_participants"
+        }
+    }
     internal class var UPDATE_COMMENT_STATUS_URL:String{
         return "\(QiscusConfig.sharedInstance.BASE_API_URL)/update_comment_status"
+    }
+    internal class var UPDATE_PROFILE:String{
+        return "\(QiscusConfig.sharedInstance.BASE_API_URL)/my_profile"
     }
     internal class var LOGIN_REGISTER:String{
         return "\(QiscusConfig.sharedInstance.BASE_API_URL)/login_or_register"
@@ -126,6 +155,9 @@ open class QiscusConfig: NSObject {
     }
     internal class var ROOM_UNIQUEID_URL:String{
         return "\(QiscusConfig.sharedInstance.BASE_API_URL)/get_or_create_room_with_unique_id"
+    }
+    internal class var ALL_UNREAD_COUNT: String {
+        return "\(QiscusConfig.sharedInstance.BASE_API_URL)/total_unread_count"
     }
     open class var LINK_METADATA_URL:String{
         let config = QiscusConfig.sharedInstance
@@ -156,5 +188,20 @@ open class QiscusConfig: NSObject {
         
         Qiscus.client.rtKey = rtKey
         Qiscus.client.userData.set(rtKey, forKey: "qiscus_rt_key")
+    }
+    
+    open class var BLOCK_USER:String{
+        let config = QiscusConfig.sharedInstance
+        return "\(config.BASE_API_URL)/block_user"
+    }
+    
+    open class var UNBLOCK_USER:String{
+        let config = QiscusConfig.sharedInstance
+        return "\(config.BASE_API_URL)/unblock_user"
+    }
+    
+    open class var LIST_BLOCK_USER:String{
+        let config = QiscusConfig.sharedInstance
+        return "\(config.BASE_API_URL)/get_blocked_users"
     }
 }

@@ -10,19 +10,17 @@ import RealmSwift
 
 public extension QRoom {
     
-    public var grouppedCommentsUID:[[String]]{
-        get{
-            return self.getGrouppedCommentsUID()
-        }
+    public func grouppedCommentsUID(filter:NSPredicate? = nil)->[[String]]{
+        return self.getGrouppedCommentsUID(filter:filter)
     }
     public var canLoadMore:Bool{
         get{
-            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
-            realm.refresh()
-            let predicate = NSPredicate(format: "id > 0 AND beforeId == 0 AND roomId = %@",self.id)
-            if realm.objects(QComment.self).filter(predicate).count > 0 {
-                return false
-            }
+//            let realm = try! Realm(configuration: Qiscus.dbConfiguration)
+//            realm.refresh()
+//            let predicate = NSPredicate(format: "id > 0 AND beforeId == 0 AND roomId = %@",self.id)
+//            if realm.objects(QComment.self).filter(predicate).count > 0 {
+//                return false
+//            }
             return true
         }
     }

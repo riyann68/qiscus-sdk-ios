@@ -44,7 +44,7 @@ public class QCarouselCardCell: UICollectionViewCell {
         self.containerArea.layer.zPosition = 999
         self.displayImageView.contentMode = .scaleAspectFill
         self.displayImageView.clipsToBounds = true
-        self.cardWidth.constant = QiscusHelper.screenWidth() * 0.60
+        self.cardWidth.constant = QiscusHelper.screenWidth() * 0.70
         let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(QCarouselCardCell.cardTapped))
         self.containerArea.addGestureRecognizer(tapRecognizer)
     }
@@ -70,7 +70,7 @@ public class QCarouselCardCell: UICollectionViewCell {
         var yPos = CGFloat(0)
         let titleColor = UIColor(red: 101/255, green: 119/255, blue: 183/255, alpha: 1)
         var i = 0
-        let buttonWidth = QiscusHelper.screenWidth() * 0.60
+        let buttonWidth = QiscusHelper.screenWidth() * 0.70
         for action in self.card!.actions{
             let buttonFrame = CGRect(x: 0, y: yPos, width: buttonWidth, height: 45)
             let button = UIButton(frame: buttonFrame)

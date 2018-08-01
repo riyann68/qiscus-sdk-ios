@@ -93,8 +93,49 @@ extension QiscusChatVC: QConversationViewCellDelegate{
                             currentIndex = totalIndex
                         }
                         let urlString = "file://\(file.localPath)"
-                        if let url = URL(string: urlString){
+                        
+                        
+                        let allowedChar = CharacterSet(bitmapRepresentation: CharacterSet.urlPathAllowed.bitmapRepresentation)
+                        if let encoded = urlString.addingPercentEncoding(withAllowedCharacters: allowedChar),
+                            let url = URL(string: encoded)
+                        {
                             if let imageData = try? Data(contentsOf: url) {
+                                if file.type == .image {
+                                    if file.ext == "gif"{
+                                        if let image = UIImage.qiscusGIF(data: imageData){
+                                            let item = QiscusGalleryItem()
+                                            item.image = image
+                                            item.isVideo = false
+                                            self.galleryItems.append(item)
+                                            totalIndex += 1
+                                        }
+                                    }else{
+                                        if let image = UIImage(data: imageData) {
+                                            let item = QiscusGalleryItem()
+                                            item.image = image
+                                            item.isVideo = false
+                                            self.galleryItems.append(item)
+                                            totalIndex += 1
+                                        }
+                                    }
+                                }else if file.type == .video{
+                                    let urlString = "file://\(file.localPath)"
+                                    let urlThumb = "file://\(file.localThumbPath)"
+                                    if let url = URL(string: urlThumb) {
+                                        if let data = try? Data(contentsOf: url) {
+                                            if let image = UIImage(data: data){
+                                                let item = QiscusGalleryItem()
+                                                item.image = image
+                                                item.isVideo = true
+                                                item.url = urlString
+                                                self.galleryItems.append(item)
+                                                totalIndex += 1
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if let originalUrl = URL(string: urlString) {
+                                guard let imageData = try? Data(contentsOf: originalUrl) else {return}
                                 if file.type == .image {
                                     if file.ext == "gif"{
                                         if let image = UIImage.qiscusGIF(data: imageData){
@@ -193,13 +234,15 @@ extension QiscusChatVC: QConversationViewCellDelegate{
             con.phoneNumbers.append(phone)
         }
         
-        let unkvc = CNContactViewController(forUnknownContact: con)
+        let unkvc = CNContactViewController.init(forNewContact: con)
         unkvc.message = "Kiwari contact"
         unkvc.contactStore = CNContactStore()
         unkvc.delegate = self
         unkvc.allowsActions = false
+        self.navigationController?.navigationBar.backgroundColor =  Qiscus.shared.styleConfiguration.color.topColor
         self.navigationController?.pushViewController(unkvc, animated: true)
     }
+    
     public func cellDelegate(didTapDocumentFile comment:QComment, room:QRoom){
         if let file = comment.file {
             if file.ext == "pdf" || file.ext == "pdf_" {
@@ -253,37 +296,39 @@ extension QiscusChatVC: QConversationViewCellDelegate{
         let action = card.defaultAction
         self.cellDelegate(didTapCardAction: action!)
     }
+    
     public func cellDelegate(didTapCardAction action: QCardAction) {
         if Qiscus.sharedInstance.connected{
             switch action.type {
             case .link:
                 let urlString = action.payload!["url"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
                 let urlArray = urlString.components(separatedBy: "/")
-                func openInBrowser(){
-                    if let url = URL(string: urlString) {
-                        UIApplication.shared.openURL(url)
-                    }
-                }
                 
-                if urlArray.count > 2 {
-                    if urlArray[2].lowercased().contains("instagram.com") {
-                        var instagram = "instagram://app"
-                        if urlArray.count == 4 || (urlArray.count == 5 && urlArray[4] == ""){
-                            let usernameIG = urlArray[3]
-                            instagram = "instagram://user?username=\(usernameIG)"
-                        }
-                        if let instagramURL =  URL(string: instagram) {
-                            if UIApplication.shared.canOpenURL(instagramURL) {
-                                UIApplication.shared.openURL(instagramURL)
-                            }else{
-                                openInBrowser()
-                            }
-                        }
+                if let url = URL(string: urlString) {
+                    if let overridedMethod = self.cellDelegate?.chatVC?(viewController: self, didTapLinkButtonWithURL: url){
+                        overridedMethod
                     }else{
-                        openInBrowser()
+                        if urlArray.count > 2 {
+                            if urlArray[2].lowercased().contains("instagram.com") {
+                                var instagram = "instagram://app"
+                                if urlArray.count == 4 || (urlArray.count == 5 && urlArray[4] == ""){
+                                    let usernameIG = urlArray[3]
+                                    instagram = "instagram://user?username=\(usernameIG)"
+                                }
+                                if let instagramURL =  URL(string: instagram) {
+                                    if UIApplication.shared.canOpenURL(instagramURL) {
+                                        UIApplication.shared.openURL(instagramURL)
+                                    }else{
+                                        UIApplication.shared.openURL(url)
+                                    }
+                                }
+                            }else{
+                                UIApplication.shared.openURL(url)
+                            }
+                        }else{
+                            UIApplication.shared.openURL(url)
+                        }
                     }
-                }else{
-                    openInBrowser()
                 }                
                 break
             default:
@@ -306,6 +351,12 @@ extension QiscusChatVC: QConversationViewCellDelegate{
 }
 
 extension QiscusChatVC: CNContactViewControllerDelegate{
-
+    public func contactViewController(_ viewController: CNContactViewController, shouldPerformDefaultActionFor property: CNContactProperty) -> Bool {
+        return true
+    }
+    
+    public func contactViewController(_ viewController: CNContactViewController, didCompleteWith contact: CNContact?) {
+        viewController.navigationController?.popViewController(animated: true)
+    }
 }
 

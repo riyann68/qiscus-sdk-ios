@@ -16,22 +16,14 @@ public class QiscusNotification: NSObject {
     
     private static var typingTimer = [String:Timer]()
     
-    
-    public static let COMMENT_DELETE = NSNotification.Name("qiscus_commentDelete")
     public static let MESSAGE_STATUS = NSNotification.Name("qiscus_messageStatus")
-    
     public static let USER_PRESENCE = NSNotification.Name("quscys_userPresence")
-    public static let USER_TYPING = NSNotification.Name("qiscus_userTyping")
     public static let USER_AVATAR_CHANGE = NSNotification.Name("qiscus_userAvatarChange")
     public static let USER_NAME_CHANGE = NSNotification.Name("qiscus_userNameChange")
-    
     public static let GOT_NEW_ROOM = NSNotification.Name("qiscus_gotNewRoom")
     public static let GOT_NEW_COMMENT = NSNotification.Name("qiscus_gotNewComment")
-    public static let ROOM_CHANGE = NSNotification.Name("qiscus_roomChange")
     public static let ROOM_DELETED = NSNotification.Name("qiscus_roomDeleted")
     public static let ROOM_ORDER_MAY_CHANGE = NSNotification.Name("qiscus_romOrderChange")
-    public static let ROOM_CLEARMESSAGES = NSNotification.Name("qiscus_clearMessages")
-    
     public static let FINISHED_CLEAR_MESSAGES = NSNotification.Name("qiscus_finishedClearMessages")
     public static let FINISHED_SYNC_ROOMLIST = NSNotification.Name("qiscus_finishedSyncRoomList")
     public static let START_CLOUD_SYNC = NSNotification.Name("qiscus_startCloudSync")
@@ -41,6 +33,20 @@ public class QiscusNotification: NSObject {
     override private init(){
         super.init()
     }
+    // MARK: Notification Name With Specific Data
+    public class func USER_TYPING(onRoom roomId: String) -> NSNotification.Name {
+        return NSNotification.Name("qiscus_userTyping_\(roomId)")
+    }
+    public class func ROOM_CHANGE(onRoom roomId: String) -> NSNotification.Name {
+        return NSNotification.Name("qiscus_roomChange_\(roomId)")
+    }
+    public class func ROOM_CLEARMESSAGES(onRoom roomId: String) -> NSNotification.Name {
+        return NSNotification.Name("qiscus_clearMessages_\(roomId)")
+    }
+    public class func COMMENT_DELETE(onRoom roomId: String) -> NSNotification.Name {
+        return NSNotification.Name("qiscus_commentDelete_\(roomId)")
+    }
+    
     internal class func publish(roomCleared room:QRoom){
         let notification = QiscusNotification.shared
         notification.publish(roomCleared: room)
@@ -176,7 +182,7 @@ public class QiscusNotification: NSObject {
             let userInfo: [AnyHashable: Any] = [
                 "room"      : room
             ]
-            self.nc.post(name: QiscusNotification.ROOM_CLEARMESSAGES, object: nil, userInfo: userInfo)
+            self.nc.post(name: QiscusNotification.ROOM_CLEARMESSAGES(onRoom: room.id), object: nil, userInfo: userInfo)
         }
     }
     private func publish(roomChange room:QRoom, property:QRoomProperty){
@@ -185,7 +191,7 @@ public class QiscusNotification: NSObject {
                 "room"      : room,
                 "property"  : property
             ]
-            self.nc.post(name: QiscusNotification.ROOM_CHANGE, object: nil, userInfo: userInfo)
+            self.nc.post(name: QiscusNotification.ROOM_CHANGE(onRoom: room.id), object: nil, userInfo: userInfo)
         }
     }
     private func publish(messageStatus comment:QComment, status:QCommentStatus){
@@ -208,25 +214,26 @@ public class QiscusNotification: NSObject {
     }
     private func publish(commentDeleteOnRoom room:QRoom) {
         let userInfo = ["room" : room]
-        self.nc.post(name: QiscusNotification.COMMENT_DELETE, object: nil, userInfo: userInfo)
+        self.nc.post(name: QiscusNotification.COMMENT_DELETE(onRoom: room.id), object: nil, userInfo: userInfo)
     }
     private func publish(userTyping user:QUser, room:QRoom ,typing:Bool = true){
         if room.isInvalidated || user.isInvalidated {
             return
         }
+        let roomId = room.id
         let userInfo: [AnyHashable: Any] = ["room" : room,"user" : user, "typing": typing]
         
-        self.nc.post(name: QiscusNotification.USER_TYPING, object: nil, userInfo: userInfo)
+        self.nc.post(name: QiscusNotification.USER_TYPING(onRoom: roomId), object: nil, userInfo: userInfo)
         
         if typing {
-            if QiscusNotification.typingTimer[room.id] != nil {
-                QiscusNotification.typingTimer[room.id]!.invalidate()
+            if QiscusNotification.typingTimer[roomId] != nil {
+                QiscusNotification.typingTimer[roomId]!.invalidate()
             }
-            QiscusNotification.typingTimer[room.id] = Timer.scheduledTimer(timeInterval: 3.0, target: self, selector: #selector(QiscusNotification.clearUserTyping(timer:)), userInfo: userInfo, repeats: false)
+            QiscusNotification.typingTimer[roomId] = Timer.scheduledTimer(timeInterval: 3.0, target: self, selector: #selector(QiscusNotification.clearUserTyping(timer:)), userInfo: userInfo, repeats: false)
         }else{
-            if QiscusNotification.typingTimer[room.id] != nil {
-                QiscusNotification.typingTimer[room.id]!.invalidate()
-                QiscusNotification.typingTimer[room.id] = nil
+            if QiscusNotification.typingTimer[roomId] != nil {
+                QiscusNotification.typingTimer[roomId]!.invalidate()
+                QiscusNotification.typingTimer[roomId] = nil
             }
         }
     }

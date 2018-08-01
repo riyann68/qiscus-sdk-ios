@@ -112,7 +112,7 @@ class QCellTextLeft: QChatCell, UITextViewDelegate {
             var username = replyData["replied_comment_sender_username"].stringValue
             let repliedEmail = replyData["replied_comment_sender_email"].stringValue
             if repliedEmail == Qiscus.client.email {
-                username = "You"
+                username = "YOU".getLocalize()
             }else{
                 if let user = QUser.user(withEmail: repliedEmail){
                     username = user.fullname

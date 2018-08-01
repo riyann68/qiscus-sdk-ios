@@ -9,6 +9,16 @@
 import UIKit
 
 extension QConversationCollectionView: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+    // MARK: SCrolling
+    public func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        self.onScrolling = true
+    }
+    public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        self.onScrolling = false
+        if self.needToReload {
+            self.refreshData()
+        }
+    }
     // MARK: CollectionView Data source
     public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if self.room == nil {return 0}
@@ -20,9 +30,13 @@ extension QConversationCollectionView: UICollectionViewDelegate, UICollectionVie
     }
     public func numberOfSections(in collectionView: UICollectionView) -> Int {
         var sectionNumber = 0
+        var usingTypingCell = false
+        if let config = self.configDelegate?.configDelegate?(usingTpingCellIndicator: self){
+            usingTypingCell = config
+        }
         if self.room != nil {
             sectionNumber = self.messagesId.count
-            if self.typingUsers.count > 0 {
+            if usingTypingCell && self.typingUsers.count > 0 {
                 sectionNumber += 1
             }
         }
@@ -37,7 +51,8 @@ extension QConversationCollectionView: UICollectionViewDelegate, UICollectionVie
                     comment = c
                 }
             }
-            if let cell = self.viewDelegate?.viewDelegate?(view: self, cellForComment: comment){
+            
+            if let cell = self.viewDelegate?.viewDelegate?(view: self, cellForComment: comment, indexPath: indexPath){
                 return cell
             }else{
                 var cell = collectionView.dequeueReusableCell(withReuseIdentifier: comment.cellIdentifier, for: indexPath) as! QChatCell
@@ -60,8 +75,9 @@ extension QConversationCollectionView: UICollectionViewDelegate, UICollectionVie
                 if let hideAvatar = self.configDelegate?.configDelegate?(hideLeftAvatarOn: self){
                     showAvatar = !hideAvatar
                 }
-                cell.setData(comment: comment, showUserName: showName, userNameColor: color, hideAvatar: !showAvatar)
-                cell.delegate = self
+                
+                cell.setData(onIndexPath: indexPath, comment: comment, showUserName: showName, userNameColor: color, hideAvatar: !showAvatar, delegate: self)
+                
                 if let audioCell = cell as? QCellAudio{
                     audioCell.audioCellDelegate = self
                     cell = audioCell
@@ -87,21 +103,25 @@ extension QConversationCollectionView: UICollectionViewDelegate, UICollectionVie
         if indexPath.section < self.messagesId.count {
             let commentGroup = self.messagesId[indexPath.section]
             let uid = commentGroup.first!
-            let firsMessage = QComment.comment(withUniqueId: uid)!
-            if kind == UICollectionElementKindSectionFooter{
-                if firsMessage.senderEmail == Qiscus.client.email{
-                    let footerCell = self.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "cellFooterRight", for: indexPath) as! QChatFooterRight
-                    return footerCell
+            if let firsMessage = QComment.comment(withUniqueId: uid) {
+                if kind == UICollectionElementKindSectionFooter{
+                    if firsMessage.senderEmail == Qiscus.client.email{
+                        let footerCell = self.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "cellFooterRight", for: indexPath) as! QChatFooterRight
+                        return footerCell
+                    }else{
+                        let footerCell = self.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "cellFooterLeft", for: indexPath) as! QChatFooterLeft
+                        footerCell.user = firsMessage.sender
+                        return footerCell
+                    }
                 }else{
-                    let footerCell = self.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "cellFooterLeft", for: indexPath) as! QChatFooterLeft
-                    footerCell.user = firsMessage.sender
-                    return footerCell
+                    let headerCell = self.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "cellHeader", for: indexPath) as! QChatHeaderCell
+                    
+                    headerCell.dateString = firsMessage.date
+                    return headerCell
                 }
-            }else{
-                let headerCell = self.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "cellHeader", for: indexPath) as! QChatHeaderCell
-                
-                headerCell.dateString = firsMessage.date
-                return headerCell
+            } else {
+                let footerCell = self.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "emptyHeader", for: indexPath)
+                return footerCell
             }
         }else{
             if kind == UICollectionElementKindSectionFooter{
@@ -141,11 +161,12 @@ extension QConversationCollectionView: UICollectionViewDelegate, UICollectionVie
                         }
                         DispatchQueue.main.async {
                             chatCell.willDisplayCell()
-                            let message = QComment.comment(withUniqueId: uid)!
-                            self.viewDelegate?.viewDelegate?(view: self, willDisplayCellForComment: message, cell: chatCell, indexPath: indexPath)
-                            if isLastItem {
-                                self.viewDelegate?.viewDelegate?(willDisplayLastMessage: self, comment: message)
-                                self.isLastRowVisible = true
+                            if let message = QComment.comment(withUniqueId: uid) {
+                                self.viewDelegate?.viewDelegate?(view: self, willDisplayCellForComment: message, cell: chatCell, indexPath: indexPath)
+                                if isLastItem {
+                                    self.viewDelegate?.viewDelegate?(willDisplayLastMessage: self, comment: message)
+                                    self.isLastRowVisible = true
+                                }
                             }
                         }
                     }
@@ -173,11 +194,12 @@ extension QConversationCollectionView: UICollectionViewDelegate, UICollectionVie
                             chatCell.backgroundColor = UIColor.clear
                             chatCell.endDisplayingCell()
                             
-                            let message = QComment.comment(withUniqueId: uid)!
-                            self.viewDelegate?.viewDelegate?(view: self, didEndDisplayingCellForComment: message, cell: chatCell, indexPath: indexPath)
-                            if isLastRow {
-                                self.isLastRowVisible = false
-                                self.viewDelegate?.viewDelegate?(didEndDisplayingLastMessage: self, comment: message)
+                            if let message = QComment.comment(withUniqueId: uid){
+                                self.viewDelegate?.viewDelegate?(view: self, didEndDisplayingCellForComment: message, cell: chatCell, indexPath: indexPath)
+                                if isLastRow {
+                                    self.isLastRowVisible = false
+                                    self.viewDelegate?.viewDelegate?(didEndDisplayingLastMessage: self, comment: message)
+                                }
                             }
                         }
                     }
@@ -221,12 +243,19 @@ extension QConversationCollectionView: UICollectionViewDelegate, UICollectionVie
                     }
                 }
             case "deleteComment":
-                if comment.status == .failed  {  return true  }
+                if comment.senderEmail == Qiscus.client.email && comment.status != .deleting && comment.status != .deleted {
+                    return true
+                }
+                return false
+            case "deleteForMe":
+                if comment.status != .deleting && comment.status != .deleted {
+                    return true
+                }
                 return false
             case "reply":
                 if Qiscus.sharedInstance.connected{
                     switch comment.status {
-                    case .failed, .sending, .pending :
+                    case .failed, .sending, .pending, .deleted, .deleting, .deletePending :
                         return false
                     default:
                         switch comment.type {
@@ -324,12 +353,10 @@ extension QConversationCollectionView: UICollectionViewDelegate, UICollectionVie
             if section == 0 {
                 height = 35
             }else{
-                let uid = self.messagesId[section].first!
-                let uidBefore = self.messagesId[section - 1].first!
-                let group = QComment.comment(withUniqueId: uid)!
-                let groupBefore = QComment.comment(withUniqueId: uidBefore)!
-                if group.date != groupBefore.date {
-                    height = 35
+                if let uid = self.messagesId[section].first, let uidBefore = self.messagesId[section - 1].first, let group = QComment.comment(withUniqueId: uid), let groupBefore = QComment.comment(withUniqueId: uidBefore) {
+                    if group.date != groupBefore.date {
+                        height = 35
+                    }
                 }
             }
         }
@@ -339,15 +366,17 @@ extension QConversationCollectionView: UICollectionViewDelegate, UICollectionVie
         var height = CGFloat(0)
         var width = CGFloat(0)
         if self.messagesId.count > section {
-            let uid = self.messagesId[section].first!
-            let firstMessage = QComment.comment(withUniqueId: uid)!
             var showAvatar = true
-            if let hideAvatar = self.configDelegate?.configDelegate?(hideLeftAvatarOn: self){
-                showAvatar = !hideAvatar
-            }
-            if showAvatar && firstMessage.senderEmail != Qiscus.client.email && firstMessage.type != .system {
-                height = 44
-                width = 44
+            if let uid = self.messagesId[section].first {
+                if let firstMessage = QComment.comment(withUniqueId: uid) {
+                    if let hideAvatar = self.configDelegate?.configDelegate?(hideLeftAvatarOn: self){
+                        showAvatar = !hideAvatar
+                    }
+                    if showAvatar && firstMessage.senderEmail != Qiscus.client.email && firstMessage.type != .system {
+                        height = 44
+                        width = 44
+                    }
+                }
             }
         }
         return CGSize(width: width, height: height)
@@ -372,14 +401,21 @@ extension QConversationCollectionView: UICollectionViewDelegate, UICollectionVie
             let group = self.messagesId[indexPath.section]
             if group.count > indexPath.item {
                 let uid = group[indexPath.item]
-                if let message = QComment.comment(withUniqueId: uid) {
-                    if let h = self.viewDelegate?.viewDelegate?(view: self, heightForComment: message) {
-                        return CGSize(width: QiscusHelper.screenWidth() - 16, height: h.height)
-                    }else{
-                        var size = message.textSize
-                        size.width = QiscusHelper.screenWidth() - 16
-                        size.height = self.cellHeightForComment(comment: message, defaultHeight: size.height, firstInSection: indexPath.item == 0)
-                        return size
+                if let cachedSize = self.cacheCellSize[uid] {
+                    return cachedSize
+                } else {
+                    if let message = QComment.comment(withUniqueId: uid) {
+                        if let h = self.viewDelegate?.viewDelegate?(view: self, heightForComment: message) {
+                            let size = CGSize(width: QiscusHelper.screenWidth() - 16, height: h.height)
+                            self.cacheCellSize[uid] = size
+                            return size
+                        }else{
+                            var size = message.textSize
+                            size.width = QiscusHelper.screenWidth() - 16
+                            size.height = self.cellHeightForComment(comment: message, defaultHeight: size.height, firstInSection: indexPath.item == 0)
+                            self.cacheCellSize[uid] = size
+                            return size
+                        }
                     }
                 }
             }

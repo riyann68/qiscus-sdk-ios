@@ -19,29 +19,116 @@ extension QConversationCollectionView: QCellCarouselDelegate{
     }
 }
 extension QConversationCollectionView: ChatCellDelegate, ChatCellAudioDelegate {
-    func getInfo(comment: QComment) {
+    public func enableReplyMenuItem(onCell cell:QChatCell)->Bool {
+        guard let comment = cell.comment else {return true}
+        if let config = self.configDelegate?.configDelegate?(enableReplyMenuItem: self, forComment: comment){
+            return config
+        }
+        return true
+    }
+    
+    public func enableForwardMenuItem(onCell cell:QChatCell)->Bool {
+        guard let comment = cell.comment else {return true}
+        if let config = self.configDelegate?.configDelegate?(enableForwardMenuItem: self, forComment: comment){
+            return config
+        }
+        return true
+    }
+    
+    public func enableResendMenuItem(onCell cell:QChatCell)->Bool {
+        guard let comment = cell.comment else {return true}
+        if let config = self.configDelegate?.configDelegate?(enableResendMenuItem: self, forComment: comment){
+            return config
+        }
+        return true
+    }
+    
+    public func enableDeleteMenuItem(onCell cell:QChatCell)->Bool {
+        guard let comment = cell.comment else {return true}
+        if let config = self.configDelegate?.configDelegate?(enableDeleteMenuItem: self, forComment: comment){
+            return config
+        }
+        return true
+    }
+    
+    public func enableDeleteForMeMenuItem(onCell cell:QChatCell)->Bool {
+        guard let comment = cell.comment else {return true}
+        if let config = self.configDelegate?.configDelegate?(enableDeleteForMeMenuItem: self, forComment: comment){
+            return config
+        }
+        return true
+    }
+    
+    public func enableShareMenuItem(onCell cell:QChatCell)->Bool {
+        guard let comment = cell.comment else {return true}
+        if let config = self.configDelegate?.configDelegate?(enableShareMenuItem: self, forComment: comment){
+            return config
+        }
+        return true
+    }
+    
+    public func enableInfoMenuItem(onCell cell:QChatCell)->Bool {
+        guard let comment = cell.comment else {return true}
+        if let config = self.configDelegate?.configDelegate?(enableInfoMenuItem: self, forComment: comment){
+            return config
+        }
+        return true
+    }
+    
+    public func deletedMessageText(selfMessage isSelf:Bool)->String {
+        if let config = self.configDelegate?.configDelegate?(deletedMessageText: self, selfMessage: isSelf){
+            return config
+        }else if isSelf {
+            return "🚫 You deleted this message."
+        }else{
+            return "🚫 This message was deleted."
+        }
+    }
+    public func willDeleteComment(onIndexPath indexPath: IndexPath) {
+        
+    }
+    
+    public func didDeleteComment(onIndexPath indexPath: IndexPath) {
+        var hardDelete = true
+        if let softDelete = self.viewDelegate?.viewDelegate?(usingSoftDeleteOnView: self){
+            hardDelete = !softDelete
+        }
+        if hardDelete {
+            self.refreshData()
+        }else{
+            self.reloadItems(at: [indexPath])
+        }
+    }
+    
+    public func useSoftDelete() -> Bool {
+        if let softDelete = self.viewDelegate?.viewDelegate?(usingSoftDeleteOnView: self) {
+            return softDelete
+        }
+        return false
+    }
+    public func getInfo(comment: QComment) {
         self.cellDelegate?.cellDelegate?(didTapInfoOnComment: comment)
     }
-    func didForward(comment: QComment) {
+    public func didForward(comment: QComment) {
         self.cellDelegate?.cellDelegate?(didTapForwardOnComment: comment)
     }
-    func didReply(comment: QComment) {
+    public func didReply(comment: QComment) {
         self.cellDelegate?.cellDelegate?(didTapReplyOnComment: comment)
     }
-    func didShare(comment: QComment) {
+    public func didShare(comment: QComment) {
         self.cellDelegate?.cellDelegate?(didTapShareOnComment: comment)
     }
     
-    func didTapAccountLinking(onComment comment: QComment) {
+    public func didTapAccountLinking(onComment comment: QComment) {
         self.cellDelegate?.cellDelegate?(didTapAccountLinking: comment)
     }
-    func didTapCardButton(onComment comment: QComment, index: Int) {
+    public func didTapCardButton(onComment comment: QComment, index: Int) {
         self.cellDelegate?.cellDelegate?(didTapCardButton: comment, buttonIndex: index)
     }
-    func didTapPostbackButton(onComment comment: QComment, index: Int) {
+    public func didTapPostbackButton(onComment comment: QComment, index: Int) {
         self.cellDelegate?.cellDelegate?(didTapPostbackButton: comment, buttonIndex: index)
     }
-    func didTouchLink(onComment comment: QComment) {
+    public func didTouchLink(onComment comment: QComment) {
         if comment.type == .reply{
             let replyData = JSON(parseJSON: comment.data)
             let commentId = replyData["replied_comment_id"].intValue
@@ -51,13 +138,13 @@ extension QConversationCollectionView: ChatCellDelegate, ChatCellAudioDelegate {
             self.cellDelegate?.cellDelegate?(didTapCommentLink: comment)
         }
     }
-    func didTapCell(onComment comment: QComment){
+    public func didTapCell(onComment comment: QComment){
         self.cellDelegate?.cellDelegate?(didTapMediaCell: comment)
     }
-    func didTapSaveContact(onComment comment: QComment) {
+    public func didTapSaveContact(onComment comment: QComment) {
         self.cellDelegate?.cellDelegate?(didTapSaveContact: comment)
     }
-    func didTapFile(comment: QComment) {
+    public func didTapFile(comment: QComment) {
         if let file = comment.file {
             if file.ext == "doc" || file.ext == "docx" || file.ext == "ppt" || file.ext == "pptx" || file.ext == "xls" || file.ext == "xlsx" || file.ext == "txt" {
                 self.cellDelegate?.cellDelegate?(didTapKnownFile: comment, room: self.room!)

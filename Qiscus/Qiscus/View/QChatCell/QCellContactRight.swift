@@ -43,7 +43,7 @@ class QCellContactRight: QChatCell {
         self.balloonView.image = self.getBallon()
         
         if self.showUserName{
-            self.userNameLabel.text = "You"
+            self.userNameLabel.text = "YOU".getLocalize()
             self.userNameLabel.isHidden = false
             self.topMargin.constant = 20
         }else{
@@ -57,6 +57,7 @@ class QCellContactRight: QChatCell {
         self.delegate?.didTapSaveContact(onComment: self.comment!)
     }
     public override func updateStatus(toStatus status:QCommentStatus){
+        super.updateStatus(toStatus: status)
         dateLabel.textColor = QiscusColorConfiguration.sharedInstance.rightBaloonTextColor
         dateLabel.text = self.comment!.time.lowercased()
         statusImage.isHidden = false
@@ -65,6 +66,17 @@ class QCellContactRight: QChatCell {
         statusImage.tintColor = QiscusColorConfiguration.sharedInstance.rightBaloonTextColor
         
         switch status {
+        case .deleted:
+            dateLabel.text = self.comment!.time.lowercased()
+            statusImage.image = Qiscus.image(named: "ic_deleted")?.withRenderingMode(.alwaysTemplate)
+            break
+        case .deleting, .deletePending:
+            dateLabel.text = QiscusTextConfiguration.sharedInstance.deletingText
+            if status == .deletePending {
+                dateLabel.text = self.comment!.time.lowercased()
+            }
+            statusImage.image = Qiscus.image(named: "ic_deleting")?.withRenderingMode(.alwaysTemplate)
+            break;
         case .sending, .pending:
             dateLabel.text = QiscusTextConfiguration.sharedInstance.sendingText
             if status == .pending {
@@ -88,6 +100,7 @@ class QCellContactRight: QChatCell {
             statusImage.image = Qiscus.image(named: "ic_warning")?.withRenderingMode(.alwaysTemplate)
             statusImage.tintColor = QiscusColorConfiguration.sharedInstance.failToSendColor
             break
+        default: break
         }
     }
     public override func comment(didChangePosition comment:QComment, position: QCellPosition) {

@@ -1,0 +1,52 @@
+/*
+ Localizable.strings
+ Pods
+ 
+ Created by Rahardyan Bisma on 03/05/18.
+ 
+ */
+
+//Chat view:
+"YOU"               = "Tú";
+"LAST_SEEN"         = "últ. vez: %@";
+"FEW_SECOND_AGO"    = "hace unos segundos";
+"A_MINUTE_AGO"      = "hace un minuto";
+"MINUTES_AGO"       = "hace %d minutos";
+"AN_HOUR_AGO"       = "hace una hora";
+"HOURS_AGO"         = "hace %d horas";
+"TODAY_AT"          = "hoy %@";
+"YESTERDAY_AT"      = "ayer %@";
+"LOADING_LOCATION"  = "Obteniendo tu ubicación actual";
+"WELCOME"           = "Te damos la bienvenida";
+"EMPTY_MESSAGE"     = "Escribe un mensaje para iniciar una conversación";
+"AT"                = "a las";
+"FAILED"            = "ha fallado";
+"DELETING"          = "eliminando";
+"SENDING"           = "enviando";
+"DOWNLOADING"       = "descargando";
+"UPLOADING"         = "cargando";
+"NO_CONNECTION"     = "no se puede conectar a internet, verifique su conexión";
+
+//cell option:
+"COPY"              = "Copiar";
+"REPLY"             = "Responder";
+"FORWARD"           = "Reenviar";
+"DELETE"            = "Eliminar";
+"DELETE_FOR_ME"     = "Eliminar para mí";
+"RESEND"            = "Volver a enviar";
+"SHARE"             = "Compartir";
+"INFO"              = "Info.";
+
+//Attachment menu:
+"CAMERA"            = "Cámara";
+"GALLERY"           = "Galería";
+"DOCUMENT"          = "Documento";
+"CONTACT"           = "Contacto";
+"CURRENT_LOCATION"  = "Ubicación actual";
+"CANCEL"            = "Cancelar";
+
+//Alert Dialog:
+"CONFIRMATION"              = "CONFIRMACIÓN";
+"UPLOAD_IMAGE_CONFIRMATION" = "¿Estás seguro de enviar esta imagen?";
+"UPLOAD_FILE_CONFIRMATION"  = "¿Estás seguro de enviar";
+"SETTING"                   = "AJUSTE";

@@ -8,6 +8,8 @@
 
 import UIKit
 
+
+/// Qiscus ui style configuration
 open class QiscusUIConfiguration: NSObject {
     static var sharedInstance = QiscusUIConfiguration()
     
@@ -31,7 +33,7 @@ open class QiscusUIConfiguration: NSObject {
     /// To set read only or not, Default value : false
     open var readOnly = false
     
-    static var chatTextMaxWidth:CGFloat = 0.6 * QiscusHelper.screenWidth()
+    static var chatTextMaxWidth:CGFloat = 0.7 * QiscusHelper.screenWidth()
     open var topicId:Int = 0
     open var chatUsers:[String] = [String]()
     open var baseColor:UIColor{

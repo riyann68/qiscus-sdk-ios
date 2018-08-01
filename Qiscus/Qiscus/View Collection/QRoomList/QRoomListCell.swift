@@ -19,15 +19,37 @@ open class QRoomListCell: UITableViewCell {
     public var room:QRoom? {
         didSet{
             setupUI()
+            
+            if let oldRoom = oldValue {
+                if !oldRoom.isInvalidated {
+                    let roomId = oldRoom.id
+                    self.unsubscribeEvent(roomId: roomId)
+                }
+            }
+            
+            if let currentRoom = room {
+                let roomId = currentRoom.id
+                self.subscribeEvent(roomId: roomId)
+            }
         }
     }
 
+    func subscribeEvent(roomId: String) {
+        let center: NotificationCenter = NotificationCenter.default
+        center.addObserver(self, selector: #selector(QRoomListCell.userTyping(_:)), name: QiscusNotification.USER_TYPING(onRoom: roomId), object: nil)
+        center.addObserver(self, selector: #selector(QRoomListCell.roomChangeNotif(_:)), name: QiscusNotification.ROOM_CHANGE(onRoom: roomId), object: nil)
+    }
+    
+    func unsubscribeEvent(roomId: String) {
+        let center: NotificationCenter = NotificationCenter.default
+        center.removeObserver(self, name: QiscusNotification.USER_TYPING(onRoom: roomId), object: nil)
+        center.removeObserver(self, name: QiscusNotification.ROOM_CHANGE(onRoom: roomId), object: nil)
+    }
+    
     override open func awakeFromNib() {
         super.awakeFromNib()
         let center: NotificationCenter = NotificationCenter.default
-        center.addObserver(self, selector: #selector(QRoomListCell.userTyping(_:)), name: QiscusNotification.USER_TYPING, object: nil)
         center.addObserver(self, selector: #selector(QRoomListCell.newCommentNotif(_:)), name: QiscusNotification.GOT_NEW_COMMENT, object: nil)
-        center.addObserver(self, selector: #selector(QRoomListCell.roomChangeNotif(_:)), name: QiscusNotification.ROOM_CHANGE, object: nil)
     }
 
     override open func setSelected(_ selected: Bool, animated: Bool) {
@@ -35,6 +57,10 @@ open class QRoomListCell: UITableViewCell {
 
         // Configure the view for the selected state
     }
+    
+    /**
+    Config Custom Cell
+    */
     open func setupUI(){}
     
     
@@ -59,12 +85,10 @@ open class QRoomListCell: UITableViewCell {
             if room.isInvalidated || user.isInvalidated {
                 return
             }
-            if let currentRoom = self.room {
-                if currentRoom.isInvalidated { return }
-            }
-            if self.room?.id == room.id {
-                self.onUserTyping(user: user, typing: typing)
-            }
+            guard let currentRoom = self.room else { return }
+            if currentRoom.isInvalidated { return }
+            if self.room?.id != room.id { return}
+            self.onUserTyping(user: user, typing: typing)
         }
     }
     @objc private func newCommentNotif(_ notification: Notification){

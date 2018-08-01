@@ -14,20 +14,40 @@ import SwiftyJSON
 import UserNotifications
 import ContactsUI
 import CoreLocation
-
-//
 import RealmSwift
+
+@objc public protocol QiscusChatVCCellDelegate{
+    @objc optional func chatVC(viewController:QiscusChatVC, didTapLinkButtonWithURL url:URL )
+    @objc optional func chatVC(viewController:QiscusChatVC, cellForComment comment:QComment, indexPath:IndexPath)->QChatCell?
+    @objc optional func chatVC(viewController:QiscusChatVC, heightForComment comment:QComment)->QChatCellHeight?
+    @objc optional func chatVC(viewController:QiscusChatVC, hideCellWith comment:QComment)->Bool
+}
 
 @objc public protocol QiscusChatVCConfigDelegate{
     @objc optional func chatVCConfigDelegate(userNameLabelColor viewController:QiscusChatVC, forUser user:QUser)->UIColor?
     @objc optional func chatVCConfigDelegate(hideLeftAvatarOn viewController:QiscusChatVC)->Bool
     @objc optional func chatVCConfigDelegate(hideUserNameLabel viewController:QiscusChatVC, forUser user:QUser)->Bool
+    @objc optional func chatVCConfigDelegate(usingSoftDeleteOn viewController:QiscusChatVC)->Bool
+    @objc optional func chatVCConfigDelegate(deletedMessageTextFor viewController:QiscusChatVC, selfMessage isSelf:Bool)->String
+    @objc optional func chatVCConfigDelegate(enableReplyMenuItem viewController:QiscusChatVC, forComment comment: QComment)->Bool
+    @objc optional func chatVCConfigDelegate(enableForwardMenuItem viewController:QiscusChatVC, forComment comment: QComment)->Bool
+    @objc optional func chatVCConfigDelegate(enableResendMenuItem viewController:QiscusChatVC, forComment comment: QComment)->Bool
+    @objc optional func chatVCConfigDelegate(enableDeleteMenuItem viewController:QiscusChatVC, forComment comment: QComment)->Bool
+    @objc optional func chatVCConfigDelegate(enableDeleteForMeMenuItem viewController:QiscusChatVC, forComment comment: QComment)->Bool
+    @objc optional func chatVCConfigDelegate(enableShareMenuItem viewController:QiscusChatVC, forComment comment: QComment)->Bool
+    @objc optional func chatVCConfigDelegate(enableInfoMenuItem viewController:QiscusChatVC, forComment comment: QComment)->Bool
+    
+    @objc optional func chatVCConfigDelegate(usingNavigationSubtitleTyping viewController:QiscusChatVC)->Bool
+    @objc optional func chatVCConfigDelegate(usingTypingCell viewController:QiscusChatVC)->Bool
+    
 }
+
 @objc public protocol QiscusChatVCDelegate{
+    // MARK : Review this
     func chatVC(enableForwardAction viewController:QiscusChatVC)->Bool
     func chatVC(enableInfoAction viewController:QiscusChatVC)->Bool
     func chatVC(overrideBackAction viewController:QiscusChatVC)->Bool
-    
+    //
     @objc optional func chatVC(backAction viewController:QiscusChatVC, room:QRoom?, data:Any?)
     @objc optional func chatVC(titleAction viewController:QiscusChatVC, room:QRoom?, data:Any?)
     @objc optional func chatVC(viewController:QiscusChatVC, onForwardComment comment:QComment, data:Any?)
@@ -36,12 +56,9 @@ import RealmSwift
     @objc optional func chatVC(onViewDidLoad viewController:QiscusChatVC)
     @objc optional func chatVC(viewController:QiscusChatVC, willAppear animated:Bool)
     @objc optional func chatVC(viewController:QiscusChatVC, willDisappear animated:Bool)
+    @objc optional func chatVC(didTapAttachment actionSheet: UIAlertController, viewController: QiscusChatVC, onRoom: QRoom?)
     
     @objc optional func chatVC(viewController:QiscusChatVC, willPostComment comment:QComment, room:QRoom?, data:Any?)->QComment?
-    
-    @objc optional func chatVC(viewController:QiscusChatVC, cellForComment comment:QComment)->QChatCell?
-    @objc optional func chatVC(viewController:QiscusChatVC, heightForComment comment:QComment)->QChatCellHeight?
-    @objc optional func chatVC(viewController:QiscusChatVC, hideCellWith comment:QComment)->Bool
     
     @objc optional func chatVC(viewController:QiscusChatVC, didFailLoadRoom error:String)
 }
@@ -52,11 +69,11 @@ public class QiscusChatVC: UIViewController{
     // MARK: - IBOutlet Properties
     @IBOutlet weak var inputBar: UIView!
     @IBOutlet public weak var backgroundView: UIImageView!
-    @IBOutlet weak var inputText: ChatInputText!
+    @IBOutlet public weak var inputText: ChatInputText!
     @IBOutlet weak var welcomeView: UIView!
     @IBOutlet weak var welcomeText: UILabel!
     @IBOutlet weak var welcomeSubtitle: UILabel!
-    @IBOutlet weak var sendButton: UIButton!
+    @IBOutlet public weak var sendButton: UIButton!
     @IBOutlet weak var attachButton: UIButton!
     @IBOutlet weak var archievedNotifView: UIView!
     @IBOutlet weak var archievedNotifLabel: UILabel!
@@ -75,7 +92,7 @@ public class QiscusChatVC: UIViewController{
     @IBOutlet weak var cancelRecordButton: UIButton!
     
     // MARK: - Constrain
-    @IBOutlet weak var minInputHeight: NSLayoutConstraint!
+    @IBOutlet public weak var minInputHeight: NSLayoutConstraint!
     @IBOutlet weak var archievedNotifTop: NSLayoutConstraint!
     @IBOutlet weak var inputBarBottomMargin: NSLayoutConstraint!
     @IBOutlet weak var collectionViewBottomConstrain: NSLayoutConstraint!
@@ -86,7 +103,8 @@ public class QiscusChatVC: UIViewController{
     
     public var delegate:QiscusChatVCDelegate?
     public var configDelegate:QiscusChatVCConfigDelegate?
-    
+    public var cellDelegate:QiscusChatVCCellDelegate?
+
     public var data:Any?
     
     var isPresence:Bool = false
@@ -107,9 +125,9 @@ public class QiscusChatVC: UIViewController{
     var didFindLocation = true
     var prefetch:Bool = false
     var presentingLoading = false
-    
-    internal let currentNavbarTint = Qiscus.shared.styleConfiguration.color.tintColor
-    static let currentNavbarTint = Qiscus.shared.styleConfiguration.color.tintColor
+    var flagPresence = true
+    internal let currentNavbarTint = UINavigationBar.appearance().tintColor
+    static let currentNavbarTint = UINavigationBar.appearance().tintColor
     
     var replyData:QComment? = nil {
         didSet{
@@ -129,7 +147,9 @@ public class QiscusChatVC: UIViewController{
     public var chatRoom:QRoom?{
         didSet{
             if let room = self.chatRoom {
-                room.subscribeRealtimeStatus()
+                if !prefetch && isPresence {
+                    room.subscribeRealtimeStatus()
+                }
                 self.collectionView.room = self.chatRoom
             }
             if oldValue == nil && self.chatRoom != nil {
@@ -143,10 +163,17 @@ public class QiscusChatVC: UIViewController{
                     self.dataLoaded = true
                 })
             }
+            
+            if let roomId = self.chatRoom?.id {
+                let center: NotificationCenter = NotificationCenter.default
+                center.addObserver(self, selector: #selector(QiscusChatVC.userTyping(_:)), name: QiscusNotification.USER_TYPING(onRoom: roomId), object: nil)
+            }
+
         }
     }
     public var chatMessage:String?
     public var chatRoomId:String?
+    public var isPublicChannel:Bool = false
     public var chatUser:String?
     public var chatTitle:String?{
         didSet{
@@ -180,10 +207,7 @@ public class QiscusChatVC: UIViewController{
     var audioPlayer: AVAudioPlayer?
     var audioTimer: Timer?
     var activeAudioCell: QCellAudio?
-    
-    var cellDelegate:QiscusChatCellDelegate?
     var loadingView = QLoadingViewController.sharedInstance
-    
     var firstLoad = true
     
     // MARK: - Audio recording variable
@@ -246,7 +270,10 @@ public class QiscusChatVC: UIViewController{
     var contactVC = CNContactPickerViewController()
     var typingUsers = [String:QUser]()
     var typingUserTimer = [String:Timer]()
+    
     var processingTyping = false
+    
+    
     var previewedTypingUsers = [String]()
     
     public init() {
@@ -358,9 +385,26 @@ public class QiscusChatVC: UIViewController{
         
         let center: NotificationCenter = NotificationCenter.default
         center.addObserver(self, selector: #selector(QiscusChatVC.appDidEnterBackground), name: NSNotification.Name.UIApplicationDidEnterBackground, object: nil)
-        
-        self.welcomeView.isHidden = false
+       
+        self.welcomeView.isHidden = true
         self.collectionView.isHidden = true
+    }
+    
+    @objc func appPresence(){
+         self.loadSubtitle()
+    }
+    
+    func checkSingleRoom()->Bool{
+        if let room = self.chatRoom {
+            if room.type == .single && flagPresence{
+                flagPresence = false
+                return true
+            }else{
+                return false
+            }
+        }else {
+            return false
+        }
     }
     
     required public init?(coder aDecoder: NSCoder) {
@@ -371,16 +415,21 @@ public class QiscusChatVC: UIViewController{
     override public func viewDidLoad() {
         super.viewDidLoad()
         self.chatService.delegate = self
-        
+        if #available(iOS 9, *) {
+            self.collectionView.dataSource = self.collectionView
+        }
         if let delegate = self.delegate{
             delegate.chatVC?(onViewDidLoad: self)
         }
         
     }
 
+    
     override public func viewWillDisappear(_ animated: Bool) {
         if let room = self.chatRoom {
             room.readAll()
+            room.unsubscribeRoomChannel()
+            room.clearRemain30()
         }
         self.isPresence = false
         self.dataLoaded = false
@@ -389,7 +438,14 @@ public class QiscusChatVC: UIViewController{
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillHide, object: nil)
         NotificationCenter.default.removeObserver(self, name: .UIKeyboardWillChangeFrame, object: nil)
         NotificationCenter.default.removeObserver(self, name: .UIApplicationDidBecomeActive, object: nil)
+        if checkSingleRoom(){
+            NotificationCenter.default.removeObserver(self, name: QiscusNotification.USER_PRESENCE, object:nil)
+        }
         
+        if let roomId = self.chatRoom?.id {
+            NotificationCenter.default.removeObserver(self, name: QiscusNotification.USER_TYPING(onRoom: roomId), object: nil)
+        }
+    
         view.endEditing(true)
         
         self.dismissLoading()
@@ -411,6 +467,7 @@ public class QiscusChatVC: UIViewController{
                 QiscusBackgroundThread.async {
                     if let rts = QRoom.threadSaveRoom(withId: rid){
                         rts.readAll()
+                        rts.subscribeRoomChannel()
                     }
                 }
             }
@@ -422,8 +479,9 @@ public class QiscusChatVC: UIViewController{
         self.collectionView.roomDelegate = self
         self.collectionView.cellDelegate = self
         self.collectionView.configDelegate = self
+        self.collectionView.reloadData()
         
-        // UINavigationBar.appearance().tintColor = self.currentNavbarTint
+        UINavigationBar.appearance().tintColor = self.currentNavbarTint
         
         if let _ = self.navigationController {
             self.navigationController?.navigationBar.isTranslucent = false
@@ -438,6 +496,11 @@ public class QiscusChatVC: UIViewController{
             center.addObserver(self, selector: #selector(QiscusChatVC.keyboardWillHide(_:)), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
             center.addObserver(self, selector: #selector(QiscusChatVC.keyboardChange(_:)), name: NSNotification.Name.UIKeyboardWillChangeFrame, object: nil)
             center.addObserver(self, selector: #selector(QiscusChatVC.applicationDidBecomeActive), name: .UIApplicationDidBecomeActive, object: nil)
+            
+            if let roomId = self.chatRoom?.id {
+                center.addObserver(self, selector: #selector(QiscusChatVC.userTyping(_:)), name: QiscusNotification.USER_TYPING(onRoom: roomId), object: nil)
+            }
+
         }
         if self.loadMoreControl.isRefreshing {
             self.loadMoreControl.endRefreshing()
@@ -485,7 +548,7 @@ public class QiscusChatVC: UIViewController{
             self.unreadIndicator.isHidden = true
             if let r = self.collectionView.room {
                 if r.comments.count == 0 {
-                    if self.isPresence && !self.prefetch {
+                    if self.isPresence && !self.prefetch && self.chatRoom == nil {
                         self.showLoading("Load data ...")
                     }
                     self.collectionView.loadData()
@@ -497,11 +560,13 @@ public class QiscusChatVC: UIViewController{
                 self.chatMessage = nil
             }
             room.resendPendingMessage()
+            room.redeletePendingDeletedMessage()
             setupNavigationTitle()
             setupPage()
-        }else{
-            self.loadData()
         }
+        
+        self.loadData()
+        
         if let delegate = self.delegate {
             delegate.chatVC?(viewController: self, willAppear: animated)
         }
@@ -510,7 +575,7 @@ public class QiscusChatVC: UIViewController{
     override public func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         if firstLoad {
-            if self.isPresence && !self.prefetch {
+            if self.isPresence && !self.prefetch && self.chatRoom == nil {
                 self.showLoading("Load data ...")
             }
             self.collectionView.room = self.chatRoom
@@ -518,7 +583,7 @@ public class QiscusChatVC: UIViewController{
         if let room = self.chatRoom {
             Qiscus.shared.chatViews[room.id] = self
         }else{
-            if self.isPresence && !self.prefetch {
+            if self.isPresence && !self.prefetch && self.chatRoom == nil {
                 self.showLoading("Load data ...")
             }
         }
@@ -660,10 +725,6 @@ public class QiscusChatVC: UIViewController{
     @IBAction func showAttcahMenu(_ sender: UIButton) {
         self.showAttachmentMenu()
     }
-    override public func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
-        super.viewWillTransition(to: size, with: coordinator)
-        collectionView.collectionViewLayout.invalidateLayout()
-    }
     
     @IBAction func doNothing(_ sender: Any) {}
     
@@ -687,14 +748,173 @@ public class QiscusChatVC: UIViewController{
             room.syncRoom()
         }
     }
+    
+    public func postReceivedFile(fileUrl: URL) {
+        self.showLoading("Processing File")
+        let coordinator = NSFileCoordinator()
+        coordinator.coordinate(readingItemAt: fileUrl, options: NSFileCoordinator.ReadingOptions.forUploading, error: nil) { (dataURL) in
+            do{
+                var data:Data = try Data(contentsOf: dataURL, options: NSData.ReadingOptions.mappedIfSafe)
+                let mediaSize = Double(data.count) / 1024.0
+                
+                if mediaSize > Qiscus.maxUploadSizeInKB {
+                    self.processingFile = false
+                    self.dismissLoading()
+                    self.showFileTooBigAlert()
+                    return
+                }
+                
+                var fileName = dataURL.lastPathComponent.replacingOccurrences(of: "%20", with: "_")
+                fileName = fileName.replacingOccurrences(of: " ", with: "_")
+                
+                var popupText = QiscusTextConfiguration.sharedInstance.confirmationImageUploadText
+                var fileType = QiscusFileType.image
+                var thumb:UIImage? = nil
+                let fileNameArr = (fileName as String).split(separator: ".")
+                let ext = String(fileNameArr.last!).lowercased()
+                
+                let gif = (ext == "gif" || ext == "gif_")
+                let video = (ext == "mp4" || ext == "mp4_" || ext == "mov" || ext == "mov_")
+                let isImage = (ext == "jpg" || ext == "jpg_" || ext == "tif" || ext == "heic" || ext == "png" || ext == "png_")
+                let isPDF = (ext == "pdf" || ext == "pdf_")
+                var usePopup = false
+                
+                if isImage{
+                    var i = 0
+                    for n in fileNameArr{
+                        if i == 0 {
+                            fileName = String(n)
+                        }else if i == fileNameArr.count - 1 {
+                            fileName = "\(fileName).jpg"
+                        }else{
+                            fileName = "\(fileName).\(String(n))"
+                        }
+                        i += 1
+                    }
+                    let image = UIImage(data: data)!
+                    let imageSize = image.size
+                    var bigPart = CGFloat(0)
+                    if(imageSize.width > imageSize.height){
+                        bigPart = imageSize.width
+                    }else{
+                        bigPart = imageSize.height
+                    }
+                    
+                    var compressVal = CGFloat(1)
+                    if(bigPart > 2000){
+                        compressVal = 2000 / bigPart
+                    }
+                    data = UIImageJPEGRepresentation(image, compressVal)!
+                    thumb = UIImage(data: data)
+                }else if isPDF{
+                    usePopup = true
+                    popupText = "Are you sure to send this document?"
+                    fileType = QiscusFileType.document
+                    if let provider = CGDataProvider(data: data as NSData) {
+                        if let pdfDoc = CGPDFDocument(provider) {
+                            if let pdfPage:CGPDFPage = pdfDoc.page(at: 1) {
+                                var pageRect:CGRect = pdfPage.getBoxRect(.mediaBox)
+                                pageRect.size = CGSize(width:pageRect.size.width, height:pageRect.size.height)
+                                UIGraphicsBeginImageContext(pageRect.size)
+                                if let context:CGContext = UIGraphicsGetCurrentContext(){
+                                    context.saveGState()
+                                    context.translateBy(x: 0.0, y: pageRect.size.height)
+                                    context.scaleBy(x: 1.0, y: -1.0)
+                                    context.concatenate(pdfPage.getDrawingTransform(.mediaBox, rect: pageRect, rotate: 0, preserveAspectRatio: true))
+                                    context.drawPDFPage(pdfPage)
+                                    context.restoreGState()
+                                    if let pdfImage:UIImage = UIGraphicsGetImageFromCurrentImageContext() {
+                                        thumb = pdfImage
+                                    }
+                                }
+                                UIGraphicsEndImageContext()
+                            }
+                        }
+                    }
+                }
+                else if gif{
+                    let image = UIImage(data: data)!
+                    thumb = image
+                    let asset = PHAsset.fetchAssets(withALAssetURLs: [dataURL], options: nil)
+                    if let phAsset = asset.firstObject {
+                        let option = PHImageRequestOptions()
+                        option.isSynchronous = true
+                        option.isNetworkAccessAllowed = true
+                        PHImageManager.default().requestImageData(for: phAsset, options: option) {
+                            (gifData, dataURI, orientation, info) -> Void in
+                            data = gifData!
+                        }
+                    }
+                    popupText = "Are you sure to send this image?"
+                    usePopup = true
+                }else if video {
+                    fileType = .video
+                    
+                    let assetMedia = AVURLAsset(url: dataURL)
+                    let thumbGenerator = AVAssetImageGenerator(asset: assetMedia)
+                    thumbGenerator.appliesPreferredTrackTransform = true
+                    
+                    let thumbTime = CMTimeMakeWithSeconds(0, 30)
+                    let maxSize = CGSize(width: QiscusHelper.screenWidth(), height: QiscusHelper.screenWidth())
+                    thumbGenerator.maximumSize = maxSize
+                    
+                    do{
+                        let thumbRef = try thumbGenerator.copyCGImage(at: thumbTime, actualTime: nil)
+                        thumb = UIImage(cgImage: thumbRef)
+                        popupText = "Are you sure to send this video?"
+                    }catch{
+                        Qiscus.printLog(text: "error creating thumb image")
+                    }
+                    usePopup = true
+                }else{
+                    usePopup = true
+                    let textFirst = QiscusTextConfiguration.sharedInstance.confirmationFileUploadText
+                    let textMiddle = "\(fileName as String)"
+                    let textLast = QiscusTextConfiguration.sharedInstance.questionMark
+                    popupText = "\(textFirst) \(textMiddle) \(textLast)"
+                    fileType = QiscusFileType.file
+                }
+                self.dismissLoading()
+                //                UINavigationBar.appearance().tintColor = self.currentNavbarTint
+                if usePopup {
+                    QPopUpView.showAlert(withTarget: self, image: thumb, message:popupText, isVideoImage: video,
+                                         doneAction: {
+                                            self.postFile(filename: fileName, data: data, type: fileType, thumbImage: thumb)
+                    },
+                                         cancelAction: {
+                                            Qiscus.printLog(text: "cancel upload")
+                                            QFileManager.clearTempDirectory()
+                    }
+                    )
+                }else{
+                    let uploader = QiscusUploaderVC(nibName: "QiscusUploaderVC", bundle: Qiscus.bundle)
+                    uploader.chatView = self
+                    uploader.data = data
+                    uploader.fileName = fileName
+                    uploader.room = self.chatRoom
+                    self.navigationController?.pushViewController(uploader, animated: true)
+                }
+            }catch _{
+                self.dismissLoading()
+            }
+        }
+    }
 }
 
 extension QiscusChatVC:QChatServiceDelegate{
     public func chatService(didFinishLoadRoom inRoom: QRoom, withMessage message: String?) {
+        self.chatRoomId = inRoom.id
         self.chatRoom = inRoom
+        self.chatRoomUniqueId = inRoom.uniqueId
+        self.isPublicChannel = inRoom.isPublicChannel
         self.loadTitle()
         self.loadSubtitle()
         self.unreadIndicator.isHidden = true
+        
+        if inRoom.isPublicChannel {
+            Qiscus.shared.mqtt?.subscribe("\(Qiscus.client.appId)/\(inRoom.uniqueId)/c")
+        }
+        
         if self.chatMessage != nil && self.chatMessage != "" {
             let newMessage = self.chatRoom!.newComment(text: self.chatMessage!)
             self.postComment(comment: newMessage)
@@ -710,7 +930,12 @@ extension QiscusChatVC:QChatServiceDelegate{
                 self.collectionView.scrollToBottom()
             }
         }
+        if checkSingleRoom(){
+            let presence: NotificationCenter = NotificationCenter.default
+            presence.addObserver(self, selector: #selector(QiscusChatVC.appPresence), name: QiscusNotification.USER_PRESENCE, object: nil)
+        }
         self.dismissLoading()
+        
     }
     public func chatService(didFailLoadRoom error: String) {
         let delay = 1.5 * Double(NSEC_PER_SEC)
@@ -718,7 +943,14 @@ extension QiscusChatVC:QChatServiceDelegate{
         DispatchQueue.main.asyncAfter(deadline: time, execute: {
             self.dismissLoading()
         })
-        QToasterSwift.toast(target: self, text: "Can't load chat room\n\(error)", backgroundColor: UIColor(red: 0.9, green: 0,blue: 0,alpha: 0.8), textColor: UIColor.white)
+        if chatRoom?.storedName == nil {
+            if !Qiscus.sharedInstance.connected {
+                QToasterSwift.toast(target: self, text: "No Internet Connection", backgroundColor: UIColor(red: 0.9, green: 0,blue: 0,alpha: 0.8), textColor: UIColor.white)
+            }else {
+                QToasterSwift.toast(target: self, text: "Can't load chat room\n\(error)", backgroundColor: UIColor(red: 0.9, green: 0,blue: 0,alpha: 0.8), textColor: UIColor.white)
+                self.hideInputBar()
+            }
+        }
         self.dataLoaded = false
         self.delegate?.chatVC?(viewController: self, didFailLoadRoom: error)
     }
@@ -771,6 +1003,10 @@ extension QiscusChatVC:QConversationViewRoomDelegate{
             self.unreadIndicator.isHidden = self.bottomButton.isHidden
         }
     }
+    public func roomDelegate(gotFirstComment room: QRoom) {
+        self.welcomeView.isHidden = true
+        self.collectionView.isHidden = false
+    }
 }
 
 extension QiscusChatVC: CLLocationManagerDelegate {
@@ -799,6 +1035,7 @@ extension QiscusChatVC: CLLocationManagerDelegate {
                                 DispatchQueue.main.async { autoreleasepool{
                                     let comment = self.chatRoom!.newLocationComment(latitude: latitude, longitude: longitude, title: title, address: address)
                                     self.postComment(comment: comment)
+                                    self.addCommentToCollectionView(comment: comment)
                                 }}
                             }
                         }

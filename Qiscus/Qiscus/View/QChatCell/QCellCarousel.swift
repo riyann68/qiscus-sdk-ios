@@ -83,7 +83,7 @@ public class QCellCarousel: QChatCell{
             
             if self.showUserName{
                 if c.senderEmail == Qiscus.client.email {
-                    self.userNameLabel.text = "You"
+                    self.userNameLabel.text = "YOU".getLocalize()
                 } else if let sender = c.sender {
                     self.userNameLabel.text = sender.fullname
                 }else{
@@ -119,7 +119,7 @@ extension QCellCarousel: UICollectionViewDelegateFlowLayout {
     public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         if let c = self.comment {
             var size = c.textSize
-            size.width = QiscusHelper.screenWidth() * 0.60
+            size.width = QiscusHelper.screenWidth() * 0.70
             size.height += 30
             return size
         }

@@ -85,7 +85,7 @@ class QCellAudioRight: QCellAudio {
         self.durationLabel.text = self.comment!.durationLabel
         
         if self.showUserName{
-            userNameLabel.text = "You"
+            userNameLabel.text = "YOU".getLocalize()
             userNameLabel.isHidden = false
             balloonTopMargin.constant = 20
             cellHeight.constant = 20
@@ -206,6 +206,7 @@ class QCellAudioRight: QCellAudio {
     }
 
     public override func updateStatus(toStatus status:QCommentStatus){
+        super.updateStatus(toStatus: status)
         dateLabel.textColor = QiscusColorConfiguration.sharedInstance.rightBaloonTextColor
         dateLabel.text = self.comment!.time.lowercased()
         statusImage.isHidden = false
@@ -214,6 +215,17 @@ class QCellAudioRight: QCellAudio {
         statusImage.tintColor = QiscusColorConfiguration.sharedInstance.rightBaloonTextColor
         
         switch status {
+        case .deleted:
+            dateLabel.text = self.comment!.time.lowercased()
+            statusImage.image = Qiscus.image(named: "ic_deleted")?.withRenderingMode(.alwaysTemplate)
+            break
+        case .deleting, .deletePending:
+            dateLabel.text = QiscusTextConfiguration.sharedInstance.deletingText
+            if status == .deletePending {
+                dateLabel.text = self.comment!.time.lowercased()
+            }
+            statusImage.image = Qiscus.image(named: "ic_deleting")?.withRenderingMode(.alwaysTemplate)
+            break;
         case .sending, .pending:
             dateLabel.text = QiscusTextConfiguration.sharedInstance.sendingText
             if status == .pending {
@@ -238,6 +250,7 @@ class QCellAudioRight: QCellAudio {
             statusImage.image = Qiscus.image(named: "ic_warning")?.withRenderingMode(.alwaysTemplate)
             statusImage.tintColor = QiscusColorConfiguration.sharedInstance.failToSendColor
             break
+        default: break
         }
     }
     public override func downloadingMedia() {

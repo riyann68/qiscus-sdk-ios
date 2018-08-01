@@ -83,26 +83,26 @@ public class QUser:Object {
                 let hourDiff = Int(minuteDiff/60)
                 
                 if secondDiff < 60 {
-                    result = "few seconds ago"
+                    result = "FEW_SECOND_AGO".getLocalize()
                 }
                 else if minuteDiff == 1 {
-                    result = "a minute ago"
+                    result = "A_MINUTE_AGO".getLocalize()
                 }
                 else if minuteDiff < 60 {
-                    result = "\(Int(secondDiff/60)) minute ago"
+                    result = "MINUTES_AGO".getLocalize(value: Int(secondDiff/60))
                 }else if hourDiff == 1{
-                    result = "an hour ago"
+                    result = "AN_HOUR_AGO".getLocalize()
                 }else if hourDiff < 6 {
-                    result = "\(hourDiff) hours ago"
+                    result = "HOURS_AGO".getLocalize(value: hourDiff)
                 }
                 else if date.isToday{
-                    result = "today at \(timeString)"
+                    result = "HOURS_AGO".getLocalize(value: timeString)
                 }
                 else if date.isYesterday{
-                    result = "yesterday at \(timeString)"
+                    result = "YESTERDAY_AT".getLocalize(value: timeString)
                 }
                 else{
-                    result = "\(dateString) at \(timeString)"
+                    result = "\(dateString) " + "AT".getLocalize() + " \(timeString)"
                 }
                 
                 return result
@@ -206,7 +206,6 @@ public class QUser:Object {
         if data.count > 0 {
             let user = data.first!
             user.cacheObject()
-            user.subscribeRealtimeStatus()
             return user
         }
         return nil
