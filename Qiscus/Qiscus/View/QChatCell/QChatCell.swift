@@ -115,17 +115,30 @@ open class QChatCell: UICollectionViewCell, QCommentDelegate {
                     switch c.type{
                     case .text,.contact:
                         c.updateStatus(status: .sending)
-                        room.post(comment: c)
+                        room.post(comment: c, onSuccess: {
+                            
+                        }, onError: { (error) in
+                            
+                        })
                         break
                     case .video,.image,.audio,.file,.document:
                         if let file = c.file {
                             if file.url.contains("http") {
                                 c.updateStatus(status: .sending)
-                                room.post(comment: c)
+                                room.post(comment: c, onSuccess: {
+                                    
+                                }, onError: { (error) in
+                                     Qiscus.printLog(text: "error \(error)")
+                                })
                             }else{
                                 if QFileManager.isFileExist(inLocalPath: file.localPath) {
                                     room.upload(comment: c, onSuccess: { (r, message) in
-                                        r.post(comment: message)
+                                        r.post(comment: message, onSuccess: {
+                                            
+                                        }, onError: { (error) in
+                                             Qiscus.printLog(text: "error \(error)")
+                                        })
+                                        
                                     }, onError: { (_, _, error) in
                                         Qiscus.printLog(text: "error reupload file")
                                     })

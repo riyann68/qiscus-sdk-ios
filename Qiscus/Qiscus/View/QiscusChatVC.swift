@@ -735,7 +735,10 @@ public class QiscusChatVC: UIViewController{
                 postedComment = temp
             }
         }
-        chatRoom?.post(comment: postedComment)
+        chatRoom?.post(comment: postedComment, onSuccess: {
+        }, onError: { (error) in
+            Qiscus.printLog(text: "error \(error)")
+        })
     }
     public func register(_ nib: UINib?, forChatCellWithReuseIdentifier identifier: String) {
         self.collectionView.register(nib, forCellWithReuseIdentifier: identifier)

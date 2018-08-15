@@ -218,6 +218,9 @@ internal extension QRoom {
     }
     
     internal func addComment(newComment:QComment, onTop:Bool = false){
+        
+        if newComment.isInvalidated { return }
+        
         let id = self.id
         let cUniqueId = newComment.uniqueId
         

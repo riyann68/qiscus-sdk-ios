@@ -461,17 +461,26 @@ public class QConversationCollectionView: UICollectionView {
     // MARK: public Method
     func scrollToBottom(_ animated:Bool = false){
         if self.room != nil {
-            if self.messagesId.count > 0 {
-                let lastSection = self.numberOfSections - 1
-                let lastItem = self.numberOfItems(inSection: lastSection) - 1
-                
-                if lastSection >= 0 && lastItem >= 0 {
-                    let indexPath = IndexPath(item: lastItem, section: lastSection)
+            var section = 0
+            var item = 0
+            if let lastUid = self.messagesId.last?.last {
+                if let lastComment = QComment.comment(withUniqueId: lastUid) {
+                    section = self.messagesId.count - 1
+                    item = (self.messagesId.last?.count)! - 1
+                    let indexPath = IndexPath(row: item, section: section)
+
+                    if(self.indexPathIsValid(indexPath: indexPath) == true){
+                        self.scrollToItem(at: indexPath, at: .bottom, animated: animated)
+                    }
+
                     self.layoutIfNeeded()
-                    self.scrollToItem(at: indexPath, at: .bottom, animated: animated)
                 }
             }
         }
+    }
+    
+    func indexPathIsValid(indexPath: IndexPath) -> Bool {
+        return indexPath.section < self.numberOfSections && indexPath.row < self.numberOfItems(inSection: indexPath.section)
     }
     
     open func cellHeightForComment (comment:QComment, defaultHeight height:CGFloat, firstInSection first:Bool)->CGFloat{

@@ -527,7 +527,11 @@ public class QRoom:Object {
         comment.typeRaw = QCommentType.text.name()
         
         self.addComment(newComment: comment)
-        self.post(comment: comment)
+        self.post(comment: comment, onSuccess: {
+            
+        }, onError: { (error) in
+            Qiscus.printLog(text: "error \(error)")
+        })
     }
     internal func resendPendingMessage(){
         QiscusDBThread.async {
@@ -539,9 +543,11 @@ public class QRoom:Object {
                 if Thread.isMainThread {
                     if let room = QRoom.room(withId: comment.roomId){
                         room.updateCommentStatus(inComment: comment, status: .sending)
-                        room.post(comment: comment) {
+                        room.post(comment: comment, onSuccess: {
                             self.resendPendingMessage()
-                        }
+                        }, onError: { (error) in
+                            Qiscus.printLog(text: "error \(error)")
+                        })
                     }
                 }else{
                     let commentTS = ThreadSafeReference(to: comment)
@@ -551,9 +557,11 @@ public class QRoom:Object {
                         guard let c = realm.resolve(commentTS) else { return }
                         if let room = QRoom.room(withId: c.roomId){
                             room.updateCommentStatus(inComment: c, status: .sending)
-                            room.post(comment: c) {
+                            room.post(comment: c, onSuccess: {
                                 self.resendPendingMessage()
-                            }
+                            }, onError: { (error) in
+                                Qiscus.printLog(text: "error \(error)")
+                            })
                         }
                     }
                 }
@@ -576,12 +584,12 @@ public class QRoom:Object {
         }
     }
     
-    public func post(comment:QComment, type:String? = nil, payload:JSON? = nil, onSuccess: @escaping ()->Void = {}){
+    public func post(comment:QComment, type:String? = nil, payload:JSON? = nil, onSuccess: @escaping ()->Void, onError: @escaping (String)->Void){
         let service = QRoomService()
         let id = self.id
 //        self.resendPendingMessage()
         self.redeletePendingDeletedMessage()
-        service.postComment(onRoom: id, comment: comment, type: type, payload:payload, onSuccess: onSuccess)
+        service.postComment(onRoom: id, comment: comment, type: type, payload:payload, onSuccess: onSuccess, onError: onError)
     }
     
     public func upload(comment:QComment, onSuccess:  @escaping (QRoom, QComment)->Void, onError:  @escaping (QRoom,QComment,String)->Void, onProgress:((Double)->Void)? = nil){

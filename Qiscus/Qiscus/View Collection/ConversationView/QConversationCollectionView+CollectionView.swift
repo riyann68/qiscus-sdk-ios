@@ -215,119 +215,125 @@ extension QConversationCollectionView: UICollectionViewDelegate, UICollectionVie
         return false
     }
     open func collectionView(_ collectionView: UICollectionView, canPerformAction action: Selector, forItemAt indexPath: IndexPath, withSender sender: Any?) -> Bool {
-        if indexPath.section < self.messagesId.count {
+        
+        if indexPath.section < self.messagesId.count{
+            
             let uid = self.messagesId[indexPath.section][indexPath.item]
-            let comment = QComment.comment(withUniqueId: uid)!
-            switch action.description {
-            case "copy:":
-                if comment.type == .text{ return true }
-                return false
-            case "resend":
-                if !Qiscus.sharedInstance.connected || comment.status != .failed {
+            if let comment = QComment.comment(withUniqueId: uid){
+                switch action.description {
+                case "copy:":
+                    if comment.type == .text{ return true }
                     return false
-                }else{
-                    switch comment.type {
-                    case .text, .contact:
-                        return true
-                    case .video,.image,.audio,.file,.document:
-                        if let file = comment.file {
-                            if QFileManager.isFileExist(inLocalPath: file.localPath){
-                                return true
-                            }else if file.url.contains("http"){
-                                return true
-                            }
-                        }
+                case "resend":
+                    if !Qiscus.sharedInstance.connected || comment.status != .failed {
                         return false
-                    default:
-                        return false
-                    }
-                }
-            case "deleteComment":
-                if comment.senderEmail == Qiscus.client.email && comment.status != .deleting && comment.status != .deleted {
-                    return true
-                }
-                return false
-            case "deleteForMe":
-                if comment.status != .deleting && comment.status != .deleted {
-                    return true
-                }
-                return false
-            case "reply":
-                if Qiscus.sharedInstance.connected{
-                    switch comment.status {
-                    case .failed, .sending, .pending, .deleted, .deleting, .deletePending :
-                        return false
-                    default:
+                    }else{
                         switch comment.type {
-                        case .postback,.account,.system,.card,.carousel:
+                        case .text, .contact:
+                            return true
+                        case .video,.image,.audio,.file,.document:
+                            if let file = comment.file {
+                                if QFileManager.isFileExist(inLocalPath: file.localPath){
+                                    return true
+                                }else if file.url.contains("http"){
+                                    return true
+                                }
+                            }
                             return false
                         default:
-                            return true
+                            return false
                         }
                     }
-                }
-                return false
-            case "forward":
-                if let viewDelegate = self.viewDelegate{
-                    if !Qiscus.sharedInstance.connected || !viewDelegate.viewDelegate(enableForwardAction: self){
-                        return false
-                    }else {
+                case "deleteComment":
+                    if comment.senderEmail == Qiscus.client.email && comment.status != .deleting && comment.status != .deleted {
+                        return true
+                    }
+                    return false
+                case "deleteForMe":
+                    if comment.status != .deleting && comment.status != .deleted {
+                        return true
+                    }
+                    return false
+                case "reply":
+                    if Qiscus.sharedInstance.connected{
                         switch comment.status {
-                        case .failed, .sending, .pending: return false
+                        case .failed, .sending, .pending, .deleted, .deleting, .deletePending :
+                            return false
                         default:
                             switch comment.type {
-                            case .postback, .account,.system,.carousel:
+                            case .postback,.account,.system,.card,.carousel:
                                 return false
                             default:
                                 return true
                             }
                         }
                     }
-                }
-                return false
-            case "info":
-                if let viewDelegate = self.viewDelegate {
-                    if  !Qiscus.sharedInstance.connected ||
-                        !viewDelegate.viewDelegate(enableInfoAction: self) ||
-                        self.room!.type == .single || comment.senderEmail != Qiscus.client.email{
-                        return false
-                    }else {
-                        switch comment.status {
-                        case .failed, .sending, .pending: return false
-                        default:
-                            switch comment.type {
-                            case .postback, .account,.system,.carousel:
-                                return false
+                    return false
+                case "forward":
+                    if let viewDelegate = self.viewDelegate{
+                        if !Qiscus.sharedInstance.connected || !viewDelegate.viewDelegate(enableForwardAction: self){
+                            return false
+                        }else {
+                            switch comment.status {
+                            case .failed, .sending, .pending: return false
                             default:
-                                return true
+                                switch comment.type {
+                                case .postback, .account,.system,.carousel:
+                                    return false
+                                default:
+                                    return true
+                                }
                             }
                         }
                     }
-                }
-                return false
-            case "share":
-                if Qiscus.sharedInstance.connected && ( comment.type == .image || comment.type == .video || comment.type == .audio || comment.type == .text || comment.type == .file || comment.type == .document) {
-                    if let file = comment.file {
-                        switch comment.type {
-                        case .file:
-                            if NSURL(string: file.url) != nil{
-                                return true
+                    return false
+                case "info":
+                    if let viewDelegate = self.viewDelegate {
+                        if  !Qiscus.sharedInstance.connected ||
+                            !viewDelegate.viewDelegate(enableInfoAction: self) ||
+                            self.room!.type == .single || comment.senderEmail != Qiscus.client.email{
+                            return false
+                        }else {
+                            switch comment.status {
+                            case .failed, .sending, .pending: return false
+                            default:
+                                switch comment.type {
+                                case .postback, .account,.system,.carousel:
+                                    return false
+                                default:
+                                    return true
+                                }
                             }
-                            break
-                        case .text:
-                            return true
-                        default:
-                            if QFileManager.isFileExist(inLocalPath: file.localPath){
-                                return true
-                            }
-                            break
                         }
                     }
+                    return false
+                case "share":
+                    if Qiscus.sharedInstance.connected && ( comment.type == .image || comment.type == .video || comment.type == .audio || comment.type == .text || comment.type == .file || comment.type == .document) {
+                        if let file = comment.file {
+                            switch comment.type {
+                            case .file:
+                                if NSURL(string: file.url) != nil{
+                                    return true
+                                }
+                                break
+                            case .text:
+                                return true
+                            default:
+                                if QFileManager.isFileExist(inLocalPath: file.localPath){
+                                    return true
+                                }
+                                break
+                            }
+                        }
+                    }
+                    return false
+                default:
+                    return false
                 }
-                return false
-            default:
+            }else{
                 return false
             }
+           
         }else{
             return false
         }

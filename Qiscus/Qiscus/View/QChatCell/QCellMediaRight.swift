@@ -323,11 +323,14 @@ class QCellMediaRight: QChatCell {
     }
     @objc func didTapImage(){
         if !self.comment!.isUploading && !self.comment!.isDownloading{
-            if let file = self.comment!.file{
-                if QFileManager.isFileExist(inLocalPath: file.localPath){
-                    delegate?.didTapCell(onComment: self.comment!)
+            if !(self.comment?.isInvalidated)!{
+                if let file = self.comment!.file{
+                    if QFileManager.isFileExist(inLocalPath: file.localPath){
+                        delegate?.didTapCell(onComment: self.comment!)
+                    }
                 }
             }
+            
         }
     }
     public override func uploadingMedia() {

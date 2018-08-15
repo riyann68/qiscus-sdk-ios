@@ -726,7 +726,11 @@ public class QComment:Object {
                 }
             }
             room.addComment(newComment: comment)
-            room.post(comment: comment)
+            room.post(comment: comment, onSuccess: {
+                
+            }, onError: { (error) in
+                Qiscus.printLog(text: "error \(error)")
+            })
         }
         
     }
@@ -1298,9 +1302,11 @@ public class QComment:Object {
                 if Thread.isMainThread {
                     if let room = QRoom.room(withId: comment.roomId){
                         room.updateCommentStatus(inComment: comment, status: .sending)
-                        room.post(comment: comment) {
+                        room.post(comment: comment, onSuccess: {
                             self.resendPendingMessage()
-                        }
+                        }, onError: { (error) in
+                            Qiscus.printLog(text: "error \(error)")
+                        })
                     }
                 }else{
                     let commentTS = ThreadSafeReference(to: comment)
@@ -1310,9 +1316,11 @@ public class QComment:Object {
                         guard let c = realm.resolve(commentTS) else { return }
                         if let room = QRoom.room(withId: c.roomId){
                             room.updateCommentStatus(inComment: c, status: .sending)
-                            room.post(comment: c) {
-                                self.resendPendingMessage()
-                            }
+                            room.post(comment: c, onSuccess: {
+                                 self.resendPendingMessage()
+                            }, onError: { (error) in
+                                Qiscus.printLog(text: "error \(error)")
+                            })
                         }
                     }
                 }

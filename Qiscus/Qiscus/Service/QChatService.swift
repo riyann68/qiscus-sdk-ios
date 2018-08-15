@@ -928,6 +928,10 @@ public class QChatService:NSObject {
                                 Qiscus.shared.delegate?.qiscus?(finishSync: true, error: nil)
                                 Qiscus.printLog(text: "finish syncing process on [\(getTime())].")
                             }
+                            
+                            QiscusBackgroundThread.async {
+                                Qiscus.syncEvent()
+                            }
                         }
                     }else if error != JSON.null{
                         Qiscus.printLog(text: "error sync message: \(error) on [\(getTime())]")

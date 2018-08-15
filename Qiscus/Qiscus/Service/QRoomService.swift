@@ -364,6 +364,7 @@ public class QRoomService:NSObject{
                         //                        room.post(comment: c)
                         //                    }
                     })
+                    onError("failed post comment with error \(error.localizedDescription)")
                     break
                 }
             })

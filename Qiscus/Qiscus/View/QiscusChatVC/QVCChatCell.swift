@@ -337,7 +337,11 @@ extension QiscusChatVC: QConversationViewCellDelegate{
                 
                 if let room = self.chatRoom {
                     let newComment = room.newComment(text: text)
-                    room.post(comment: newComment, type: type, payload: action.payload!)
+                    room.post(comment: newComment, type: type, payload: action.payload!, onSuccess: {
+                        
+                    }, onError: { (error) in
+                        Qiscus.printLog(text: "error \(error)")
+                    })
                 }
                 break
             }
