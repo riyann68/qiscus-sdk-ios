@@ -152,7 +152,7 @@ var QiscusDBThread = DispatchQueue(label: "com.qiscus.db", attributes: .concurre
      */
     // TODO : when active save log, make sure file size under 1/3Mb.
     @available(*, deprecated, message: "no longer available for public ...")
-    static var saveLog:Bool = false
+    public static var saveLog:Bool = false
     
     /**
      Receive all Qiscus Log, then handle logs\s by client.

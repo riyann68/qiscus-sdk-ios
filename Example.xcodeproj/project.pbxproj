@@ -175,6 +175,10 @@
 		3D4ED3B1204D424A00B064FD /* Qiscus.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 39F1F70F1D3B91E200FF1C8C /* Qiscus.framework */; };
 		6A7FF5E2D9CEB063A127937B /* Pods_Qiscus.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A4527A84D23FDA5B8B32B9C1 /* Pods_Qiscus.framework */; };
 		B0846505F0ABD97C0375C737 /* Pods_Example.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88710D4C9FAFADF156A657F4 /* Pods_Example.framework */; };
+		EBFAE76721274FA6003D9D12 /* String+Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBFAE76621274FA6003D9D12 /* String+Localization.swift */; };
+		EBFAE76A21274FCE003D9D12 /* MultipleImageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBFAE76821274FCE003D9D12 /* MultipleImageCell.swift */; };
+		EBFAE76B21274FCE003D9D12 /* MultipleImageCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = EBFAE76921274FCE003D9D12 /* MultipleImageCell.xib */; };
+		EBFAE76D2127500A003D9D12 /* UIDevice+info.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBFAE76C2127500A003D9D12 /* UIDevice+info.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -385,6 +389,10 @@
 		98773C3A23586CB325C3DFE1 /* Pods-Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Example.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Example/Pods-Example.debug.xcconfig"; sourceTree = "<group>"; };
 		9CE65FBC6F02844B3B9F7A09 /* Pods-Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Example.release.xcconfig"; path = "Pods/Target Support Files/Pods-Example/Pods-Example.release.xcconfig"; sourceTree = "<group>"; };
 		A4527A84D23FDA5B8B32B9C1 /* Pods_Qiscus.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Qiscus.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		EBFAE76621274FA6003D9D12 /* String+Localization.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "String+Localization.swift"; path = "Qiscus/Extension/String+Localization.swift"; sourceTree = "<group>"; };
+		EBFAE76821274FCE003D9D12 /* MultipleImageCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = MultipleImageCell.swift; path = Qiscus/View/MultipleImageCell.swift; sourceTree = "<group>"; };
+		EBFAE76921274FCE003D9D12 /* MultipleImageCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = MultipleImageCell.xib; path = Qiscus/View/MultipleImageCell.xib; sourceTree = "<group>"; };
+		EBFAE76C2127500A003D9D12 /* UIDevice+info.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "UIDevice+info.swift"; path = "Qiscus/Extension/UIDevice+info.swift"; sourceTree = "<group>"; };
 		EC54D4C4B940F9B3AB0ACC05 /* Pods_QiscusTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_QiscusTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3F55B687CDC2C8DA3A277C5 /* Pods-Qiscus.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Qiscus.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Qiscus/Pods-Qiscus.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -489,6 +497,8 @@
 		39955B3F1D655B6700927ADD /* ViewController */ = {
 			isa = PBXGroup;
 			children = (
+				EBFAE76821274FCE003D9D12 /* MultipleImageCell.swift */,
+				EBFAE76921274FCE003D9D12 /* MultipleImageCell.xib */,
 				39955B401D655C5500927ADD /* Component */,
 				39E790511E5298150011850B /* QiscusChatVC */,
 				39F70FAF1F3D5F5800774D97 /* QiscusChatVC.swift */,
@@ -515,6 +525,8 @@
 		39955B5B1D65603C00927ADD /* Extension */ = {
 			isa = PBXGroup;
 			children = (
+				EBFAE76C2127500A003D9D12 /* UIDevice+info.swift */,
+				EBFAE76621274FA6003D9D12 /* String+Localization.swift */,
 				39F70F8B1F3D5BBD00774D97 /* Background.swift */,
 				39F70F8C1F3D5BBD00774D97 /* NavigationBar.swift */,
 				39F70F8D1F3D5BBD00774D97 /* QDate.swift */,
@@ -1000,6 +1012,7 @@
 				39955B6D1D656D1700927ADD /* Media.xcassets in Resources */,
 				394D7AA41F4E979E00E69E1C /* QCellLocationLeft.xib in Resources */,
 				39F70FEC1F3D619900774D97 /* QCellFileLeft.xib in Resources */,
+				EBFAE76B21274FCE003D9D12 /* MultipleImageCell.xib in Resources */,
 				39F70FE41F3D619900774D97 /* QCellAudioRight.xib in Resources */,
 				39A142C820031DDA00A64953 /* QCarouselCardCell.xib in Resources */,
 				39F70FF41F3D619900774D97 /* QCellPostbackLeft.xib in Resources */,
@@ -1250,9 +1263,11 @@
 				39A142CE2003443B00A64953 /* QCardAction.swift in Sources */,
 				39A142CA200343E100A64953 /* QCard.swift in Sources */,
 				39F70FE51F3D619900774D97 /* QCellCardLeft.swift in Sources */,
+				EBFAE76D2127500A003D9D12 /* UIDevice+info.swift in Sources */,
 				39F7101A1F3D63B500774D97 /* ChatInputText.swift in Sources */,
 				39F70FFC1F3D619900774D97 /* QChatFooterLeft.swift in Sources */,
 				39F7101B1F3D63B500774D97 /* ChatTapRecognizer.swift in Sources */,
+				EBFAE76A21274FCE003D9D12 /* MultipleImageCell.swift in Sources */,
 				39E754431F678B2B003C3302 /* QiscusNotification.swift in Sources */,
 				39461C941FE4D56300BEE09E /* QConversationCollectionView+CollectionView.swift in Sources */,
 				39F70FBD1F3D5FE000774D97 /* QVCPickerAndMedia.swift in Sources */,
@@ -1270,6 +1285,7 @@
 				39F70FB11F3D5F5800774D97 /* QiscusChatVC.swift in Sources */,
 				39F70FB91F3D5FE000774D97 /* QVCAction.swift in Sources */,
 				39F70FED1F3D619900774D97 /* QCellFileRight.swift in Sources */,
+				EBFAE76721274FA6003D9D12 /* String+Localization.swift in Sources */,
 				39F70F841F3D5B4400774D97 /* QPopUpView.swift in Sources */,
 				39F710101F3D62FE00774D97 /* QiscusLinkData.swift in Sources */,
 			);
