@@ -131,13 +131,17 @@ internal extension QRoom {
                     var participantString = [String]()
                     for participantJSON in participants {
                         let participantEmail = participantJSON["email"].stringValue
+                        let extrasData = participantJSON["extras"]
                         let fullname = participantJSON["username"].stringValue
                         let avatarURL = participantJSON["avatar_url"].stringValue
                         let lastReadId = participantJSON["last_comment_read_id"].intValue
                         let lastDeliveredId = participantJSON["last_comment_received_id"].intValue
+                        var extras = ""
+                        if !(extrasData.isEmpty){
+                            extras = "\(extrasData)"
+                        }
                         
-                        
-                        let savedUser = QUser.saveUser(withEmail: participantEmail, fullname: fullname, avatarURL: avatarURL)
+                        let savedUser = QUser.saveUser(withEmail: participantEmail, fullname: fullname, avatarURL: avatarURL, extras: extras)
                         
                         if room.type == .single {
                             if savedUser.email != Qiscus.client.email {
@@ -153,6 +157,7 @@ internal extension QRoom {
                             newParticipant.localId = "\(room.id)_\(participantEmail)"
                             newParticipant.roomId = room.id
                             newParticipant.email = participantEmail
+                            newParticipant.extras = extras
                             newParticipant.lastReadCommentId = lastReadId
                             newParticipant.lastDeliveredCommentId = lastDeliveredId
                             
@@ -169,6 +174,7 @@ internal extension QRoom {
                             let selectedParticipant = roomPariticipant.first!
                             try! realm.write {
                                 selectedParticipant.email = participantEmail
+                                selectedParticipant.extras = "\(extras)"
                                 selectedParticipant.lastReadCommentId = lastReadId
                                 selectedParticipant.lastDeliveredCommentId = lastDeliveredId
                             }

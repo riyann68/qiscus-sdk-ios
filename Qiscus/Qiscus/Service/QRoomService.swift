@@ -947,6 +947,9 @@ public class QRoomService:NSObject{
                         for room in rooms {
                             let roomId = "\(room["id"])"
                             if let r = QRoom.threadSaveRoom(withId: roomId){
+                                if r.isInvalidated {
+                                    return
+                                }
                                 r.syncRoomData(withJSON: room)
                                 r.clearMessage()
                                 r.clearLastComment()

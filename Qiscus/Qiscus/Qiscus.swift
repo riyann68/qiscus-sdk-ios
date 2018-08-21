@@ -24,9 +24,7 @@ var QiscusDBThread = DispatchQueue(label: "com.qiscus.db", attributes: .concurre
     
     static let sharedInstance = Qiscus()
 
-    
-    static let qiscusVersionNumber:String = "2.8.27"
-    
+    static let qiscusVersionNumber:String = "2.8.28"
     
     /// shared instance of QiscusClient
     public static var client : QiscusClient {
@@ -389,10 +387,11 @@ var QiscusDBThread = DispatchQueue(label: "com.qiscus.db", attributes: .concurre
     /// - Parameters:
     ///   - username: String username
     ///   - avatarURL: String avatar url
+    ///   - extras: valid jsonString
     ///   - onSuccess: @escaping on success update user profile
     ///   - onFailed: @escaping on error update user profile with error message
-    public class func updateProfile(username:String? = nil, avatarURL:String? = nil, onSuccess:@escaping (()->Void), onFailed:@escaping ((String)->Void)) {
-        QChatService.updateProfil(userName: username, userAvatarURL: avatarURL, onSuccess: onSuccess, onError: onFailed)
+    public class func updateProfile(username:String? = nil, avatarURL:String? = nil, extras: String? = nil, onSuccess:@escaping (()->Void), onFailed:@escaping ((String)->Void)) {
+        QChatService.updateProfil(userName: username, userAvatarURL: avatarURL, extras: extras, onSuccess: onSuccess, onError: onFailed)
     }
     
     
@@ -406,7 +405,8 @@ var QiscusDBThread = DispatchQueue(label: "com.qiscus.db", attributes: .concurre
     ///   - avatarURL: client avatar url
     ///   - delegate: QiscusConfigDelegate
     ///   - secureURl: true => https, false => http
-    @objc public class func setup(withAppId appId:String, userEmail:String, userKey:String, username:String, avatarURL:String? = nil, delegate:QiscusConfigDelegate? = nil, secureURl:Bool = true){
+    ///   - extras:  client extras (jsonString)
+    @objc public class func setup(withAppId appId:String, userEmail:String, userKey:String, username:String, avatarURL:String? = nil, extras:String? = nil, delegate:QiscusConfigDelegate? = nil, secureURl:Bool = true){
         var requestProtocol = "https"
         if !secureURl {
             requestProtocol = "http"
@@ -436,6 +436,7 @@ var QiscusDBThread = DispatchQueue(label: "com.qiscus.db", attributes: .concurre
             Qiscus.client.userData.set(email, forKey: "qiscus_param_email")
             Qiscus.client.userData.set(userKey, forKey: "qiscus_param_pass")
             Qiscus.client.userData.set(username, forKey: "qiscus_param_username")
+            Qiscus.client.userData.set(extras, forKey: "qiscus_param_extras")
             
             if Qiscus.client.baseUrl == "" {
                 Qiscus.client.baseUrl = baseUrl
@@ -446,7 +447,7 @@ var QiscusDBThread = DispatchQueue(label: "com.qiscus.db", attributes: .concurre
                 Qiscus.client.userData.set(avatarURL, forKey: "qiscus_param_avatar")
             }
             
-            QiscusCommentClient.sharedInstance.loginOrRegister(userEmail, password: userKey, username: username, avatarURL: avatarURL)
+            QiscusCommentClient.sharedInstance.loginOrRegister(userEmail, password: userKey, username: username, avatarURL: avatarURL, extras: extras)
         }else{
             if let delegate = Qiscus.shared.delegate {
                 Qiscus.uiThread.async { autoreleasepool{

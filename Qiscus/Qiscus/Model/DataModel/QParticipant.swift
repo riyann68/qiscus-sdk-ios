@@ -16,6 +16,7 @@ public class QParticipant:Object {
     @objc public dynamic var localId:String = ""
     @objc public dynamic var roomId:String = ""
     @objc public dynamic var email:String = ""
+    @objc public dynamic var extras:String = ""
     @objc public dynamic var lastReadCommentId:Int = 0
     @objc public dynamic var lastDeliveredCommentId:Int = 0
     

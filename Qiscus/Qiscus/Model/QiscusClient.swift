@@ -76,6 +76,7 @@ open class QiscusClient: NSObject {
     public var avatarUrl = ""
     public var rtKey = ""
     public var token = ""
+    public var extras = ""
     public var userKey = ""
     public var appId = ""
     public var baseUrl = ""
@@ -92,6 +93,7 @@ open class QiscusClient: NSObject {
     public var paramPass = ""
     public var paramUsername = ""
     public var paramAvatar = ""
+    public var paramExtras = ""
     
     open var deviceToken:String = ""{
         didSet{
@@ -107,6 +109,9 @@ open class QiscusClient: NSObject {
         }
         if let userEmail = userData.value(forKey: "qiscus_email") as? String {
             self.email = userEmail
+        }
+        if let extras = userData.value(forKey: "qiscus_extras") as? String{
+            self.extras = extras
         }
         if let appId = userData.value(forKey: "qiscus_appId") as? String {
             self.appId = appId
@@ -162,6 +167,9 @@ open class QiscusClient: NSObject {
         if let paramAvatar = userData.value(forKey: "qiscus_param_avatar") as? String{
             self.paramAvatar = paramAvatar
         }
+        if let paramExtras = userData.value(forKey: "qiscus_param_extras") as? String{
+            self.paramExtras = paramExtras
+        }
     }
     
     open class func saveData(fromJson json:JSON, reconnect:Bool = false)->QiscusClient{
@@ -172,13 +180,19 @@ open class QiscusClient: NSObject {
         Qiscus.client.avatarUrl = json["avatar"].stringValue
         Qiscus.client.rtKey = json["rtKey"].stringValue
         Qiscus.client.token = json["token"].stringValue
-        
+        var extrasData = json["extras"]
+        var extras = ""
+        if !(extrasData.isEmpty){
+            extras = "\(extrasData)"
+        }
+        Qiscus.client.extras = extras
         Qiscus.client.userData.set(json["id"].intValue, forKey: "qiscus_id")
         Qiscus.client.userData.set(json["email"].stringValue, forKey: "qiscus_email")
         Qiscus.client.userData.set(json["username"].stringValue, forKey: "qiscus_username")
         Qiscus.client.userData.set(json["avatar"].stringValue, forKey: "qiscus_avatar_url")
         Qiscus.client.userData.set(json["rtKey"].stringValue, forKey: "qiscus_rt_key")
         Qiscus.client.userData.set(json["token"].stringValue, forKey: "qiscus_token")
+        Qiscus.client.userData.set(extras, forKey: "extras")
         
         if !reconnect {
             Qiscus.client.userData.set(json["last_comment_id"].intValue, forKey: "qiscus_lastComment_id")
@@ -231,6 +245,7 @@ open class QiscusClient: NSObject {
         Qiscus.client.token = ""
         Qiscus.client.lastCommentId = 0
         Qiscus.client.lastEventId = ""
+        Qiscus.client.extras = ""
         
         Qiscus.client.userData.removeObject(forKey: "qiscus_id")
         Qiscus.client.userData.removeObject(forKey: "qiscus_email")
@@ -241,6 +256,7 @@ open class QiscusClient: NSObject {
         Qiscus.client.userData.removeObject(forKey: "qiscus_lastComment_id")
         Qiscus.client.userData.removeObject(forKey: "qiscus_lastKnownComment_id")
         Qiscus.client.userData.removeObject(forKey: "qiscus_lastEvent_id")
+        Qiscus.client.userData.removeObject(forKey: "qiscus_extras")
     }
     
     public class func update(lastEventId eventId: String){

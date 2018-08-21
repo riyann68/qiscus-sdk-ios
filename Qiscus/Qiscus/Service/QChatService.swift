@@ -30,6 +30,7 @@ public class QChatService:NSObject {
         let userKey = Qiscus.client.userData.value(forKey: "qiscus_param_pass") as? String
         let userName = Qiscus.client.userData.value(forKey: "qiscus_param_username") as? String
         let avatarURL = Qiscus.client.userData.value(forKey: "qiscus_param_avatar") as? String
+        let extras = Qiscus.client.userData.value(forKey: "qiscus_param_extras") as? String
         if email != nil && userKey != nil && userName != nil {
             if Qiscus.client.appId.isEmpty {
                 #if DEBUG
@@ -38,11 +39,11 @@ public class QChatService:NSObject {
                 Qiscus.printLog(text: "app id is empty")
                 return
             }
-            QiscusCommentClient.sharedInstance.loginOrRegister(email!, password: userKey!, username: userName!, avatarURL: avatarURL, reconnect: true, onSuccess: onSuccess)
+            QiscusCommentClient.sharedInstance.loginOrRegister(email!, password: userKey!, username: userName!, avatarURL: avatarURL, reconnect: true, extras: extras, onSuccess: onSuccess)
         }
     }
     
-    internal class func updateProfil(userName: String? = nil, userAvatarURL: String? = nil, onSuccess: @escaping (()->Void),onError:@escaping ((String)->Void)){
+    internal class func updateProfil(userName: String? = nil, userAvatarURL: String? = nil, extras: String? = nil, onSuccess: @escaping (()->Void),onError:@escaping ((String)->Void)){
         if Qiscus.isLoggedIn {
             var parameters:[String: AnyObject] = [String: AnyObject]()
             parameters["token"] = qiscus.config.USER_TOKEN as AnyObject
@@ -54,6 +55,9 @@ public class QChatService:NSObject {
                 parameters["avatar_url"] = avatar as AnyObject?
             }
             
+            if let paramExtras =  extras{
+                parameters["extras"] = paramExtras as AnyObject?
+            }
             
             DispatchQueue.global().async(execute: {
                 QiscusService.session.request(QiscusConfig.UPDATE_PROFILE, method: .patch, parameters: parameters, encoding: URLEncoding.default, headers: QiscusConfig.sharedInstance.requestHeader).responseJSON(completionHandler: { response in
@@ -1687,31 +1691,33 @@ public class QChatService:NSObject {
                             
                             if roomsData.count > 0 {
                                 func execute(){
-                                    var rooms = [QRoom]()
                                     for roomData in roomsData {
                                         let roomId = "\(roomData["id"])"
                                         let unread = roomData["unread_count"].intValue
-                                        if let room = QRoom.room(withId: roomId){
+                                        
+                                        if let room = QRoom.threadSaveRoom(withId: roomId){
                                             let lastCommentData = roomData["last_comment"]
                                             let lastComment = QComment.tempComment(fromJSON: lastCommentData)
                                             room.updateLastComentInfo(comment: lastComment)
-                                            rooms.append(room)
                                         }else{
                                             let room = QRoom.room(fromJSON: roomData)
                                             room.updateUnreadCommentCount(count: unread)
-                                            rooms.append(room)
                                         }
                                     }
-                                    onSuccess(rooms)
+                                    DispatchQueue.main.async {
+                                        var rooms = [QRoom]()
+                                        for roomData in roomsData {
+                                            
+                                            let roomId = "\(roomData["id"])"
+                                            if let room = QRoom.room(withId: roomId){
+                                                rooms.append(room)
+                                            }
+                                        }
+                                        onSuccess(rooms)
+                                    }
                                 }
-                                if Thread.isMainThread {
+                                QiscusBackgroundThread.async {
                                     execute()
-                                }else{
-                                    DispatchQueue.main.sync {
-                                        autoreleasepool{
-                                            execute()
-                                        }
-                                    }
                                 }
                             }else{
                                 onFailed("all requested room not found")
