@@ -15,6 +15,8 @@ All users within the same Qiscus application are able to communicate with each o
 Done! Now you can use the APP_ID into your apps and get chat functionality by implementing Qiscus into your app.
 
 
+for example you can check the link https://github.com/qiscus/qiscus-sdk-ios-sample-v2
+
 ### integrating SDK with an existing app
 
 [CocoaPods](http://cocoapods.org/) is a dependency manager for Cocoa projects. You can install it with the following command:
