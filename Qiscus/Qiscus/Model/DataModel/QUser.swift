@@ -23,6 +23,7 @@ public class QUser:Object {
     
     @objc public dynamic var email:String = ""
     @objc public dynamic var id:Int = 0
+    @objc public dynamic var extras: String = ""
     @objc public dynamic var avatarURL:String = ""
     @objc public dynamic var storedName:String = ""
     @objc public dynamic var definedName:String = ""
@@ -114,7 +115,7 @@ public class QUser:Object {
     override public static func ignoredProperties() -> [String] {
         return ["cachedAvatar","delegate"]
     }
-    public class func saveUser(withEmail email:String, id:Int? = nil ,fullname:String? = nil, avatarURL:String? = nil, lastSeen:Double? = nil)->QUser{
+    public class func saveUser(withEmail email:String, id:Int? = nil ,fullname:String? = nil, avatarURL:String? = nil, lastSeen:Double? = nil, extras:String? = nil)->QUser{
         let realm = try! Realm(configuration: Qiscus.dbConfiguration)
         realm.refresh()
         var user = QUser()
@@ -136,6 +137,11 @@ public class QUser:Object {
             if id != nil {
                 try! realm.write {
                     user.id = id!
+                }
+            }
+            if extras != nil {
+                try! realm.write {
+                    user.extras = extras!
                 }
             }
             if avatarURL != nil && avatarURL! != user.avatarURL{
@@ -175,6 +181,9 @@ public class QUser:Object {
             }
             if id != nil {
                 user.id = id!
+            }
+            if extras != nil {
+                user.extras = extras!
             }
             try! realm.write {
                 realm.add(user, update:true)

@@ -55,7 +55,7 @@ open class QiscusCommentClient: NSObject {
     
     
     // MARK: - Login or register
-    open func loginOrRegister(_ email:String, password:String, username:String? = nil, avatarURL:String? = nil, reconnect:Bool = false, onSuccess:(()->Void)? = nil){
+    open func loginOrRegister(_ email:String, password:String, username:String? = nil, avatarURL:String? = nil, reconnect:Bool = false, extras:String? = nil, onSuccess:(()->Void)? = nil){
         if email.isEmpty || password.isEmpty {
             #if DEBUG
                 fatalError("parameters cant be empty")
@@ -75,6 +75,10 @@ open class QiscusCommentClient: NSObject {
         }
         if let avatar =  avatarURL{
             parameters["avatar_url"] = avatar as AnyObject?
+        }
+        
+        if let extras = extras{
+            parameters["extras"] = extras as AnyObject?
         }
         
         DispatchQueue.global().async(execute: {
@@ -213,8 +217,9 @@ open class QiscusCommentClient: NSObject {
         let userKey = Qiscus.client.userData.value(forKey: "qiscus_param_pass") as? String
         let userName = Qiscus.client.userData.value(forKey: "qiscus_param_username") as? String
         let avatarURL = Qiscus.client.userData.value(forKey: "qiscus_param_avatar") as? String
+        let extras = Qiscus.client.userData.value(forKey: "qiscus_param_extras") as? String
         if email != nil && userKey != nil && userName != nil {
-            QiscusCommentClient.sharedInstance.loginOrRegister(email!, password: userKey!, username: userName!, avatarURL: avatarURL, reconnect: true, onSuccess: onSuccess)
+            QiscusCommentClient.sharedInstance.loginOrRegister(email!, password: userKey!, username: userName!, avatarURL: avatarURL, reconnect: true, extras: extras, onSuccess: onSuccess)
         }
         
     }

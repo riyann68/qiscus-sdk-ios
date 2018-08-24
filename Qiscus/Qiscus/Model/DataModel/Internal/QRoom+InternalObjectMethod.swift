@@ -538,8 +538,12 @@ internal extension QRoom {
                         let participantEmail = participantJSON["email"].stringValue
                         let fullname = participantJSON["username"].stringValue
                         let avatarURL = participantJSON["avatar_url"].stringValue
-                        
-                        let _ = QUser.saveUser(withEmail: participantEmail, fullname: fullname, avatarURL: avatarURL)
+                        let extrasData = participantJSON["extras"]
+                        var extras = ""
+                        if !(extrasData.isEmpty){
+                            extras = "\(extrasData)"
+                        }
+                        let _ = QUser.saveUser(withEmail: participantEmail, fullname: fullname, avatarURL: avatarURL, extras: extras)
                         
                         let lastReadId = participantJSON["last_comment_read_id"].intValue
                         let lastDeliveredId = participantJSON["last_comment_received_id"].intValue
